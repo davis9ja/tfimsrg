@@ -6,7 +6,8 @@
   * X create method for generating particle/hole basis and defining reference state (this is for an easy way to change number of particles in G.S., etc.)
   * look into normal ordering procedure (could be written differently)
   * try object-oriented approach?
-  * pass particle/hole tensors to generator
-* optimize code execution (should it be this slow?)
+  * X pass particle/hole tensors to generator
+  * configure ability to flow with n_holes =/= n_particles
+* X optimize code execution (should it be this slow?) -- optimized for 4h/4p
 * update README with useful information about what the code does
 * do some scaling tests; benchmark with reference code
