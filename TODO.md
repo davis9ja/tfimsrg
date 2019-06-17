@@ -9,5 +9,7 @@
   * X pass particle/hole tensors to generator
   * configure ability to flow with n_holes =/= n_particles
 * X optimize code execution (should it be this slow?) -- optimized for 4h/4p
-* update README with useful information about what the code does
+* X update README with useful information about what the code does
 * do some scaling tests; benchmark with reference code
+
+* write IMSRG flow in TensorNetwork architecture
