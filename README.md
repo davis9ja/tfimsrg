@@ -3,12 +3,15 @@
 #### PURPOSE:
 The purpose of this code is to write the IM-SRG flow solution for the pairing model into the TensorFlow architecture. The motivation for this project is that the IM-SRG flow equation terms can be written as operations on tensors built from N-body interactions in the nuclear Hamiltonian. The TensorFlow library offers optimized and intuitive tools for performing tensor operations. We want to know if these methods can be used to efficiently solve the flow equations; if so, we would like to apply those methods to solve for three-body interactions.
 
-#### FILES:
-`testing_tensorflow_v2`: main notebook
-`TODO.md`: information regarding future tasks or strategies to implement
-`README.md`: overview of project (this file)
+We solve the IMSRG flow in two architectures; 1) pure TensorFlow and 2) TensorNetwork, a library that uses TensorFlow as a backend.
 
-#### SUMMARY OF CODE:
+#### FILES:
+* `testing_tensorflow_v2.ipynb`: main notebook for TensorFlow implementation
+* `IMSRG_tensornetwork.ipynb`: main notebook for TensorNetwork implementation
+* `TODO.md`: information regarding future tasks or strategies to implement
+* `README.md`: overview of project (this file)
+
+#### SUMMARY OF `testing_tensorflow_v2.ipynb`:
 
 __Cell 1:__ 
 Import libraries and print TensorFlow version. This code was written in the API r1.13 (latest stable version at the time of writing).
@@ -42,4 +45,7 @@ __Cell 8:__
 
 __Cell 9:__
 Main procedure that initializes variables and runs the scipy.ode solver. First, we build the Hamiltonian and retrieve all necessary components (1B and 2B tensors, reference state, holes, particles, and single-particle basis). Then, we construct the occupation tensors using information in the reference state. We normal order the Hamiltonian and pass the components into the scipy.ode solver, including any necessary additonal arguments required by `derivative()`. The solver iterates until our scale paramter _s_ = 2, at which point the ground state energy has reached convergence.
+
+#### SUMMARY OF `IMSRG_tensornetwork.ipynb`:
+
 
