@@ -1,0 +1,209 @@
+{
+    "machine_info": {
+        "node": "jacob-PC",
+        "processor": "x86_64",
+        "machine": "x86_64",
+        "python_compiler": "GCC 7.3.0",
+        "python_implementation": "CPython",
+        "python_implementation_version": "3.7.3",
+        "python_version": "3.7.3",
+        "python_build": [
+            "default",
+            "Mar 27 2019 22:11:17"
+        ],
+        "release": "4.15.0-48-generic",
+        "system": "Linux",
+        "cpu": {
+            "vendor_id": "GenuineIntel",
+            "hardware": "unknown",
+            "brand": "Intel(R) Core(TM) i7-6500U CPU @ 2.50GHz"
+        }
+    },
+    "commit_info": {
+        "id": "b3b3f0c00e99766d410fa70481c58d8b408db767",
+        "time": "2019-06-26T15:13:12-04:00",
+        "author_time": "2019-06-26T15:13:12-04:00",
+        "dirty": true,
+        "project": "im-srg_tensorflow",
+        "branch": "experimental"
+    },
+    "benchmarks": [
+        {
+            "group": null,
+            "name": "test02ph_run",
+            "fullname": "IMSRG_tensornetwork.py::test02ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.024894525995478034,
+                "max": 0.03455970100185368,
+                "mean": 0.02629223611738245,
+                "stddev": 0.0029995815701107935,
+                "rounds": 17,
+                "median": 0.025035087004653178,
+                "iqr": 0.0009950869989552302,
+                "q1": 0.024939197499406873,
+                "q3": 0.025934284498362103,
+                "iqr_outliers": 2,
+                "stddev_outliers": 2,
+                "outliers": "2;2",
+                "ld15iqr": 0.024894525995478034,
+                "hd15iqr": 0.03376326799480012,
+                "ops": 38.034041514592786,
+                "total": 0.4469680139955017,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test04ph_run",
+            "fullname": "IMSRG_tensornetwork.py::test04ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.0671725680003874,
+                "max": 0.08025856599851977,
+                "mean": 0.07164741592266811,
+                "stddev": 0.005358955114811806,
+                "rounds": 13,
+                "median": 0.06872453099640552,
+                "iqr": 0.009688509002444334,
+                "q1": 0.06738133724684303,
+                "q3": 0.07706984624928737,
+                "iqr_outliers": 0,
+                "stddev_outliers": 3,
+                "outliers": "3;0",
+                "ld15iqr": 0.0671725680003874,
+                "hd15iqr": 0.08025856599851977,
+                "ops": 13.957237495897123,
+                "total": 0.9314164069946855,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test06ph_run",
+            "fullname": "IMSRG_tensornetwork.py::test06ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.2519564959948184,
+                "max": 0.2645188370006508,
+                "mean": 0.25800679819949435,
+                "stddev": 0.004988836989353653,
+                "rounds": 5,
+                "median": 0.2574685409999802,
+                "iqr": 0.007913382001788705,
+                "q1": 0.2541365194992977,
+                "q3": 0.2620499015010864,
+                "iqr_outliers": 0,
+                "stddev_outliers": 2,
+                "outliers": "2;0",
+                "ld15iqr": 0.2519564959948184,
+                "hd15iqr": 0.2645188370006508,
+                "ops": 3.875866864666048,
+                "total": 1.2900339909974718,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test08ph_run",
+            "fullname": "IMSRG_tensornetwork.py::test08ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.8904292950028321,
+                "max": 0.9719580029995996,
+                "mean": 0.9250054994015955,
+                "stddev": 0.040093318770412514,
+                "rounds": 5,
+                "median": 0.900582784001017,
+                "iqr": 0.07191780075299903,
+                "q1": 0.8951110425005027,
+                "q3": 0.9670288432535017,
+                "iqr_outliers": 0,
+                "stddev_outliers": 2,
+                "outliers": "2;0",
+                "ld15iqr": 0.8904292950028321,
+                "hd15iqr": 0.9719580029995996,
+                "ops": 1.0810746537689992,
+                "total": 4.625027497007977,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test10ph_run",
+            "fullname": "IMSRG_tensornetwork.py::test10ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 2.55630680500326,
+                "max": 2.743466850006371,
+                "mean": 2.6605186712025897,
+                "stddev": 0.08974608273890614,
+                "rounds": 5,
+                "median": 2.7145449020026717,
+                "iqr": 0.1581411364932137,
+                "q1": 2.5665041882548394,
+                "q3": 2.724645324748053,
+                "iqr_outliers": 0,
+                "stddev_outliers": 2,
+                "outliers": "2;0",
+                "ld15iqr": 2.55630680500326,
+                "hd15iqr": 2.743466850006371,
+                "ops": 0.3758665597140826,
+                "total": 13.302593356012949,
+                "iterations": 1
+            }
+        }
+    ],
+    "datetime": "2019-06-26T19:53:21.762615",
+    "version": "3.2.2"
+}

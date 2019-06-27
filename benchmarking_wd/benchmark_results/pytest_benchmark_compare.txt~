@@ -1,0 +1,47 @@
+
+
+The results below record the execution time for one iteration of the
+derivative in the IMSRG flow. One iteration includes one calculation of
+the generator, and one calculation of the flow equations.                                                       
+                                                                                         
+In the "Name" column, we see 15 tests have been recorded. The name
+"test0Xph_run" is a single iteration of the flow using 2X single
+particle states. Next to each test name is a file-name; the prefix 000X
+represents which architecture was used to run the code. X=1 is Heiko's
+python IMSRG(2), X=2 is my raw TensorFlow architecture for the IMSRG(2),
+and X=3 is my TensorNetwork architecture for the IMSRG(2). It's best to
+look at the "Min" column, since these runs represent the best possible
+performance.           
+                                                                                         
+We can see that the TensorNetwork runs at least an order of magnitude
+faster than the other two codes. Might be worth running these tests with
+more rounds. Will have to stick with a maximum of 20 single particles
+states, however; my computer can't handle any more than that in
+TensorFlow (might have to optimize memory usage).
+
+Author:  Jacob Davison                                                                   
+Date:    06/27/2019                                                                      
+
+Computing stats ...----------------------------------------------------------------------------------------------- benchmark: 15 tests -----------------------------------------------------------------------------------------------
+Name (time in ms)                       Min                    Max                   Mean              StdDev                 Median                 IQR            Outliers      OPS            Rounds  Iterations
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+test02ph_run (0001_b3b3f0c)         21.7882 (1.0)          30.2690 (1.0)          23.1189 (1.0)        2.1438 (1.0)          22.3780 (1.0)        0.3888 (1.0)           5;9  43.2546 (1.0)          46           1
+test02ph_run (0002_b3b3f0c)        521.9464 (23.96)       618.0027 (20.42)       580.0901 (25.09)     49.3189 (23.01)       613.0298 (27.39)     88.9278 (228.72)        2;0   1.7239 (0.04)          5           1
+test02ph_run (0003_b3b3f0c)         24.8945 (1.14)         34.5597 (1.14)         26.2922 (1.14)       2.9996 (1.40)         25.0351 (1.12)       0.9951 (2.56)          2;2  38.0340 (0.88)         17           1
+test04ph_run (0001_b3b3f0c)        657.5349 (30.18)       664.6482 (21.96)       661.5923 (28.62)      2.9421 (1.37)        662.7202 (29.61)      4.6913 (12.07)         2;0   1.5115 (0.03)          5           1
+test04ph_run (0002_b3b3f0c)        567.8788 (26.06)       699.9717 (23.13)       638.1852 (27.60)     51.7145 (24.12)       654.5712 (29.25)     75.9447 (195.33)        2;0   1.5669 (0.04)          5           1
+test04ph_run (0003_b3b3f0c)         67.1726 (3.08)         80.2586 (2.65)         71.6474 (3.10)       5.3590 (2.50)         68.7245 (3.07)       9.6885 (24.92)         3;0  13.9572 (0.32)         13           1
+test06ph_run (0001_b3b3f0c)      4,690.4192 (215.27)    4,746.6739 (156.82)    4,713.2135 (203.87)    21.4007 (9.98)      4,705.6176 (210.28)    26.1743 (67.32)         2;0   0.2122 (0.00)          5           1
+test06ph_run (0002_b3b3f0c)      1,704.1103 (78.21)     1,957.4391 (64.67)     1,890.6387 (81.78)    105.9134 (49.40)     1,936.7255 (86.55)     92.9545 (239.08)        1;1   0.5289 (0.01)          5           1
+test06ph_run (0003_b3b3f0c)        251.9565 (11.56)       264.5188 (8.74)        258.0068 (11.16)      4.9888 (2.33)        257.4685 (11.51)      7.9134 (20.35)         2;0   3.8759 (0.09)          5           1
+test08ph_run (0001_b3b3f0c)     18,691.5039 (857.87)   18,816.6448 (621.65)   18,731.1552 (810.21)    51.0481 (23.81)    18,727.3044 (836.86)    58.2563 (149.84)        1;0   0.0534 (0.00)          5           1
+test08ph_run (0002_b3b3f0c)      9,899.4320 (454.35)   10,076.7766 (332.91)    9,989.4845 (432.09)    75.3121 (35.13)    10,018.0263 (447.67)   125.1924 (322.00)        2;0   0.1001 (0.00)          5           1
+test08ph_run (0003_b3b3f0c)        890.4293 (40.87)       971.9580 (32.11)       925.0055 (40.01)     40.0933 (18.70)       900.5828 (40.24)     71.9178 (184.97)        2;0   1.0811 (0.02)          5           1
+test10ph_run (0001_b3b3f0c)     55,975.4160 (>1000.0)  56,345.5711 (>1000.0)  56,175.7715 (>1000.0)  134.5975 (62.78)    56,184.3373 (>1000.0)  152.3189 (391.77)        2;0   0.0178 (0.00)          5           1
+test10ph_run (0002_b3b3f0c)     34,775.8129 (>1000.0)  35,053.4559 (>1000.0)  34,903.3691 (>1000.0)  100.0828 (46.68)    34,893.7942 (>1000.0)  104.4934 (268.76)        2;0   0.0287 (0.00)          5           1
+test10ph_run (0003_b3b3f0c)      2,556.3068 (117.33)    2,743.4669 (90.64)     2,660.5187 (115.08)    89.7461 (41.86)     2,714.5449 (121.30)   158.1411 (406.74)        2;0   0.3759 (0.01)          5           1
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Legend:
+  Outliers: 1 Standard Deviation from Mean; 1.5 IQR (InterQuartile Range) from 1st Quartile and 3rd Quartile.
+  OPS: Operations Per Second, computed as 1 / Mean

@@ -1,0 +1,209 @@
+{
+    "machine_info": {
+        "node": "jacob-PC",
+        "processor": "x86_64",
+        "machine": "x86_64",
+        "python_compiler": "GCC 7.3.0",
+        "python_implementation": "CPython",
+        "python_implementation_version": "3.7.3",
+        "python_version": "3.7.3",
+        "python_build": [
+            "default",
+            "Mar 27 2019 22:11:17"
+        ],
+        "release": "4.15.0-48-generic",
+        "system": "Linux",
+        "cpu": {
+            "vendor_id": "GenuineIntel",
+            "hardware": "unknown",
+            "brand": "Intel(R) Core(TM) i7-6500U CPU @ 2.50GHz"
+        }
+    },
+    "commit_info": {
+        "id": "b3b3f0c00e99766d410fa70481c58d8b408db767",
+        "time": "2019-06-26T15:13:12-04:00",
+        "author_time": "2019-06-26T15:13:12-04:00",
+        "dirty": true,
+        "project": "im-srg_tensorflow",
+        "branch": "experimental"
+    },
+    "benchmarks": [
+        {
+            "group": null,
+            "name": "test02ph_run",
+            "fullname": "testing_tensorflow_v2.py::test02ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.521946350003418,
+                "max": 0.6180027189984685,
+                "mean": 0.5800900779999211,
+                "stddev": 0.04931892871527806,
+                "rounds": 5,
+                "median": 0.6130297579948092,
+                "iqr": 0.08892778400149837,
+                "q1": 0.5283315777505777,
+                "q3": 0.6172593617520761,
+                "iqr_outliers": 0,
+                "stddev_outliers": 2,
+                "outliers": "2;0",
+                "ld15iqr": 0.521946350003418,
+                "hd15iqr": 0.6180027189984685,
+                "ops": 1.7238702021035708,
+                "total": 2.9004503899996052,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test04ph_run",
+            "fullname": "testing_tensorflow_v2.py::test04ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.567878826004744,
+                "max": 0.6999717459984822,
+                "mean": 0.6381852085993159,
+                "stddev": 0.051714512044797836,
+                "rounds": 5,
+                "median": 0.6545711769940681,
+                "iqr": 0.0759447474974877,
+                "q1": 0.5961980580013915,
+                "q3": 0.6721428054988792,
+                "iqr_outliers": 0,
+                "stddev_outliers": 2,
+                "outliers": "2;0",
+                "ld15iqr": 0.567878826004744,
+                "hd15iqr": 0.6999717459984822,
+                "ops": 1.5669432423775418,
+                "total": 3.19092604299658,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test06ph_run",
+            "fullname": "testing_tensorflow_v2.py::test06ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 1.7041103090014076,
+                "max": 1.957439122001233,
+                "mean": 1.8906386649992784,
+                "stddev": 0.10591342254017058,
+                "rounds": 5,
+                "median": 1.9367255269971793,
+                "iqr": 0.09295451899924956,
+                "q1": 1.8568108069994196,
+                "q3": 1.9497653259986691,
+                "iqr_outliers": 1,
+                "stddev_outliers": 1,
+                "outliers": "1;1",
+                "ld15iqr": 1.907710972998757,
+                "hd15iqr": 1.957439122001233,
+                "ops": 0.5289217969105597,
+                "total": 9.453193324996391,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test08ph_run",
+            "fullname": "testing_tensorflow_v2.py::test08ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 9.899432010002783,
+                "max": 10.076776558002166,
+                "mean": 9.989484537803218,
+                "stddev": 0.07531208529613918,
+                "rounds": 5,
+                "median": 10.018026291007118,
+                "iqr": 0.1251923860017996,
+                "q1": 9.916875314251229,
+                "q3": 10.042067700253028,
+                "iqr_outliers": 0,
+                "stddev_outliers": 2,
+                "outliers": "2;0",
+                "ld15iqr": 9.899432010002783,
+                "hd15iqr": 10.076776558002166,
+                "ops": 0.10010526531331009,
+                "total": 49.94742268901609,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test10ph_run",
+            "fullname": "testing_tensorflow_v2.py::test10ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 34.77581294599804,
+                "max": 35.05345587500051,
+                "mean": 34.90336909220059,
+                "stddev": 0.1000827860771703,
+                "rounds": 5,
+                "median": 34.89379422699858,
+                "iqr": 0.10449341100138554,
+                "q1": 34.84908030200131,
+                "q3": 34.9535737130027,
+                "iqr_outliers": 0,
+                "stddev_outliers": 2,
+                "outliers": "2;0",
+                "ld15iqr": 34.77581294599804,
+                "hd15iqr": 35.05345587500051,
+                "ops": 0.028650529333096877,
+                "total": 174.51684546100296,
+                "iterations": 1
+            }
+        }
+    ],
+    "datetime": "2019-06-26T19:52:27.077181",
+    "version": "3.2.2"
+}

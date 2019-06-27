@@ -1,0 +1,209 @@
+{
+    "machine_info": {
+        "node": "jacob-PC",
+        "processor": "x86_64",
+        "machine": "x86_64",
+        "python_compiler": "GCC 7.3.0",
+        "python_implementation": "CPython",
+        "python_implementation_version": "3.7.3",
+        "python_version": "3.7.3",
+        "python_build": [
+            "default",
+            "Mar 27 2019 22:11:17"
+        ],
+        "release": "4.15.0-48-generic",
+        "system": "Linux",
+        "cpu": {
+            "vendor_id": "GenuineIntel",
+            "hardware": "unknown",
+            "brand": "Intel(R) Core(TM) i7-6500U CPU @ 2.50GHz"
+        }
+    },
+    "commit_info": {
+        "id": "b3b3f0c00e99766d410fa70481c58d8b408db767",
+        "time": "2019-06-26T15:13:12-04:00",
+        "author_time": "2019-06-26T15:13:12-04:00",
+        "dirty": true,
+        "project": "im-srg_tensorflow",
+        "branch": "experimental"
+    },
+    "benchmarks": [
+        {
+            "group": null,
+            "name": "test02ph_run",
+            "fullname": "imsrg_pairing.py::test02ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.021788159996503964,
+                "max": 0.030268971000623424,
+                "mean": 0.023118945021016534,
+                "stddev": 0.0021438299993783473,
+                "rounds": 46,
+                "median": 0.02237795800101594,
+                "iqr": 0.00038879899511812255,
+                "q1": 0.02210765900235856,
+                "q3": 0.022496457997476682,
+                "iqr_outliers": 9,
+                "stddev_outliers": 5,
+                "outliers": "5;9",
+                "ld15iqr": 0.021788159996503964,
+                "hd15iqr": 0.02334038000117289,
+                "ops": 43.2545688867264,
+                "total": 1.0634714709667605,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test04ph_run",
+            "fullname": "imsrg_pairing.py::test04ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.6575348689948441,
+                "max": 0.6646482350042788,
+                "mean": 0.6615922917990247,
+                "stddev": 0.002942117508398898,
+                "rounds": 5,
+                "median": 0.6627201949959272,
+                "iqr": 0.004691316005846602,
+                "q1": 0.6590740399969945,
+                "q3": 0.6637653560028411,
+                "iqr_outliers": 0,
+                "stddev_outliers": 2,
+                "outliers": "2;0",
+                "ld15iqr": 0.6575348689948441,
+                "hd15iqr": 0.6646482350042788,
+                "ops": 1.5115049138205123,
+                "total": 3.3079614589951234,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test06ph_run",
+            "fullname": "imsrg_pairing.py::test06ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 4.690419195001596,
+                "max": 4.746673857996939,
+                "mean": 4.7132135248015405,
+                "stddev": 0.021400683633219637,
+                "rounds": 5,
+                "median": 4.7056175870020525,
+                "iqr": 0.02617428474513872,
+                "q1": 4.700308358254915,
+                "q3": 4.726482643000054,
+                "iqr_outliers": 0,
+                "stddev_outliers": 2,
+                "outliers": "2;0",
+                "ld15iqr": 4.690419195001596,
+                "hd15iqr": 4.746673857996939,
+                "ops": 0.21216946669992148,
+                "total": 23.5660676240077,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test08ph_run",
+            "fullname": "imsrg_pairing.py::test08ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 18.691503946996818,
+                "max": 18.816644830993027,
+                "mean": 18.731155152997236,
+                "stddev": 0.05104808188961334,
+                "rounds": 5,
+                "median": 18.72730435000267,
+                "iqr": 0.058256301752408035,
+                "q1": 18.69201143524515,
+                "q3": 18.750267736997557,
+                "iqr_outliers": 0,
+                "stddev_outliers": 1,
+                "outliers": "1;0",
+                "ld15iqr": 18.691503946996818,
+                "hd15iqr": 18.816644830993027,
+                "ops": 0.05338699038217014,
+                "total": 93.65577576498617,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test10ph_run",
+            "fullname": "imsrg_pairing.py::test10ph_run",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 55.97541600400291,
+                "max": 56.3455710690032,
+                "mean": 56.175771532399814,
+                "stddev": 0.13459751768285416,
+                "rounds": 5,
+                "median": 56.18433731100231,
+                "iqr": 0.15231888875132427,
+                "q1": 56.104038918996594,
+                "q3": 56.25635780774792,
+                "iqr_outliers": 0,
+                "stddev_outliers": 2,
+                "outliers": "2;0",
+                "ld15iqr": 55.97541600400291,
+                "hd15iqr": 56.3455710690032,
+                "ops": 0.017801268638086124,
+                "total": 280.87885766199906,
+                "iterations": 1
+            }
+        }
+    ],
+    "datetime": "2019-06-26T19:46:29.131166",
+    "version": "3.2.2"
+}

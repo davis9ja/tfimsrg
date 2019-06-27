@@ -1,0 +1,20 @@
+BENCHMARK WORKING DIRECTORY
+
+All results are logged in ./benchmark_results
+
+########################################################################
+
+Benchmarks performed using the pytest fixture called pytest-benchmark.
+Results are stored in the file 
+
+Documentation --> https://pytest-benchmark.readthedocs.io/en/latest/
+
+########################################################################
+
+Line profiling and memory profiling results (performed on Heiko's IMSRG
+and TensorFlow IMSRG) are stored in the files titled "imsrgp_bench.txt"
+and "tt_bench.txt". These are logs that record the time spent and
+memory usage per line on every function decorated with @profile.
+
+Line profiler   --> https://github.com/rkern/line_profiler
+Memory profiler --> https://pypi.org/project/memory-profiler/
