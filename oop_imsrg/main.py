@@ -21,8 +21,6 @@ def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
 
     generator.f = f
     generator.G = G
-    eta1B = generator.calc_eta1B()
-    eta2B = generator.calc_eta2B()
     
     dE, df, dG = flow.flow(generator, occ_tensors)
     
@@ -105,8 +103,6 @@ if __name__ == '__main__':
     # end = time.time()
     # print(end-start)
 
-    start = time.time()    
-    dE, df, dG = fl.flow(wg, ot)
-    end = time.time()
-    print(dG[0,1,4,5])
-    print(end-start)
+    # dE, df, dG = fl.flow(wg, ot)
+
+    main()
