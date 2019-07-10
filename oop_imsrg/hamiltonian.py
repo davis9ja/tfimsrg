@@ -1,9 +1,34 @@
 import numpy as np
 from tensornetwork import *
 
-class PairingHamiltonian(object):
+class Hamiltonian(object):
+    """Parent class for organization purposes. Ideally, all Hamiltonian
+    classes should inherit from this class. In this way, AssertionErrors
+    can be handled in a general way."""
 
-    def __init__(self, n_hole_states, n_particle_states, d=1, g=0.5, pb=0.0):
+    def __construct():
+        print("Function that constructs the Hamiltonian")
+
+    def __normal_order():
+        print("Function that normal-orders the Hamiltonian")
+
+class PairingHamiltonian2B(Hamiltonian):
+    """Generate the two-body pairing Hamiltonian. Inherits from Hamiltonian."""
+
+    def __init__(self, n_hole_states, n_particle_states, d=1.0, g=0.5, pb=0.0):
+        """Class constructor. Instantiate PairingHamiltonian2B object.
+        
+        Arguments:
+        
+        n_hole_states -- number of holes states in the single particle basis
+        n_particle_states -- number of particles states in the single particle basis
+
+        Keyword arguments:
+
+        d -- the energy level spacing (default: 1.0)
+        g -- the pairing strength (default: 0.5)
+        pb -- strength of the pair-breaking term (operates in double particle basis) (default: 0.0)"""
+
         self._d = d
         self._g = g
         self._pb = pb
@@ -19,58 +44,105 @@ class PairingHamiltonian(object):
 
     @property
     def d(self):
+        """Returns: 
+
+        d -- energy level spacing."""
         return self._d
 
     @property
     def g(self):
+        """Returns: 
+
+        g -- pairing strength."""
         return self._g
 
     @property
     def pb(self):
+        """Returns: 
+
+        pb -- pair-breaking strength."""
         return self._pb
 
     @property
     def reference(self):
+        """Returns: 
+
+        reference -- reference state (ground state)."""
         return self._reference
 
     @property
     def holes(self):
+        """Returns: 
+
+        holes -- indices of hole states in single particle basis."""
         return self._holes
 
     @property
     def particles(self):
+        """Returns: 
+
+        particles -- indices of particle states in single particle basis."""
         return self._particles
     
     @property
     def sp_basis(self):
+        """Returns: 
+
+        sp_basis -- indices of full single particle basis."""
         return self._sp_basis
     
     @property
     def n_sp_states(self):
+        """Returns: 
+
+        n_sp_states -- size of single-particle basis."""
         return self._n_sp_states
 
     @property
     def H1B(self):
+        """Returns: 
+
+        H1B -- one-body (rank 2) tensor defined by __construct()."""
         return self._H1B
     
     @property
     def H2B(self):
+        """Returns: 
+
+        H2B -- two-body (rank 4) tensor defined by __construct()."""
         return self._H2B
 
     @property
     def E(self):
+        """Returns: 
+
+        E -- zero-body (rank 0) tensor defined by __normal_order()."""
         return self._E
     
     @property
     def f(self):
+        """Returns: 
+
+        f -- one-body (rank 2) tensor defined by __normal_order()."""
         return self._f
     
     @property
     def G(self):
+        """Returns: 
+
+        G -- two-body (rank 4) tensor defined by __normal_order()."""
         return self._G
     
     
     def __delta2B(self, p,q,r,s):
+        """Determines if a two-body tensor elements should be zero, 
+        positive, or negative. This behavior is dicated by the pairing
+        term in pairing Hamiltonian.
+
+        Arguments:
+
+        p,q,r,s -- indices in single-particle basis"""
+
         pp = np.floor_divide(p,2)
         qp = np.floor_divide(q,2)
         rp = np.floor_divide(r,2)
@@ -93,6 +165,14 @@ class PairingHamiltonian(object):
         return 0
     
     def __deltaPB(self, p,q,r,s):
+        """Determines if a two-body tensor elements should be zero, 
+        positive, or negative. This behavior is dicated by the pair-
+        breaking term in pairing Hamiltonian.
+
+        Arguments:
+
+        p,q,r,s -- indices in single particle basis"""
+
         pp = np.floor_divide(p,2)
         qp = np.floor_divide(q,2)
         rp = np.floor_divide(r,2)
@@ -114,6 +194,15 @@ class PairingHamiltonian(object):
         return 0
 
     def __construct(self):
+        """Constructs the one- and two-body pieces of the pairing
+        Hamiltonian. 
+
+        Returns:
+
+        (H1B, -- one-body tensor elements (defined by one-body operator)
+         H2B) -- two-body tensor elements (defined by two-body operator)"""
+
+
         bas1B = self.sp_basis # get the single particle basis
 
         # one body part of Hamiltonian is floor-division of basis index
@@ -133,6 +222,14 @@ class PairingHamiltonian(object):
         return (H1B, H2B)
 
     def __normal_order(self):
+        """Normal-orders the pairing Hamiltonian.
+
+        Returns:
+
+        (E, -- zero-body piece
+         f, -- one-body piece
+         G) -- two-body piece"""
+
         bas1B = self.sp_basis # get the single particle basis
         H1B_t = self.H1B   # get the 1B tensor
         H2B_t = self.H2B   # get the 2B tensor
@@ -172,4 +269,9 @@ class PairingHamiltonian(object):
         
         return (E, f, G)
 
+class PairingHamiltonian3B(PairingHamiltonian2B):
 
+    def __delta3B():
+        pass
+
+    pass

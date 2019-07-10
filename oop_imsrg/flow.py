@@ -1,13 +1,29 @@
 from tensornetwork import *
 import numpy as np
-from hamiltonian import PairingHamiltonian
-from occupation_tensors import OccupationTensors
-from generator import WegnerGenerator
+from hamiltonian import *
+from occupation_tensors import *
+from generator import *
 
-class Flow_IMSRG2(object):
+class Flow(object):
+    """Parent class for organization purposes. Ideally, all Flow
+    classes should inherit from this class. In this way, AssertionErrors
+    can be handled in a general way."""
+
+    def flow():
+        print("Function that iterates flow equation once")
+
+class Flow_IMSRG2(Flow):
+    """Calculates the flow equations for the IMSRG(2)."""
 
     def __init__(self, h, occ_t):
-        assert isinstance(h, PairingHamiltonian), "Arg 0 must be PairingHamiltonian object"
+        """Class constructor. Instantiates Flow_IMSRG2 object.
+
+        Arguments:
+
+        h -- Hamiltonian object
+        occ_t -- OccupationTensors object"""
+
+        assert isinstance(h, Hamiltonian), "Arg 0 must be PairingHamiltonian object"
         assert isinstance(occ_t, OccupationTensors), "Arg 1 must be OccupationTensors object"
 
         # self.f = h.f
@@ -16,10 +32,10 @@ class Flow_IMSRG2(object):
         self._holes = h.holes
         self._particles = h.particles
 
-        # self._occA = occ_t.occA
-        # self._occB = occ_t.occB
-        # self._occC = occ_t.occC
-        # self._occD = occ_t.occD
+        self._occA = occ_t.occA
+        self._occB = occ_t.occB
+        self._occC = occ_t.occC
+        self._occD = occ_t.occD
 
     # @property
     # def f(self):
@@ -37,26 +53,37 @@ class Flow_IMSRG2(object):
     # def G(self, G):
     #     self._G = G
 
-    def flow(self, gen, occ_t):
-        assert isinstance(gen, WegnerGenerator), "Arg 0 must be WegnerGenerator object"
+    def flow(self, gen):
+        """Iterates the IMSRG2 flow equations once.
+
+        Arugments:
+
+        gen -- Generator object; generator produces the flow
+
+        Returns:
+
+        (dE, -- zero-body tensor
+         df, -- one-body tensor
+         dG) -- two-body tensor"""
+
+        assert isinstance(gen, Generator), "Arg 0 must be WegnerGenerator object"
 
         # f = self.f
         # G = self.G
         f = gen.f
         G = gen.G
 
-        eta1B = gen.calc_eta1B()
-        eta2B = gen.calc_eta2B()
+        eta1B, eta2B = gen.calc_eta()
 
-        occA = occ_t.occA
-        occB = occ_t.occB
-        occC = occ_t.occC
-        occD = occ_t.occD
+        # occA = occ_t.occA
+        # occB = occ_t.occB
+        # occC = occ_t.occC
+        # occD = occ_t.occD
         
-        # occA = self._occA
-        # occB = self._occB
-        # occC = self._occC
-        # occD = self._occD
+        occA = self._occA
+        occB = self._occB
+        occC = self._occC
+        occD = self._occD
 
         # - Calculate dE/ds
         # first term
