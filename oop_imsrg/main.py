@@ -5,18 +5,21 @@
 # Date:   07/10/2019
 
 # import packages, libraries, and modules
+# user files
 from hamiltonian import *
 from occupation_tensors import *
 from generator import *
 from flow import *
+from plot_data import *
+from display_memory import *
+
+# libraries
 from scipy.integrate import odeint, ode
 import numpy as np
 import time
-
-ha = PairingHamiltonian2B(4,4)
-ot = OccupationTensors(ha.sp_basis, ha.reference)
-wg = WegnerGenerator(ha, ot)
-fl = Flow_IMSRG2(ha, ot)
+import pickle
+import tracemalloc
+import os
 
 def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
     """Defines the derivative to pass into ode object.
@@ -92,18 +95,23 @@ def ravel(y, bas_len):
     return(ravel_E, ravel_f, ravel_G)
 
 
-def main():
+def main(n_holes, n_particles, d=1.0, g=0.5, pb=0.0):
     """Main method uses scipy.integrate.ode to solve the IMSRG flow
     equations."""
+    ha = PairingHamiltonian2B(4, 4, d, g, pb)
+    ot = OccupationTensors(ha.sp_basis, ha.reference)
+    wg = WegnerGenerator(ha, ot)
+    fl = Flow_IMSRG2(ha, ot)
+
 
     start = time.time()
     print("""Pairing model IM-SRG flow: 
-    d              = {:2d}
+    d              = {:2.4f}
     g              = {:2.4f}
     pb             = {:2.4f}
     SP basis size  = {:2d}
     n_holes        = {:2d}
-    n_particles    = {:2d}""".format(1, 0.5, 0.0, 8, 4,4) )
+    n_particles    = {:2d}""".format(ha.d, ha.g, ha.pb, ha.n_sp_states, len(ha.holes), len(ha.particles)) )
     
     print("Flowing...")
 
@@ -143,17 +151,59 @@ def main():
             break
 
     end = time.time()
-    with open('convergence_times.txt', 'a') as f:
-        f.write("{:2.5f}\n".format(end-start))   
+    time_str = "{:2.5f}\n".format(end-start)  
 
-    return (convergence, iters, ha.d, ha.G, ha.pb, ha.n_sp_states, s_vals, E_vals)
+    return (convergence, iters, ha.d, ha.g, ha.pb, ha.n_sp_states, s_vals, E_vals, time_str)
 
 
 if __name__ == '__main__':
-    # start = time.time()
-    # main()
-    # end = time.time()
-    # print(end-start)
-    # print(PairingHamiltonian3B(4,4).d)
-    main() 
+    tracemalloc.start()    
 
+    log_dir = "logs\\"
+    plot_dir = "plots\\"
+
+    if not os.path.exists(log_dir):
+        os.mkdir(log_dir)
+        print("Created log directory at "+log_dir)
+    if not os.path.exists(plot_dir):
+        os.mkdir(plot_dir)
+        print("Created plots directory at "+plot_dir+"\n")
+
+
+    if os.path.isfile(log_dir+'total_mem.txt'):
+        os.remove(log_dir+'total_mem.txt')
+
+    start = 0.0001
+    stop = 1.0
+    num = 100
+
+    gsv = np.linspace(start, stop, num)
+    pbv = np.copy(gsv)
+    # gsv = np.append(np.linspace(-stop,-start,num), np.linspace(start, stop,num))
+    # pbs = np.copy(gsv)
+
+    # data_container = np.array([])
+    for g in gsv:
+        pb_list = np.array(['convergence', 'iters', 'd', 'g', 'pb', 'n_sp_states', 's_vals', 'E_vals', 'time_str'])
+        for pb in pbv:
+            data = main(4,4, d=stop, g=g, pb=pb) # (convergence, s_vals, E_vals)
+            pb_list = np.vstack([pb_list, data])
+
+            snapshot = tracemalloc.take_snapshot()
+            top_stats = snapshot.statistics('lineno')
+            total_mem = sum(stat.size for stat in top_stats)
+
+            with open(log_dir+'total_mem.txt', 'a') as f:
+                f.write('{:.1f}\n'.format(total_mem))
+
+            if data[0] == 0:
+                print("Energy diverged. Continuing to next g value...\n")
+                break
+            
+        with open('{:s}g-{:2.4f}.pickle'.format(log_dir,g), 'wb') as f:
+            pickle.dump(pb_list, f, pickle.HIGHEST_PROTOCOL)
+
+        plot_data(log_dir, plot_dir)
+
+        # data_container = np.append(data_container, pb_list)
+    
