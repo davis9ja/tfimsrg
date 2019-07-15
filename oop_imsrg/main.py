@@ -20,7 +20,9 @@ import time
 import pickle
 import tracemalloc
 import os
+from memory_profiler import profile
 
+# @profile
 def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
     """Defines the derivative to pass into ode object.
 
@@ -55,6 +57,7 @@ def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
     
     return dy
 
+# @profile
 def unravel(E, f, G):
     """Transforms E, f, and G into a 1D array. Facilitates
     compatability with scipy.integrate.ode.
@@ -72,6 +75,7 @@ def unravel(E, f, G):
     
     return np.concatenate([unravel_E, unravel_f, unravel_G], axis=0)
 
+# @profile
 def ravel(y, bas_len):
     """Transforms 1D array into E, f, and G. Facilitates
     compatability with scipy.integrate.ode.
@@ -94,17 +98,17 @@ def ravel(y, bas_len):
     
     return(ravel_E, ravel_f, ravel_G)
 
-
+# @profile
 def main(n_holes, n_particles, d=1.0, g=0.5, pb=0.0):
     """Main method uses scipy.integrate.ode to solve the IMSRG flow
     equations."""
-    ha = PairingHamiltonian2B(4, 4, d, g, pb)
+    start = time.time()
+
+    ha = PairingHamiltonian2B(n_holes, n_particles, d, g, pb)
     ot = OccupationTensors(ha.sp_basis, ha.reference)
     wg = WegnerGenerator(ha, ot)
     fl = Flow_IMSRG2(ha, ot)
 
-
-    start = time.time()
     print("""Pairing model IM-SRG flow: 
     d              = {:2.4f}
     g              = {:2.4f}
@@ -153,9 +157,11 @@ def main(n_holes, n_particles, d=1.0, g=0.5, pb=0.0):
     end = time.time()
     time_str = "{:2.5f}\n".format(end-start)  
 
-    return (convergence, iters, ha.d, ha.g, ha.pb, ha.n_sp_states, s_vals, E_vals, time_str)
+    del ha, ot, wg, fl, solver, y0, sfinal, ds
 
+    return (convergence, iters, d, g, pb, n_holes+n_particles, s_vals, E_vals, time_str)
 
+# @profile
 if __name__ == '__main__':
     tracemalloc.start()    
 
@@ -199,11 +205,15 @@ if __name__ == '__main__':
             if data[0] == 0:
                 print("Energy diverged. Continuing to next g value...\n")
                 break
+
+            del data, snapshot, top_stats, total_mem
             
         with open('{:s}g-{:2.4f}.pickle'.format(log_dir,g), 'wb') as f:
             pickle.dump(pb_list, f, pickle.HIGHEST_PROTOCOL)
 
         plot_data(log_dir, plot_dir)
+
+        del pb_list # delete resources that have been written
 
         # data_container = np.append(data_container, pb_list)
     
