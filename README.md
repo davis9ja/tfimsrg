@@ -100,3 +100,9 @@ Performance testing. Measures the time for one iteration of the flow.
 
 __Cell 14:__
 Performance testing. Measures the time for flow convergence with _g=0.5_ and _pb=0.0_.
+
+#### SUMMARY OF `oop_imsrg/`:
+
+This directory contains all files for solving the IM-SRG using an object-oriented approach. The purpose of writing an object-oriented code is so that updates can be designed and implemented without major changes to the base IM-SRG(2) code that already works. The OOP code is "plug-and-play" in the sense that any class that inherits from Hamiltonian, Generator, and Flow can be used to run the code. In this way, algorithms that solve the IM-SRG flow in different ways (e.g. three-body truncation, different generator, etc.) can be encapsulated in their own classes without changes to the main method.
+
+Documentation about each class and how they are used is found in `oop_imsrg/docs`.
