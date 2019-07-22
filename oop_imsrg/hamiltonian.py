@@ -267,6 +267,8 @@ class PairingHamiltonian2B(Hamiltonian):
 
         G = H2B_t
 
+        del net
+        
         return (E, f, G)
 
 class PairingHamiltonian3B(PairingHamiltonian2B):
