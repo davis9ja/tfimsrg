@@ -53,7 +53,7 @@ __Cell 8:__
 __Cell 9:__
 Main procedure that initializes variables and runs the scipy.integrate.ode solver. First, we build the Hamiltonian and retrieve all necessary components (1B and 2B tensors, reference state, holes, particles, and single-particle basis). Then, we construct the occupation tensors using information in the reference state. We normal order the Hamiltonian and pass the components into the scipy.integrate.ode solver, including any necessary additional arguments required by `derivative()`. The solver iterates until our scale parameter _s_ = 2, at which point the ground state energy has reached convergence.
 
-#### SUMMARY OF `IMSRG_tensornetwork.ipynb`:
+#### SUMMARY OF `IMSRG2_tensornetwork.ipynb`:
 
 __Cell 1:__
 Import libraries. We use the ncon interface, provided in TensorNetwork, for calculating tensor contractions. Print out the TensorFlow version and TensorNetwork version.
@@ -64,4 +64,39 @@ __Cell 2:__
 ![equation](https://latex.codecogs.com/gif.latex?f_\text{p-break}&space;=&space;\frac{f}{2}\sum_{p'\ne&space;p,q}\left(a^\dag_{p',&plus;1}&space;a^\dag_{p,-1}a_{q,-1}a_{q,&plus;1}&space;&plus;&space;a^\dag_{q,&plus;1}a^\dag_{q,-1}a_{p,-1}a_{p',&plus;1}&space;\right).
 
 __Cell 3:__
-Functions that define occupation tensors in the same way as `testing_tensorflow_v2`.
+Functions that define occupation tensors in the same way as `testing_tensorflow_v2`. We provide the option to treat each occupation tensor as a rank equal to either the same number of indices that appear in the equation within the text, or a rank twice that number of indices.
+
+__Cell 4:__
+`def normal_order()`: We provide a function to normal order the pairing Hamiltonian that is generated from `build_hamiltonian()`. The normal ordering procedure is written in the canonical TensorNetwork architecture, rather than the ncon interface. This function could be rewritten with ncon, but this would not likely provide any discernable change in performance.
+
+__Cell 5:__
+`def wegner_tn()`: Wegner generator written in canonical TensorNetwork architecture. This function is still in development.
+
+__Cell 6:__
+`def wegner_ncon()`: Wegner generator written in ncon interface provided by TensorNetwork. This function calculates the tensor contractions, term-by-term, encoded in the Wegner's generator (see _An Advanced Course in Computational Nuclear Physics_, Ch. 10).
+
+__Cell 7:__
+`def flow()`: IM-SRG(2) flow written in ncon interface provided by TensorNetwork. Performs the same calculations as Cell 6 in `testing_tensorflow_v2`.
+
+__Cell 8:__
+`def derivative()`: Derivative to pass into scipy.integrate.ode.
+
+__Cell 9:__
+`def unravel()`: Transform E, f, and G tensors into 1D array so that data can be passed into scipy.integrate.ode.
+
+`def ravel()`: Undo operation performed in `unravel()`, so that data can be stored and analyzed.
+
+__Cell 10:__
+`def main()`: Solves the IM-SRG(2) flow using scipy.ode.integrate. The flow equation is a sum of differential equations that describe how E, f, and G change with the scale parameter _s_. We choose convergence criterion as no change in energy within 10^-8 precision. We choose divergence criterion as a change in energy greater than 1.0; since change in energy should always decrease toward convergence, we can safely assume the flow has diverged in the event of such a large change in energy.
+
+__Cell 11:__
+This routine runs the flow for varying values of _g_ and _pb_. The energy spacing _d_ is kept fixed as the maximum value of _g_ and _pb_. Outputs from `main()` are stored in data arrays and dumped into binary files that can be directly loaded using the standard Python library pickle.
+
+__Cell 12:__
+This routine loads the binary files stored by Cell 11 and creates a plot of _g_ versus _pb_.
+
+__Cell 13:__
+Performance testing. Measures the time for one iteration of the flow.
+
+__Cell 14:__
+Performance testing. Measures the time for flow convergence with _g=0.5_ and _pb=0.0_.
