@@ -268,7 +268,7 @@ class PairingHamiltonian2B(Hamiltonian):
         G = H2B_t
 
         del net
-        
+
         return (E, f, G)
 
 class PairingHamiltonian3B(PairingHamiltonian2B):
@@ -298,5 +298,66 @@ class PairingHamiltonian3B(PairingHamiltonian2B):
         p_where = np.where(p_equiv==True)
         s_where = np.where(s_equiv==True)
 
+        result = 0
         if len(p_where) == 2:
-            pass
+            p_where_n = np.where(p_equiv==False)
+
+            l_spins = lhs_s[p_where]
+            r_spins = rhs_s[p_where]
+
+            if l_spins[0] == l_spins[1] or r_spins[0] == r_spins[1]:
+                result *= 0
+            if l_spins[0] == r_spins[0] and l_spins[1] == r_spins[1]:
+                result *= 1
+            if l_spins[0] == r_spins[1] and l_spins[1] == r_spins[0]:
+                result *= -1
+
+            if lhs_p[p_where_n] != rhs_p[p_where_n] and lhs_s[p_where_n] != rhs_p[p_where_n]:
+                result *= 1
+            else:
+                result *= 0
+
+        return result
+
+    def __construct(self):
+        """Constructs the one- and two-body pieces of the pairing
+        Hamiltonian.
+
+        Returns:
+
+        (H1B, -- one-body tensor elements (defined by one-body operator)
+         H2B) -- two-body tensor elements (defined by two-body operator)"""
+
+
+        bas1B = self.sp_basis # get the single particle basis
+
+        # one body part of Hamiltonian is floor-division of basis index
+        # matrix elements are (P-1) where P is energy level
+        H1B = np.diag(self.d*np.floor_divide(bas1B,2))
+
+        # two body part of Hamiltonian constructed from four indices
+        # with non-zero elements defined by pairing term
+        H2B = np.zeros(np.ones(4, dtype=np.int64)*self.n_sp_states)
+        for p in bas1B:
+            for q in bas1B:
+                for r in bas1B:
+                    for s in bas1B:
+                        H2B[p,q,r,s] += self.g*0.5*self.__delta2B(p,q,r,s)
+                        H2B[p,q,r,s] += self.pb*0.5*self.__deltaPB(p,q,r,s)
+
+        W=1
+        H3B = np.zeros(np.ones(6, dtype=np.int64)*self.n_sp_states)
+        for p in bas1B:
+            for q in bas1B:
+                for r in bas1B:
+                    for s in bas1B:
+                        for t in bas1B:
+                            for u in bas1B:
+                                H3B[p,q,r,s,t,u] += W*(1/6)*self.__delta3B(p,q,r,s,t,u)
+        print(H3B[0,1,2,3,4,5])
+        return (H1B, H2B, H3B)
+            # if lhs_p[p_where_n] != rhs_p[p_where_n]:
+            #     if np.array_equal(s_where, [])
+
+test = PairingHamiltonian3B(4,4)
+# print(test3[0,1,2,3,4,5])
