@@ -180,8 +180,8 @@ if __name__ == '__main__':
         os.remove(log_dir+'total_mem.txt')
 
     start = 0.0001
-    stop = 1.0
-    num = 100
+    stop = 5
+    num = 200
 
     gsv = np.linspace(start, stop, num)
     pbv = np.copy(gsv)
