@@ -1,4 +1,4 @@
-# Main program for IM-SRG. 
+# Main program for IM-SRG.
 
 
 # Author: Jacob Davison
@@ -28,7 +28,7 @@ def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
 
     Arguments:
     (required by scipy.integrate.ode)
-    t -- points at which to solve for y 
+    t -- points at which to solve for y
     y -- in this case, 1D array that contains E, f, G
 
     (additional parameters)
@@ -50,11 +50,11 @@ def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
 
     generator.f = f
     generator.G = G
-    
+
     dE, df, dG = flow.flow(generator)
-    
+
     dy = unravel(dE, df, dG)
-    
+
     return dy
 
 # @profile
@@ -67,12 +67,12 @@ def unravel(E, f, G):
     E, f, G -- normal-ordered pieces of Hamiltonian
 
     Returns:
-    
+
     concatenation of tensors peeled into 1D arrays"""
     unravel_E = np.reshape(E, -1)
     unravel_f = np.reshape(f, -1)
     unravel_G = np.reshape(G, -1)
-    
+
     return np.concatenate([unravel_E, unravel_f, unravel_G], axis=0)
 
 # @profile
@@ -88,14 +88,14 @@ def ravel(y, bas_len):
     Returns:
 
     E, f, G -- normal-ordered pieces of Hamiltonian"""
-    
+
     # bas_len = len(np.append(holes,particles))
-    
+
     ravel_E = np.reshape(y[0], ())
     ravel_f = np.reshape(y[1:bas_len**2+1], (bas_len, bas_len))
-    ravel_G = np.reshape(y[bas_len**2+1:bas_len**2+1+bas_len**4], 
+    ravel_G = np.reshape(y[bas_len**2+1:bas_len**2+1+bas_len**4],
                          (bas_len, bas_len, bas_len, bas_len))
-    
+
     return(ravel_E, ravel_f, ravel_G)
 
 # @profile
@@ -109,14 +109,14 @@ def main(n_holes, n_particles, d=1.0, g=0.5, pb=0.0):
     wg = WegnerGenerator(ha, ot)
     fl = Flow_IMSRG2(ha, ot)
 
-    print("""Pairing model IM-SRG flow: 
+    print("""Pairing model IM-SRG flow:
     d              = {:2.4f}
     g              = {:2.4f}
     pb             = {:2.4f}
     SP basis size  = {:2d}
     n_holes        = {:2d}
     n_particles    = {:2d}""".format(ha.d, ha.g, ha.pb, ha.n_sp_states, len(ha.holes), len(ha.particles)) )
-    
+
     print("Flowing...")
 
     # --- Solve the IM-SRG flow
@@ -137,7 +137,7 @@ def main(n_holes, n_particles, d=1.0, g=0.5, pb=0.0):
     while solver.successful() and solver.t < sfinal:
 
         ys = solver.integrate(sfinal, step=True)
-        Es, fs, Gs = ravel(ys, ha.n_sp_states) 
+        Es, fs, Gs = ravel(ys, ha.n_sp_states)
         s_vals.append(solver.t)
         E_vals.append(Es)
 
@@ -150,20 +150,46 @@ def main(n_holes, n_particles, d=1.0, g=0.5, pb=0.0):
             convergence = 1
             break
 
-        if len(E_vals) > 20 and abs(E_vals[-1] - E_vals[-2]) > 1:
+        if len(E_vals) > 20 and abs(E_vals[-1] - E_vals[-2]) > 2:
             print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
             break
 
     end = time.time()
-    time_str = "{:2.5f}\n".format(end-start)  
+    time_str = "{:2.5f}\n".format(end-start)
 
     del ha, ot, wg, fl, solver, y0, sfinal, ds
 
     return (convergence, iters, d, g, pb, n_holes+n_particles, s_vals, E_vals, time_str)
 
+def exact_diagonalization(d, g):
+    """Result of exact diagonalization in spin=0 block of
+    pairing Hamiltonian, given 8 single particle states (4 hole states
+    and 4 particle states).
+
+    Arguments:
+
+    d -- energy level spacing
+    g -- pairing strength
+
+    Returns:
+
+    E -- ground state energy
+    """
+    H = [[2*d-g, -g/2, -g/2, -g/2, -g/2, 0],
+         [-g/2, 4*d-g, -g/2, -g/2, 0, -g/2],
+         [-g/2, -g/2, 6*d-g, 0, -g/2, -g/2],
+         [-g/2, -g/2, 0, 6*d-g, -g/2, -g/2],
+         [-g/2, 0, -g/2, -g/2, 8*d-g, -g/2],
+         [0, -g/2, -g/2, -g/2, -g/2, 10*d-g]]
+
+    w, v = np.linalg.eig(H)
+    E = w[0]
+
+    return E
+
 # @profile
-if __name__ == '__main__':
-    tracemalloc.start()    
+def scan_params():
+    tracemalloc.start()
 
     log_dir = "logs\\"
     plot_dir = "plots\\"
@@ -207,7 +233,7 @@ if __name__ == '__main__':
                 break
 
             del data, snapshot, top_stats, total_mem
-            
+
         with open('{:s}g-{:2.4f}.pickle'.format(log_dir,g), 'wb') as f:
             pickle.dump(pb_list, f, pickle.HIGHEST_PROTOCOL)
 
@@ -216,4 +242,95 @@ if __name__ == '__main__':
         del pb_list # delete resources that have been written
 
         # data_container = np.append(data_container, pb_list)
-    
+def test_exact():
+    start = -1.0
+    stop = 1.0
+    num = 15
+
+    g_vals = np.linspace(start, stop, num)
+
+    for pb in g_vals:
+        E_corrs = []
+        E_exacts = []
+        for g in g_vals:
+            data = main(4,4, d=1.0, g=g, pb=pb)
+            E_vals = data[7]
+            E_corr = E_vals[-1]
+            E_exact = exact_diagonalization(1.0, g)
+
+            E_corrs.append(E_corr - (2-g))
+            E_exacts.append(E_exact - (2-g))
+
+            plt.figure()
+            plt.plot(data[6], data[7])
+            plt.ylabel('Energy')
+            plt.xlabel('scale parameter')
+            plt.title('Convergence for \n g={:2.4f}, pb={:2.4f}'.format(g,pb))
+
+            pb_plots_dir = 'plots\\pb{:2.4f}\\'.format(pb)
+            if not os.path.exists(pb_plots_dir):
+                os.mkdir(pb_plots_dir)
+
+            plt.savefig(pb_plots_dir+'g{:2.4f}_pb{:2.4f}.png'.format(g,pb))
+            plt.close()
+
+        plt.figure()
+        plt.plot(g_vals, E_exacts, marker='s')
+        plt.plot(g_vals, E_corrs, marker='v')
+        plt.ylabel('E$_{corr}$')
+        plt.xlabel('g')
+        plt.legend(['exact', 'IMSRG(2)'])
+        plt.title('Correlation energy with pb = {:2.4f}'.format(pb))
+        plt.savefig('plots\\pb{:2.4f}.png'.format(pb))
+        plt.close()
+
+def test_refs():
+    start = -1.0
+    stop = 1.0
+    num = 10
+
+    g_vals = np.linspace(start, stop, num)
+    refs = [[1,1,1,1,0,0,0,0],
+            [1,1,0,0,1,1,0,0],
+            [1,1,0,0,0,0,1,1],
+            [0,0,1,1,1,1,0,0],
+            [0,0,1,1,0,0,1,1],
+            [0,0,0,0,1,1,1,1]]
+
+    for pb in g_vals:
+        E_corrs = []
+        E_exacts = []
+        for g in g_vals:
+            data = main(4,4, d=1.0, g=g, pb=pb)
+            E_vals = data[7]
+            E_corr = E_vals[-1]
+            E_exact = exact_diagonalization(1.0, g)
+
+            E_corrs.append(E_corr - (2-g))
+            E_exacts.append(E_exact - (2-g))
+
+            plt.figure()
+            plt.plot(data[6], data[7])
+            plt.ylabel('Energy')
+            plt.xlabel('scale parameter')
+            plt.title('Convergence for \n g={:2.4f}, pb={:2.4f}'.format(g,pb))
+
+            pb_plots_dir = 'plots\\pb{:2.4f}\\'.format(pb)
+            if not os.path.exists(pb_plots_dir):
+                os.mkdir(pb_plots_dir)
+
+            plt.savefig(pb_plots_dir+'g{:2.4f}_pb{:2.4f}.png'.format(g,pb))
+            plt.close()
+
+        plt.figure()
+        plt.plot(g_vals, E_exacts, marker='s')
+        plt.plot(g_vals, E_corrs, marker='v')
+        plt.ylabel('E$_{corr}$')
+        plt.xlabel('g')
+        plt.legend(['exact', 'IMSRG(2)'])
+        plt.title('Correlation energy with pb = {:2.4f}'.format(pb))
+        plt.savefig('plots\\pb{:2.4f}.png'.format(pb))
+        plt.close()
+
+if __name__ == '__main__':
+    test_exact()
