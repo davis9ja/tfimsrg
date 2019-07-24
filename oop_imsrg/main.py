@@ -99,12 +99,15 @@ def ravel(y, bas_len):
     return(ravel_E, ravel_f, ravel_G)
 
 # @profile
-def main(n_holes, n_particles, d=1.0, g=0.5, pb=0.0):
+def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     """Main method uses scipy.integrate.ode to solve the IMSRG flow
     equations."""
     start = time.time()
 
-    ha = PairingHamiltonian2B(n_holes, n_particles, d, g, pb)
+    if ref == None:
+        ha = PairingHamiltonian2B(n_holes, n_particles, d, g, pb)
+    else:
+        ha = PairingHamiltonian2B(n_holes, n_particles, ref, d, g, pb)
     ot = OccupationTensors(ha.sp_basis, ha.reference)
     wg = WegnerGenerator(ha, ot)
     fl = Flow_IMSRG2(ha, ot)
