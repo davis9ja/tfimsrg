@@ -15,7 +15,7 @@ class Hamiltonian(object):
 class PairingHamiltonian2B(Hamiltonian):
     """Generate the two-body pairing Hamiltonian. Inherits from Hamiltonian."""
 
-    def __init__(self, n_hole_states, n_particle_states, d=1.0, g=0.5, pb=0.0):
+    def __init__(self, n_hole_states, n_particle_states, ref=None, d=1.0, g=0.5, pb=0.0):
         """Class constructor. Instantiate PairingHamiltonian2B object.
 
         Arguments:
@@ -32,7 +32,10 @@ class PairingHamiltonian2B(Hamiltonian):
         self._d = d
         self._g = g
         self._pb = pb
-        self._reference = np.append(np.ones(n_hole_states), np.zeros(n_particle_states))
+        if ref == None:
+            self._reference = np.append(np.ones(n_hole_states), np.zeros(n_particle_states))
+        else:
+            self._reference = ref
         self._holes = np.arange(n_hole_states, dtype=np.int64)
 
         self._n_sp_states = n_hole_states + n_particle_states
@@ -187,9 +190,9 @@ class PairingHamiltonian2B(Hamiltonian):
             if ps == qs or rs == ss:
                 return 0
             if ps == rs and qs == ss:
-                return -1
-            if ps == ss and qs == rs:
                 return 1
+            if ps == ss and qs == rs:
+                return -1
 
         return 0
 
@@ -423,7 +426,7 @@ class PairingHamiltonian3B(PairingHamiltonian2B):
             # if lhs_p[p_where_n] != rhs_p[p_where_n]:
             #     if np.array_equal(s_where, [])
 
-    def normal_order():
+    def normal_order(self):
         """Normal-orders the pairing Hamiltonian.
 
         Returns:
@@ -475,13 +478,13 @@ class PairingHamiltonian3B(PairingHamiltonian2B):
 
         return (E, f, G)
 
-test = PairingHamiltonian3B(4,4)
-bas1B = test.sp_basis
-for p in bas1B:
-    for q in bas1B:
-        for r in bas1B:
-            for s in bas1B:
-                for t in bas1B:
-                    for u in bas1B:
-                        if test.H3B[p,q,r,s,t,u] != 0:
-                            print('{:0.4f} | {:d} {:d} {:d} {:d} {:d} {:d}'.format(test.H3B[p,q,r,s,t,u], p,q,r,s,t,u))
+# test = PairingHamiltonian3B(4,4)
+# bas1B = test.sp_basis
+# for p in bas1B:
+#     for q in bas1B:
+#         for r in bas1B:
+#             for s in bas1B:
+#                 for t in bas1B:
+#                     for u in bas1B:
+#                         if test.H3B[p,q,r,s,t,u] != 0:
+#                             print('{:0.4f} | {:d} {:d} {:d} {:d} {:d} {:d}'.format(test.H3B[p,q,r,s,t,u], p,q,r,s,t,u))
