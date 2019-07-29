@@ -21,6 +21,8 @@ import pickle
 import tracemalloc
 import os
 from memory_profiler import profile
+import itertools
+import random
 
 # @profile
 def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
@@ -105,9 +107,9 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     start = time.time()
 
     if ref == None:
-        ha = PairingHamiltonian2B(n_holes, n_particles, d, g, pb)
+        ha = PairingHamiltonian2B(n_holes, n_particles, d=d, g=g, pb=pb)
     else:
-        ha = PairingHamiltonian2B(n_holes, n_particles, ref, d, g, pb)
+        ha = PairingHamiltonian2B(n_holes, n_particles, ref=ref, d=d, g=g, pb=pb)
     ot = OccupationTensors(ha.sp_basis, ha.reference)
     wg = WegnerGenerator(ha, ot)
     fl = Flow_IMSRG2(ha, ot)
@@ -126,7 +128,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     y0 = unravel(ha.E, ha.f, ha.G)
 
     solver = ode(derivative,jac=None)
-    solver.set_integrator('vode', method='bdf', order=5, nsteps=1000)
+    solver.set_integrator('vode', method='bdf', order=5, nsteps=500)
     solver.set_f_params(ha, ot, wg, fl)
     solver.set_initial_value(y0, 0.)
 
@@ -153,9 +155,16 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
             convergence = 1
             break
 
-        if len(E_vals) > 20 and abs(E_vals[-1] - E_vals[-2]) > 2:
+        if len(E_vals) > 20 and abs(E_vals[-1] - E_vals[-2]) > 1:
             print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
             break
+
+        if iters > 20000:
+            print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
+            break
+
+        if iters % 1000 == 0:
+            print('Iteration {:>06d}'.format(iters))
 
     end = time.time()
     time_str = "{:2.5f}\n".format(end-start)
@@ -245,10 +254,18 @@ def scan_params():
         del pb_list # delete resources that have been written
 
         # data_container = np.append(data_container, pb_list)
-def test_exact():
+def test_exact(plots_dir):
+
+    assert isinstance(plots_dir, str), "Enter plots directory as string"
+    assert (plots_dir[-1] == '\\' or
+            plots_dir[-1] == '/'), "Directory must end in slash (\\ or /)"
+
+    if not os.path.exists(plots_dir):
+        os.mkdir(plots_dir)
+
     start = -1.0
     stop = 1.0
-    num = 15
+    num = 21
 
     g_vals = np.linspace(start, stop, num)
 
@@ -256,7 +273,7 @@ def test_exact():
         E_corrs = []
         E_exacts = []
         for g in g_vals:
-            data = main(4,4, d=1.0, g=g, pb=pb)
+            data = main(4,4, d=1.0, g=g, pb=0.0)
             E_vals = data[7]
             E_corr = E_vals[-1]
             E_exact = exact_diagonalization(1.0, g)
@@ -264,76 +281,101 @@ def test_exact():
             E_corrs.append(E_corr - (2-g))
             E_exacts.append(E_exact - (2-g))
 
-            plt.figure()
+            plt.figure(figsize=[12,8])
             plt.plot(data[6], data[7])
             plt.ylabel('Energy')
             plt.xlabel('scale parameter')
             plt.title('Convergence for \n g={:2.4f}, pb={:2.4f}'.format(g,pb))
 
-            pb_plots_dir = 'plots\\pb{:2.4f}\\'.format(pb)
+            pb_plots_dir = plots_dir+'pb{:2.4f}\\'.format(pb)
             if not os.path.exists(pb_plots_dir):
                 os.mkdir(pb_plots_dir)
 
             plt.savefig(pb_plots_dir+'g{:2.4f}_pb{:2.4f}.png'.format(g,pb))
             plt.close()
 
-        plt.figure()
+        plt.figure(figsize=[12,8])
         plt.plot(g_vals, E_exacts, marker='s')
         plt.plot(g_vals, E_corrs, marker='v')
         plt.ylabel('E$_{corr}$')
         plt.xlabel('g')
         plt.legend(['exact', 'IMSRG(2)'])
         plt.title('Correlation energy with pb = {:2.4f}'.format(pb))
-        plt.savefig('plots\\pb{:2.4f}.png'.format(pb))
+        plt.savefig(plots_dir+'pb{:2.4f}.png'.format(pb))
         plt.close()
+        print(E_exacts)
+        break
 
-def test_refs():
+def test_refs(plots_dir):
+
+    assert isinstance(plots_dir, str), "Enter plots directory as string"
+    assert (plots_dir[-1] == '\\' or
+            plots_dir[-1] == '/'), "Directory must end in slash (\\ or /)"
+
+    if not os.path.exists(plots_dir):
+        os.mkdir(plots_dir)
+
     start = -1.0
     stop = 1.0
-    num = 10
+    num = 5
 
     g_vals = np.linspace(start, stop, num)
-    refs = [[1,1,1,1,0,0,0,0],
-            [1,1,0,0,1,1,0,0],
-            [1,1,0,0,0,0,1,1],
-            [0,0,1,1,1,1,0,0],
-            [0,0,1,1,0,0,1,1],
-            [0,0,0,0,1,1,1,1]]
+    refs = list(map("".join, itertools.permutations('11110000')))
+    refs = list(dict.fromkeys(refs)) # remove duplicates
+    refs = [list(map(int, list(ref))) for ref in refs]
+
+    fig_corr = plt.figure(figsize=[12,8])
+    fig_conv = plt.figure(figsize=[12,8])
+    ax_corr = fig_corr.add_subplot(1,1,1)
+    ax_conv = fig_conv.add_subplot(1,1,1)
 
     for pb in g_vals:
         E_corrs = []
         E_exacts = []
+
         for g in g_vals:
-            data = main(4,4, d=1.0, g=g, pb=pb)
-            E_vals = data[7]
-            E_corr = E_vals[-1]
+            # plt.figure(figsize=[12,8])
+            ref_rand = random.sample(refs, 10)
             E_exact = exact_diagonalization(1.0, g)
-
-            E_corrs.append(E_corr - (2-g))
             E_exacts.append(E_exact - (2-g))
+            for ref in ref_rand:
 
-            plt.figure()
-            plt.plot(data[6], data[7])
-            plt.ylabel('Energy')
-            plt.xlabel('scale parameter')
-            plt.title('Convergence for \n g={:2.4f}, pb={:2.4f}'.format(g,pb))
+                data = main(4,4, ref=ref, d=1.0, g=g, pb=pb)
+                E_vals = data[7]
+                E_corr = E_vals[-1]
 
-            pb_plots_dir = 'plots\\pb{:2.4f}\\'.format(pb)
+                E_corrs.append(E_corr - (2-g))
+
+                # plt.figure()
+                # if data[0] == 1:
+                ax_conv.plot(data[6], data[7])
+            ymin, ymax = ax_conv.get_ylim()
+            ax_conv.set_ylim(bottom=0.5*ymin, top=0.5*ymax)
+            ax_conv.set_ylabel('Energy')
+            ax_conv.set_xlabel('scale parameter')
+            ax_conv.set_title('Convergence for \n g={:2.4f}, pb={:2.4f}'.format(g,pb))
+            ax_conv.legend(ref_rand)
+            pb_plots_dir = plots_dir+'pb{:2.4f}\\'.format(pb)
             if not os.path.exists(pb_plots_dir):
                 os.mkdir(pb_plots_dir)
 
-            plt.savefig(pb_plots_dir+'g{:2.4f}_pb{:2.4f}.png'.format(g,pb))
-            plt.close()
+            fig_conv.savefig(pb_plots_dir+'g{:2.4f}_pb{:2.4f}.png'.format(g,pb))
+            ax_conv.clear()
 
-        plt.figure()
-        plt.plot(g_vals, E_exacts, marker='s')
-        plt.plot(g_vals, E_corrs, marker='v')
-        plt.ylabel('E$_{corr}$')
-        plt.xlabel('g')
-        plt.legend(['exact', 'IMSRG(2)'])
-        plt.title('Correlation energy with pb = {:2.4f}'.format(pb))
-        plt.savefig('plots\\pb{:2.4f}.png'.format(pb))
-        plt.close()
+        # plt.figure(figsize=[12,8])
+        corr_data = np.reshape(E_corrs, (len(g_vals), 10))
+        ax_corr.plot(g_vals, E_exacts, marker='s')
+        for i in range(10):
+            ax_corr.plot(g_vals, corr_data[:,i], marker='v')
+        ymin, ymax = ax_corr.get_ylim()
+        ax_corr.set_ylim(bottom=0.5*ymin, top=0.5*ymax)
+        ax_corr.set_ylabel('E$_{corr}$')
+        ax_corr.se_xlabel('g')
+        ax_corr.legend(['exact', 'IMSRG(2)'])
+        ax_corr.set_title('Correlation energy with pb = {:2.4f}'.format(pb))
+        fig_corr.savefig(plots_dir+'pb{:2.4f}.png'.format(pb))
+        ax_corr.clear()
 
 if __name__ == '__main__':
-    test_exact()
+    test_refs('plots_refs\\')
+    # test_exact('plots_exact\\')
