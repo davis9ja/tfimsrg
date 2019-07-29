@@ -15,4 +15,7 @@
 * [x] write IMSRG flow in TensorNetwork architecture
   * [x] refactor TN code for intuitive user control (e.g. let user control coupling strength and level spacing)
   * [x] add pair breaking/creating term to Hamiltonian and include interactions in 1 pair and 0 pair blocks
+    * [ ] investigate where level crossing may occur for values of pb and g
+      * [ ] use exact diagonalization results to verify
+    * [ ] scan reference state configurations to find ground state for values of pb and g
   * [ ] using TN to implement the IMSRG(3)
