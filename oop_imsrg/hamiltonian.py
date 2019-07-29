@@ -36,8 +36,8 @@ class PairingHamiltonian2B(Hamiltonian):
             self._reference = np.append(np.ones(n_hole_states), np.zeros(n_particle_states))
         else:
             self._reference = ref
-        self._holes = np.arange(n_hole_states, dtype=np.int64)
 
+        self._holes = np.arange(n_hole_states, dtype=np.int64)
         self._n_sp_states = n_hole_states + n_particle_states
         self._particles = np.arange(n_hole_states,self.n_sp_states, dtype=np.int64)
         self._sp_basis = np.append(self.holes, self.particles)
