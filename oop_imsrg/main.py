@@ -5,24 +5,26 @@
 # Date:   07/10/2019
 
 # import packages, libraries, and modules
-# user files
-from hamiltonian import *
-from occupation_tensors import *
-from generator import *
-from flow import *
-from plot_data import *
-from display_memory import *
-
 # libraries
 from scipy.integrate import odeint, ode
 import numpy as np
 import time
 import pickle
 import tracemalloc
-import os
+import os, sys
 from memory_profiler import profile
 import itertools
 import random
+
+# user files
+# sys.path.append('C:\\Users\\davison\\Research\\exact_diagonalization\\')
+from hamiltonian import *
+from occupation_tensors import *
+from generator import *
+from flow import *
+from plot_data import *
+from display_memory import *
+import ci_pairing.cipy_pairing_plus_ph as ci_matrix
 
 # @profile
 def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
@@ -108,6 +110,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
 
     if ref == None:
         ha = PairingHamiltonian2B(n_holes, n_particles, d=d, g=g, pb=pb)
+        ref = [1,1,1,1,0,0,0,0] # this is just for printing
     else:
         ha = PairingHamiltonian2B(n_holes, n_particles, ref=ref, d=d, g=g, pb=pb)
     ot = OccupationTensors(ha.sp_basis, ha.reference)
@@ -120,7 +123,10 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     pb             = {:2.4f}
     SP basis size  = {:2d}
     n_holes        = {:2d}
-    n_particles    = {:2d}""".format(ha.d, ha.g, ha.pb, ha.n_sp_states, len(ha.holes), len(ha.particles)) )
+    n_particles    = {:2d}
+    ref            = {d}""".format(ha.d, ha.g, ha.pb, ha.n_sp_states,
+                                        len(ha.holes), len(ha.particles),
+                                        d=ref) )
 
     print("Flowing...")
 
@@ -335,26 +341,29 @@ def test_refs(plots_dir):
 
         for g in g_vals:
             # plt.figure(figsize=[12,8])
-            ref_rand = random.sample(refs, 10)
-            E_exact = exact_diagonalization(1.0, g)
+            ref_rand = random.sample(refs, 20)
+            E_exact = ci_matrix.exact_diagonalization(1.0, g, pb)
             E_exacts.append(E_exact - (2-g))
-            for ref in ref_rand:
+            refs_conv = []
+            for ref in refs:
 
                 data = main(4,4, ref=ref, d=1.0, g=g, pb=pb)
-                E_vals = data[7]
-                E_corr = E_vals[-1]
 
-                E_corrs.append(E_corr - (2-g))
+                if data[0] == 1:
+                    E_vals = data[7]
+                    E_corr = E_vals[-1]
 
-                # plt.figure()
-                # if data[0] == 1:
-                ax_conv.plot(data[6], data[7])
+                    E_corrs.append(E_corr - (2-g))
+                    refs_conv.append(ref)
+
+                    ax_conv.plot(data[6], data[7])
+
             ymin, ymax = ax_conv.get_ylim()
-            ax_conv.set_ylim(bottom=0.5*ymin, top=0.5*ymax)
+            ax_conv.set_ylim(bottom=0.7*ymin, top=0.7*ymax)
             ax_conv.set_ylabel('Energy')
             ax_conv.set_xlabel('scale parameter')
             ax_conv.set_title('Convergence for \n g={:2.4f}, pb={:2.4f}'.format(g,pb))
-            ax_conv.legend(ref_rand)
+            ax_conv.legend(refs_conv)
             pb_plots_dir = plots_dir+'pb{:2.4f}\\'.format(pb)
             if not os.path.exists(pb_plots_dir):
                 os.mkdir(pb_plots_dir)
@@ -362,20 +371,52 @@ def test_refs(plots_dir):
             fig_conv.savefig(pb_plots_dir+'g{:2.4f}_pb{:2.4f}.png'.format(g,pb))
             ax_conv.clear()
 
-        # plt.figure(figsize=[12,8])
-        corr_data = np.reshape(E_corrs, (len(g_vals), 10))
-        ax_corr.plot(g_vals, E_exacts, marker='s')
-        for i in range(10):
-            ax_corr.plot(g_vals, corr_data[:,i], marker='v')
-        ymin, ymax = ax_corr.get_ylim()
-        ax_corr.set_ylim(bottom=0.5*ymin, top=0.5*ymax)
-        ax_corr.set_ylabel('E$_{corr}$')
-        ax_corr.se_xlabel('g')
-        ax_corr.legend(['exact', 'IMSRG(2)'])
-        ax_corr.set_title('Correlation energy with pb = {:2.4f}'.format(pb))
-        fig_corr.savefig(plots_dir+'pb{:2.4f}.png'.format(pb))
-        ax_corr.clear()
+            with open('g{:2.4f}_pb{:2.4f}.txt'.format(g,pb), 'w') as f:
+                f.write('Pairing model: d = 1.0, g = {:2.4f}, pb = {:2.4f}\n'.format(g, pb))
+                f.write('Full CI diagonalization -- correlation energy: {:2.8f}\n'.format(E_exacts[-1]))
+                f.write('IMSRG(2) variable reference state -- correlation energies:\n')
+                if len(refs_conv) == 0:
+                    f.write('No convergence for range of reference states tested\n')
+                else:
+                    for i in range(len(refs_conv)):
+                        f.write('{:2.8f} | {d}\n'.format(E_corrs[i], d=refs_conv[i]))
+
+                    f.write('Ground state from IMSRG(2):\n')
+                    e_sort_ind = np.argsort(E_corrs)
+                    f.write('{2.8f} | {d}\n'.format(E_corrs[e_sort_ind[0]], refs_conv[e_sort_ind[0]]))
+
+        # corr_data = np.reshape(E_corrs, (len(g_vals), 2))
+        # ax_corr.plot(g_vals, E_exacts, marker='s')
+        # for i in range(10):
+        #     ax_corr.plot(g_vals, corr_data[:,i], marker='v')
+        # ymin, ymax = ax_corr.get_ylim()
+        # ax_corr.set_ylim(bottom=0.7*ymin, top=0.7*ymax)
+        # ax_corr.set_ylabel('E$_{corr}$')
+        # ax_corr.set_xlabel('g')
+        # ax_corr.legend(['exact', 'IMSRG(2)'])
+        # ax_corr.set_title('Correlation energy with pb = {:2.4f}'.format(pb))
+        # fig_corr.savefig(plots_dir+'pb{:2.4f}.png'.format(pb))
+        # ax_corr.clear()
+
+# def search_refs(log_dir):
+#     refs = list(map("".join, itertools.permutations('11110000')))
+#     refs = list(dict.fromkeys(refs)) # remove duplicates
+#     refs = [list(map(int, list(ref))) for ref in refs]
+#     # refs = random.sample(refs, 2)
+#     E_conv = []
+#     refs_conv = []
+#     for ref in refs:
+#         data = main(4,4, ref=ref, g=0.5, pb=0.1)
+#
+#         if data[0] == 1: # energy converged
+#             Es = data[7]
+#             E_conv.append(Es[-1])
+#             refs_conv.append(ref)
+#
+#     for i in range(len(E_conv)):
+#         print('{:2.4f} | {d}'.format(E_conv[i], d=refs_conv[i]))
 
 if __name__ == '__main__':
-    test_refs('plots_refs\\')
+    test_refs('logs_refs\\')
     # test_exact('plots_exact\\')
+    # print(ci_matrix.exact_diagonalization(1.0, 0.5, 0.1))
