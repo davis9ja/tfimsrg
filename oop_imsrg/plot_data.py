@@ -6,7 +6,7 @@ import glob
 import pickle
 
 def plot_data(log_dir, plot_dir):
-    
+
     data_files = glob.glob(log_dir+"*.pickle")
 
     pb_list = []
@@ -37,7 +37,7 @@ def plot_data(log_dir, plot_dir):
     axs[0,0].set_xlabel('run number')
     axs[0,0].set_ylabel('time to convergence')
     axs[0,0].set_title(('Time to convergence \n'
-                      '(d={:2.4f},g={:2.4f})').format(data[1,2], 
+                      '(d={:2.4f},g={:2.4f})').format(data[1,2],
                                                       data[1,3]))
 
     # PLOT 2 -- scatter plot that tracks which pb strength converged
@@ -45,7 +45,7 @@ def plot_data(log_dir, plot_dir):
 
     # pbs = data[1:, 4]
     # cov = data[1:, 0]
-    # n = np.arange(len(times))   
+    # n = np.arange(len(times))
 
     axs[1,0].scatter(gvs, pbs, c=cov)
     axs[1,0].set_xlabel('g strength')

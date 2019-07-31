@@ -41,7 +41,12 @@
 </font></dt><dd>
 <dl>
 <dt><font face="helvetica, arial"><a href="flow.html#Flow_IMSRG2">Flow_IMSRG2</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="flow.html#Flow_IMSRG3">Flow_IMSRG3</a>
 </font></dt></dl>
+</dd>
+</dl>
 </dd>
 </dl>
 </dd>
@@ -94,6 +99,54 @@ h&nbsp;--&nbsp;Hamiltonian&nbsp;<a href="builtins.html#object">object</a><br>
 occ_t&nbsp;--&nbsp;OccupationTensors&nbsp;<a href="builtins.html#object">object</a></tt></dd></dl>
 
 <dl><dt><a name="Flow_IMSRG2-flow"><strong>flow</strong></a>(self, gen)</dt><dd><tt>Iterates&nbsp;the&nbsp;IMSRG2&nbsp;flow&nbsp;equations&nbsp;once.<br>
+&nbsp;<br>
+Arugments:<br>
+&nbsp;<br>
+gen&nbsp;--&nbsp;Generator&nbsp;<a href="builtins.html#object">object</a>;&nbsp;generator&nbsp;produces&nbsp;the&nbsp;flow<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;<br>
+(dE,&nbsp;--&nbsp;zero-body&nbsp;tensor<br>
+&nbsp;df,&nbsp;--&nbsp;one-body&nbsp;tensor<br>
+&nbsp;dG)&nbsp;--&nbsp;two-body&nbsp;tensor</tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="flow.html#Flow">Flow</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Flow_IMSRG3">class <strong>Flow_IMSRG3</strong></a>(<a href="flow.html#Flow_IMSRG2">Flow_IMSRG2</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#Flow_IMSRG3">Flow_IMSRG3</a>(gen)<br>
+&nbsp;<br>
+Calculates&nbsp;the&nbsp;flow&nbsp;equations&nbsp;for&nbsp;the&nbsp;IMSRG(2).<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="flow.html#Flow_IMSRG3">Flow_IMSRG3</a></dd>
+<dd><a href="flow.html#Flow_IMSRG2">Flow_IMSRG2</a></dd>
+<dd><a href="flow.html#Flow">Flow</a></dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="Flow_IMSRG3-__init__"><strong>__init__</strong></a>(self, gen)</dt><dd><tt>Class&nbsp;constructor.&nbsp;Instantiates&nbsp;<a href="#Flow_IMSRG2">Flow_IMSRG2</a>&nbsp;<a href="builtins.html#object">object</a>.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+h&nbsp;--&nbsp;Hamiltonian&nbsp;<a href="builtins.html#object">object</a><br>
+occ_t&nbsp;--&nbsp;OccupationTensors&nbsp;<a href="builtins.html#object">object</a></tt></dd></dl>
+
+<hr>
+Methods inherited from <a href="flow.html#Flow_IMSRG2">Flow_IMSRG2</a>:<br>
+<dl><dt><a name="Flow_IMSRG3-flow"><strong>flow</strong></a>(self, gen)</dt><dd><tt>Iterates&nbsp;the&nbsp;IMSRG2&nbsp;flow&nbsp;equations&nbsp;once.<br>
 &nbsp;<br>
 Arugments:<br>
 &nbsp;<br>
