@@ -1,7 +1,7 @@
 from tensornetwork import *
 import numpy as np
-from hamiltonian import *
-from occupation_tensors import *
+from oop_imsrg.hamiltonian import *
+from oop_imsrg.occupation_tensors import *
 
 class Generator(object):
     """Parent class for organization purposes. Ideally, all Generator
@@ -20,7 +20,7 @@ class WegnerGenerator(Generator):
 
         h -- Hamiltonian object (must be normal-ordered)
         occ_t -- OccupationTensor object"""
-        
+
         assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
         assert isinstance(occ_t, OccupationTensors), "Arg 1 must be OccupationTensors object"
 
@@ -46,7 +46,7 @@ class WegnerGenerator(Generator):
     def G(self):
         """Returns:
 
-        f -- two-body tensor elements (initialized by Hamiltonian object)"""        
+        f -- two-body tensor elements (initialized by Hamiltonian object)"""
         return self._G
 
     @f.setter
@@ -58,10 +58,10 @@ class WegnerGenerator(Generator):
     def G(self, G):
         """Sets the two-body tensor."""
         self._G = G
-    
+
     def __decouple_OD(self):
-        """Decouple the off-/diagonal elements from each other in 
-        the one- and two-body tensors. This procedure is outlined in 
+        """Decouple the off-/diagonal elements from each other in
+        the one- and two-body tensors. This procedure is outlined in
         An Advanced Course in Computation Nuclear Physics, Ch.10.
 
         Returns:
@@ -90,7 +90,7 @@ class WegnerGenerator(Generator):
         return (fd, fod, Gd, God)
 
     def calc_eta(self):
-        """Calculate the generator. The terms are defined in An 
+        """Calculate the generator. The terms are defined in An
         Advanced Course in Computation Nuclear Physics, Ch.10.
         See also dx.doi.org/10.1016/j.physrep.2015.12.007
 
@@ -113,19 +113,19 @@ class WegnerGenerator(Generator):
         sum1_1b_1 = ncon([fd, fod], [(-1, 0), (0, -2)]).numpy()
         sum1_1b_2 = np.transpose(sum1_1b_1)
         sum1_1b = sum1_1b_1 - sum1_1b_2
-        
+
         # second term
         sum2_1b_1 = ncon([fd, God], [(0, 1), (1, -1, 0, -2)]).numpy()
         sum2_1b_2 = ncon([fod, Gd], [(0, 1), (1, -1, 0, -2)]).numpy()
         sum2_1b_3 = sum2_1b_1 - sum2_1b_2
         sum2_1b = ncon([occA, sum2_1b_3],[(-1, -2, 0, 1), (0,1)]).numpy()
-        
+
         # third term
         sum3_1b_1 = ncon([occC, God], [(-1, -2, -3, 0, 1, 2), (0, 1, 2, -4)]).numpy()
         sum3_1b_2 = ncon([Gd, sum3_1b_1], [(2, -1, 0, 1), (0, 1, 2, -2)]).numpy()
         sum3_1b_3 = np.transpose(sum3_1b_2)
         sum3_1b = sum3_1b_2 - sum3_1b_3
-        
+
         eta1B = sum1_1b + sum2_1b + 0.5*sum3_1b
 
         # - Calculate 2B generator
@@ -135,14 +135,14 @@ class WegnerGenerator(Generator):
         sum1_2b_3 = sum1_2b_1 - sum1_2b_2
         sum1_2b_4 = np.transpose(sum1_2b_3, [1, 0, 2, 3])
         sum1_2b_5 = sum1_2b_3 - sum1_2b_4
-        
+
         # first term (P_kl piece)
         sum1_2b_6 = ncon([fd, God], [(0, -3), (-1, -2, 0, -4)]).numpy()
         sum1_2b_7 = ncon([fod, Gd], [(0, -3), (-1, -2, 0, -4)]).numpy()
         sum1_2b_8 = sum1_2b_6 - sum1_2b_7
         sum1_2b_9 = np.transpose(sum1_2b_8, [0, 1, 3, 2])
         sum1_2b_10 = sum1_2b_8 - sum1_2b_9
-        
+
         sum1_2b = sum1_2b_5 - sum1_2b_10
 
         # second term
@@ -179,19 +179,19 @@ class WegnerGenerator(Generator):
     #     sum1_1b_1 = ncon([fd, fod], [(-1, 0), (0, -2)]).numpy()
     #     sum1_1b_2 = np.transpose(sum1_1b_1)
     #     sum1_1b = sum1_1b_1 - sum1_1b_2
-        
+
     #     # second term
     #     sum2_1b_1 = ncon([fd, God], [(0, 1), (1, -1, 0, -2)]).numpy()
     #     sum2_1b_2 = ncon([fod, Gd], [(0, 1), (1, -1, 0, -2)]).numpy()
     #     sum2_1b_3 = sum2_1b_1 - sum2_1b_2
     #     sum2_1b = ncon([occA, sum2_1b_3],[(-1, -2, 0, 1), (0,1)]).numpy()
-        
+
     #     # third term
     #     sum3_1b_1 = ncon([occC, God], [(-1, -2, -3, 0, 1, 2), (0, 1, 2, -4)]).numpy()
     #     sum3_1b_2 = ncon([Gd, sum3_1b_1], [(2, -1, 0, 1), (0, 1, 2, -2)]).numpy()
     #     sum3_1b_3 = np.transpose(sum3_1b_2)
     #     sum3_1b = sum3_1b_2 - sum3_1b_3
-        
+
     #     eta1B = sum1_1b + sum2_1b + 0.5*sum3_1b
 
     #     return eta1B
@@ -212,14 +212,14 @@ class WegnerGenerator(Generator):
     #     sum1_2b_3 = sum1_2b_1 - sum1_2b_2
     #     sum1_2b_4 = np.transpose(sum1_2b_3, [1, 0, 2, 3])
     #     sum1_2b_5 = sum1_2b_3 - sum1_2b_4
-        
+
     #     # first term (P_kl piece)
     #     sum1_2b_6 = ncon([fd, God], [(0, -3), (-1, -2, 0, -4)]).numpy()
     #     sum1_2b_7 = ncon([fod, Gd], [(0, -3), (-1, -2, 0, -4)]).numpy()
     #     sum1_2b_8 = sum1_2b_6 - sum1_2b_7
     #     sum1_2b_9 = np.transpose(sum1_2b_8, [0, 1, 3, 2])
     #     sum1_2b_10 = sum1_2b_8 - sum1_2b_9
-        
+
     #     sum1_2b = sum1_2b_5 - sum1_2b_10
 
     #     # second term
@@ -244,7 +244,7 @@ class WegnerGenerator(Generator):
     # @property
     # def eta1B(self):
     #     return self._eta1B
-    
+
     # @property
     # def eta2B(self):
     #     return self._eta2B
@@ -267,19 +267,19 @@ class WegnerGenerator(Generator):
     #     sum1_1b_1 = ncon([fd, fod], [(-1, 0), (0, -2)]).numpy()
     #     sum1_1b_2 = np.transpose(sum1_1b_1)
     #     sum1_1b = sum1_1b_1 - sum1_1b_2
-        
+
     #     # second term
     #     sum2_1b_1 = ncon([fd, God], [(0, 1), (1, -1, 0, -2)]).numpy()
     #     sum2_1b_2 = ncon([fod, Gd], [(0, 1), (1, -1, 0, -2)]).numpy()
     #     sum2_1b_3 = sum2_1b_1 - sum2_1b_2
     #     sum2_1b = ncon([occA, sum2_1b_3],[(-1, -2, 0, 1), (0,1)]).numpy()
-        
+
     #     # third term
     #     sum3_1b_1 = ncon([occC, God], [(-1, -2, -3, 0, 1, 2), (0, 1, 2, -4)]).numpy()
     #     sum3_1b_2 = ncon([Gd, sum3_1b_1], [(2, -1, 0, 1), (0, 1, 2, -2)]).numpy()
     #     sum3_1b_3 = np.transpose(sum3_1b_2)
     #     sum3_1b = sum3_1b_2 - sum3_1b_3
-        
+
     #     eta1B = sum1_1b + sum2_1b + 0.5*sum3_1b
 
     #     self._eta1B = eta1B
@@ -304,14 +304,14 @@ class WegnerGenerator(Generator):
     #     sum1_2b_3 = sum1_2b_1 - sum1_2b_2
     #     sum1_2b_4 = np.transpose(sum1_2b_3, [1, 0, 2, 3])
     #     sum1_2b_5 = sum1_2b_3 - sum1_2b_4
-        
+
     #     # first term (P_kl piece)
     #     sum1_2b_6 = ncon([fd, God], [(0, -3), (-1, -2, 0, -4)]).numpy()
     #     sum1_2b_7 = ncon([fod, Gd], [(0, -3), (-1, -2, 0, -4)]).numpy()
     #     sum1_2b_8 = sum1_2b_6 - sum1_2b_7
     #     sum1_2b_9 = np.transpose(sum1_2b_8, [0, 1, 3, 2])
     #     sum1_2b_10 = sum1_2b_8 - sum1_2b_9
-        
+
     #     sum1_2b = sum1_2b_5 - sum1_2b_10
 
     #     # second term

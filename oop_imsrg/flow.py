@@ -1,8 +1,8 @@
 from tensornetwork import *
 import numpy as np
-from hamiltonian import *
-from occupation_tensors import *
-from generator import *
+from oop_imsrg.hamiltonian import *
+from oop_imsrg.occupation_tensors import *
+from oop_imsrg.generator import *
 
 class Flow(object):
     """Parent class for organization purposes. Ideally, all Flow
