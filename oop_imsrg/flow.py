@@ -79,7 +79,7 @@ class Flow_IMSRG2(Flow):
         # occB = occ_t.occB
         # occC = occ_t.occC
         # occD = occ_t.occD
-        
+
         occA = self._occA
         occB = self._occB
         occC = self._occC
@@ -89,35 +89,35 @@ class Flow_IMSRG2(Flow):
         # first term
         sum1_0b_1 = ncon([occA, eta1B], [(0, 1, -1, -2), (0, 1)]).numpy()
         sum1_0b = ncon([sum1_0b_1, f], [(0, 1), (1, 0)]).numpy()
-        
+
         # second term
         sum2_0b_1 = np.matmul(eta2B, occD)
         sum2_0b = ncon([sum2_0b_1, G], [(0, 1, 2, 3), (2, 3, 0, 1)]).numpy()
-        
+
         dE = sum1_0b + 0.5*sum2_0b
-        
-        
+
+
         # - Calculate df/ds
         # first term
         sum1_1b_1 = ncon([eta1B, f], [(-1, 0), (0, -2)]).numpy()
         sum1_1b_2 = np.transpose(sum1_1b_1)
         sum1_1b = sum1_1b_1 + sum1_1b_2
-        
+
         # second term (might need to fix)
         sum2_1b_1 = ncon([eta1B, G], [(0, 1), (1, -1, 0, -2)]).numpy()
         sum2_1b_2 = ncon([f, eta2B], [(0, 1), (1, -1, 0, -2)]).numpy()
         sum2_1b_3 = sum2_1b_1 - sum2_1b_2
         sum2_1b = ncon([occA, sum2_1b_3],[(-1, -2, 0, 1), (0,1)]).numpy()
-        
+
         # third term
         sum3_1b_1 = ncon([occC, G], [(-1, -2, -3, 0, 1, 2), (0, 1, 2, -4)]).numpy()
         sum3_1b_2 = ncon([eta2B, sum3_1b_1], [(2, -1, 0, 1), (0, 1, 2, -2)]).numpy()
         sum3_1b_3 = np.transpose(sum3_1b_2)
         sum3_1b = sum3_1b_2 + sum3_1b_3
-        
+
         df = sum1_1b + sum2_1b + 0.5*sum3_1b
-        
-        
+
+
         # - Calculate dG/ds
         # first term (P_ij piece)
         sum1_2b_1 = ncon([eta1B, G], [(-1, 0), (0, -2, -3, -4)]).numpy()
@@ -125,14 +125,14 @@ class Flow_IMSRG2(Flow):
         sum1_2b_3 = sum1_2b_1 - sum1_2b_2
         sum1_2b_4 = np.transpose(sum1_2b_3, [1, 0, 2, 3])
         sum1_2b_5 = sum1_2b_3 - sum1_2b_4
-        
+
         # first term (P_kl piece)
         sum1_2b_6 = ncon([eta1B, G], [(0, -3), (-1, -2, 0, -4)]).numpy()
         sum1_2b_7 = ncon([f, eta2B], [(0, -3), (-1, -2, 0, -4)]).numpy()
         sum1_2b_8 = sum1_2b_6 - sum1_2b_7
         sum1_2b_9 = np.transpose(sum1_2b_8, [0, 1, 3, 2])
         sum1_2b_10 = sum1_2b_8 - sum1_2b_9
-        
+
         sum1_2b = sum1_2b_5 - sum1_2b_10
 
         # second term
@@ -150,6 +150,11 @@ class Flow_IMSRG2(Flow):
         sum3_2b_5 = sum3_2b_1 - sum3_2b_2 - sum3_2b_3 + sum3_2b_4
         sum3_2b = ncon([occA, sum3_2b_5], [(0, 1, -1, -2), (0, 1, -3, -4)]).numpy()
 
-        dG = sum1_2b + 0.5*sum2_2b + sum3_2b    
-        
+        dG = sum1_2b + 0.5*sum2_2b + sum3_2b
+
         return (dE, df, dG)
+
+class Flow_IMSRG3(Flow_IMSRG2):
+
+    def __init__(self, gen):
+        super().__init__(gen)
