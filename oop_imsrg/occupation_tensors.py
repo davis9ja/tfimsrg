@@ -207,3 +207,10 @@ class OccupationTensors(object):
                                 occE[a,b,c,d,e,f] = ref[a]*ref[b]*ref[c]*\
                                                     (1-ref[d])*(1-ref[e])*\
                                                     (1-ref[f])
+    def __get_occF(self):
+        """Builds the occupation tensor occE. Treat as a rank 6 tensor.
+
+            Returns:
+
+            occE -- n_a*n_b*n_c*(1-n_d)*(1-n_e)*(1-n_f)"""
+            pass
