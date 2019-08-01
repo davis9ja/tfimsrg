@@ -61,7 +61,7 @@ Import libraries. We use the ncon interface, provided in TensorNetwork, for calc
 __Cell 2:__
 `def build_hamiltonian()`: Here we build the pairing Hamiltonian following the same logic as in `testing_tensorflow_v2`. The difference is that we have included delta functions `delta2B()` and `deltaPB()` that decide the value of the matrix element defined by the input single particle states. The `deltaPB()` function gives us matrix elements defined by a new pair-breaking/-creating term we have introduced to couple off-diagonal blocks of the Hamiltonian (e.g. 0p-0h couples to 1p-1h, 1p-1h couples to 2p-2h). This term is written as
 
-![equation](https://latex.codecogs.com/gif.latex?f_\text{p-break}&space;=&space;\frac{f}{2}\sum_{p'\ne&space;p,q}\left(a^\dag_{p',&plus;1}&space;a^\dag_{p,-1}a_{q,-1}a_{q,&plus;1}&space;&plus;&space;a^\dag_{q,&plus;1}a^\dag_{q,-1}a_{p,-1}a_{p',&plus;1}&space;\right).
+![equation](https://latex.codecogs.com/gif.latex?f_\text{p-break}&space;=&space;\frac{f}{2}\sum_{p'\ne&space;p,q}\left(a^\dag_{p',&plus;1}&space;a^\dag_{p,-1}a_{q,-1}a_{q,&plus;1}&space;&plus;&space;a^\dag_{q,&plus;1}a^\dag_{q,-1}a_{p,-1}a_{p',&plus;1}&space;\right)).
 
 __Cell 3:__
 Functions that define occupation tensors in the same way as `testing_tensorflow_v2`. We provide the option to treat each occupation tensor as a rank equal to either the same number of indices that appear in the equation within the text, or a rank twice that number of indices.
