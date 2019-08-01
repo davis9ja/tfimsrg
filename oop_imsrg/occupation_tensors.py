@@ -26,32 +26,32 @@ class OccupationTensors(object):
 
     @property
     def occA(self):
-        """Returns: 
+        """Returns:
 
         occA -- represents n_a - n_b."""
         return self._occA
-    
+
     @property
     def occB(self):
-        """Returns: 
+        """Returns:
 
         occB -- represents 1 - n_a - n_b."""
         return self._occB
-        
+
     @property
     def occC(self):
         """Returns:
 
         occC -- represents n_a*n_b + (1-n_a-n_b)*n_c"""
         return self._occC
-    
+
     @property
     def occD(self):
         """Returns:
 
         occD -- represents na*nb*(1-nc-nd) + na*nb*nc*nd"""
         return self._occD
-    
+
     def __get_occA(self, flag=0):
         """Builds the occupation tensor occA.
 
@@ -73,7 +73,7 @@ class OccupationTensors(object):
             for a in bas1B:
                 for b in bas1B:
                     occA[a,b,a,b] = ref[a] - ref[b]
-        
+
         if flag == 1:
             occA = np.zeros((n,n))
 
@@ -81,8 +81,8 @@ class OccupationTensors(object):
                 for b in bas1B:
                     occA[a,b] = ref[a] - ref[b]
 
-        return occA    
-        
+        return occA
+
     def __get_occB(self, flag=0):
         """Builds the occupation tensor occB.
 
@@ -104,7 +104,7 @@ class OccupationTensors(object):
             for a in bas1B:
                 for b in bas1B:
                     occB[a,b,a,b] = 1 - ref[a] - ref[b]
-        
+
         if flag == 1:
             occB = np.zeros((n,n))
 
@@ -112,8 +112,8 @@ class OccupationTensors(object):
                 for b in bas1B:
                     occB[a,b] = 1 - ref[a] - ref[b]
 
-        return occB        
-            
+        return occB
+
     def __get_occC(self, flag=0):
         """Builds the occupation tensor occC.
 
@@ -123,7 +123,7 @@ class OccupationTensors(object):
 
         Returns:
 
-        occC -- n_a*n_b + (1-n_a-n_b)*n_c"""
+        occC -- n_a*n_b*(1-n_c) + (1-n_a)*(1-n_b)*n_c"""
 
         bas1B = self._sp_basis
         ref = self._reference
@@ -135,16 +135,18 @@ class OccupationTensors(object):
             for a in bas1B:
                 for b in bas1B:
                     for c in bas1B:
-                        occC[a,b,c,a,b,c] = ref[a]*ref[b] + (1-ref[a]-ref[b])*ref[c]
+                        occC[a,b,c,a,b,c] = ref[a]*ref[b]*(1-ref[c]) + \
+                                            (1-ref[a])*(1-ref[b])*ref[c]
 
-        
-        if flag == 1: 
+
+        if flag == 1:
             occC = np.zeros((n,n,n))
 
             for a in bas1B:
                 for b in bas1B:
                     for c in bas1B:
-                        occC[a,b,c] = ref[a]*ref[b] + (1-ref[a]-ref[b])*ref[c]
+                        occC[a,b,c] = ref[a]*ref[b]*(1-ref[c]) + \
+                                      (1-ref[a])*(1-ref[b])*ref[c]
         return occC
 
     def __get_occD(self, flag=0):
@@ -156,21 +158,22 @@ class OccupationTensors(object):
 
             Returns:
 
-            occD -- na*nb*(1-nc-nd) + na*nb*nc*nd"""
+            occD -- n_a*n_b*(1-n_c)*(1-n_d)"""
 
         bas1B = self._sp_basis
         ref = self._reference
         n = len(bas1B)
 
-        if flag == 0: # default 
+        if flag == 0: # default
             occD = np.zeros((n,n,n,n,n,n,n,n))
 
             for a in bas1B:
                 for b in bas1B:
                     for c in bas1B:
                         for d in bas1B:
-                            occD[a,b,c,d,a,b,c,d] = ref[a]*ref[b]*(1-ref[c]-ref[d])+ref[a]*ref[b]*ref[c]*ref[d]
-        
+                            occD[a,b,c,d,a,b,c,d] = ref[a]*ref[b]*\
+                                                    (1-ref[c])*(1-ref[d])
+
         if flag == 1:
             occD = np.zeros((n,n,n,n))
 
@@ -178,6 +181,29 @@ class OccupationTensors(object):
                 for b in bas1B:
                     for c in bas1B:
                         for d in bas1B:
-                            occD[a,b,c,d] = ref[a]*ref[b]*(1-ref[c]-ref[d])+ref[a]*ref[b]*ref[c]*ref[d]
+                            occD[a,b,c,d] = ref[a]*ref[b]*\
+                                            (1-ref[c])*(1-ref[d])
 
-        return occD    
+        return occD
+
+    def __get_occE(self):
+        """Builds the occupation tensor occE. Treat as a rank 6 tensor.
+
+            Returns:
+
+            occE -- n_a*n_b*n_c*(1-n_d)*(1-n_e)*(1-n_f)"""
+        bas1B = self._sp_basis
+        ref = self._reference
+        n = len(bas1B)
+
+        occE = np.zeros((n,n,n,n,n,n,n))
+
+        for a in bas1B:
+            for b in bas1B:
+                for c in bas1B:
+                    for d in bas1B:
+                        for e in bas1B:
+                            for f in bas1B:
+                                occE[a,b,c,d,e,f] = ref[a]*ref[b]*ref[c]*\
+                                                    (1-ref[d])*(1-ref[e])*\
+                                                    (1-ref[f])
