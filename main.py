@@ -336,10 +336,10 @@ def test_refs(plots_dir):
     ax_conv = fig_conv.add_subplot(1,1,1)
 
     for pb in g_vals:
-        E_corrs = []
         E_exacts = []
 
         for g in g_vals:
+            E_corrs = []
             # plt.figure(figsize=[12,8])
             ref_rand = random.sample(refs, 20)
             E_exact = ci_matrix.exact_diagonalization(1.0, g, pb)
@@ -385,7 +385,9 @@ def test_refs(plots_dir):
 
                     f.write('Ground state from IMSRG(2):\n')
                     e_sort_ind = np.argsort(E_corrs)
-                    f.write('{2.8f} | {d}\n'.format(E_corrs[e_sort_ind[0]], d=refs_conv[e_sort_ind[0]]))
+                    print(e_sort_ind)
+                    print(E_corrs)
+                    f.write('{:2.8f} | {d}\n'.format(E_corrs[e_sort_ind[0]], d=refs_conv[e_sort_ind[0]]))
 
         # corr_data = np.reshape(E_corrs, (len(g_vals), 2))
         # ax_corr.plot(g_vals, E_exacts, marker='s')
