@@ -427,4 +427,6 @@ if __name__ == '__main__':
     # test_refs('logs_refs\\')
     # test_exact('plots_exact\\')
     # print(ci_matrix.exact_diagonalization(1.0, 0.5, 0.1))
-    print(main(4,4))
+    h = PairingHamiltonian2B(4,4)
+    occt = OccupationTensors(h.sp_basis, h.reference)
+    wg3b = WegnerGenerator3B(h, occt)
