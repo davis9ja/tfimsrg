@@ -108,6 +108,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     equations."""
     start = time.time()
 
+    initi = time.time()
     if ref == None:
         ha = PairingHamiltonian2B(n_holes, n_particles, d=d, g=g, pb=pb)
         ref = [1,1,1,1,0,0,0,0] # this is just for printing
@@ -116,6 +117,8 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     ot = OccupationTensors(ha.sp_basis, ha.reference)
     wg = WegnerGenerator(ha, ot)
     fl = Flow_IMSRG2(ha, ot)
+    initf = time.time()
+    print("Initialized objects in {:2.4f} seconds\n".format(initf-initi))
 
     print("""Pairing model IM-SRG flow:
     d              = {:2.4f}
@@ -421,6 +424,7 @@ def test_refs(plots_dir):
 #         print('{:2.4f} | {d}'.format(E_conv[i], d=refs_conv[i]))
 
 if __name__ == '__main__':
-    test_refs('logs_refs\\')
+    # test_refs('logs_refs\\')
     # test_exact('plots_exact\\')
     # print(ci_matrix.exact_diagonalization(1.0, 0.5, 0.1))
+    print(main(4,4))
