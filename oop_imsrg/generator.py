@@ -254,7 +254,7 @@ class WegnerGenerator3B(WegnerGenerator):
          eta2B, -- two-body generator
          eta3B) -- three-body generator"""
 
-         eta1B, eta2B = super().calc_eta()
+        eta1B, eta2B = super().calc_eta()
 
         fd, fod, Gd, God, Wd, Wod = self.decouple_OD()
 
