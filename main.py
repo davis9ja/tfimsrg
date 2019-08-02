@@ -430,3 +430,5 @@ if __name__ == '__main__':
     h = PairingHamiltonian2B(4,4)
     occt = OccupationTensors(h.sp_basis, h.reference)
     wg3b = WegnerGenerator3B(h, occt)
+    test = wg3b.calc_eta()
+    print(test.shape)
