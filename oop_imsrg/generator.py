@@ -11,7 +11,8 @@ class Generator(object):
         print("Function that calculates the generator")
 
 class WegnerGenerator(Generator):
-    """Calculate Wegner's generator for a normal ordered Hamiltonian."""
+    """Calculate Wegner's generator for a normal ordered Hamiltonian.
+       Truncate at two-body interactions."""
 
     def __init__(self, h, occ_t):
         """Class constructor. Instantiate WegnerGenerator object.
@@ -59,7 +60,7 @@ class WegnerGenerator(Generator):
         """Sets the two-body tensor."""
         self._G = G
 
-    def __decouple_OD(self):
+    def decouple_OD(self):
         """Decouple the off-/diagonal elements from each other in
         the one- and two-body tensors. This procedure is outlined in
         An Advanced Course in Computation Nuclear Physics, Ch.10.
@@ -99,7 +100,7 @@ class WegnerGenerator(Generator):
         (eta1B, -- one-body generator
          eta2B) -- two-body generator"""
 
-        fd, fod, Gd, God = self.__decouple_OD()
+        fd, fod, Gd, God = self.decouple_OD()
 
         holes = self._holes
         particles = self._particles
@@ -164,171 +165,107 @@ class WegnerGenerator(Generator):
 
         return (eta1B, eta2B)
 
+class WegnerGenerator3B(WegnerGenerator):
 
-    # def calc_eta1B(self):
-    #     fd, fod, Gd, God = self.__decouple_OD()
+    """Calculate Wegner's generator for a normal ordered Hamiltonian.
+       Truncate at three-body interactions. Inherits from WegnerGenerator."""
 
-    #     holes = self._holes
-    #     particles = self._particles
+    def __init__(self, h, occ_t):
+        """Class constructor. Instantiate WegnerGenerator object.
 
-    #     occA = self._occA
-    #     occC = self._occC
+        Arguments:
 
-    #     # - Calculate 1B generator
-    #     # first term
-    #     sum1_1b_1 = ncon([fd, fod], [(-1, 0), (0, -2)]).numpy()
-    #     sum1_1b_2 = np.transpose(sum1_1b_1)
-    #     sum1_1b = sum1_1b_1 - sum1_1b_2
+        h -- Hamiltonian object (must be normal-ordered)
+        occ_t -- OccupationTensor object"""
 
-    #     # second term
-    #     sum2_1b_1 = ncon([fd, God], [(0, 1), (1, -1, 0, -2)]).numpy()
-    #     sum2_1b_2 = ncon([fod, Gd], [(0, 1), (1, -1, 0, -2)]).numpy()
-    #     sum2_1b_3 = sum2_1b_1 - sum2_1b_2
-    #     sum2_1b = ncon([occA, sum2_1b_3],[(-1, -2, 0, 1), (0,1)]).numpy()
+        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
+        assert isinstance(occ_t, OccupationTensors), "Arg 1 must be OccupationTensors object"
 
-    #     # third term
-    #     sum3_1b_1 = ncon([occC, God], [(-1, -2, -3, 0, 1, 2), (0, 1, 2, -4)]).numpy()
-    #     sum3_1b_2 = ncon([Gd, sum3_1b_1], [(2, -1, 0, 1), (0, 1, 2, -2)]).numpy()
-    #     sum3_1b_3 = np.transpose(sum3_1b_2)
-    #     sum3_1b = sum3_1b_2 - sum3_1b_3
+        self.f = h.f
+        self.G = h.G
+        self.W = np.zeros(h.n_sp_states*np.ones(6,dtype=np.int64))
 
-    #     eta1B = sum1_1b + sum2_1b + 0.5*sum3_1b
+        self._holes = h.holes
+        self._particles = h.particles
 
-    #     return eta1B
+        self._occA = occ_t.occA
+        self._occB = occ_t.occB
+        self._occC = occ_t.occC
+        self._occD = occ_t.occD
+        self._occE = occ_t.occE
+        self._occF = occ_t.occF
+        self._occG = occ_t.occG
+        self._occH = occ_t.occH
+        self._occI = occ_t.occI
+        self._occJ = occ_t.occJ
 
-    # def calc_eta2B(self):
-    #     fd, fod, Gd, God = self.__decouple_OD()
+    @property
+    def W(self):
+        """Returns:
 
-    #     holes = self._holes
-    #     particles = self._particles
+        W -- three-body tensor elements (initialized by Hamiltonian object)"""
+        return self._W
 
-    #     occA = self._occA
-    #     occB = self._occB
+    @W.setter
+    def W(self, W):
+        """Sets the three-body tensor."""
+        self._W = W
 
-    #     # - Calculate 2B generator
-    #     # first term (P_ij piece)
-    #     sum1_2b_1 = ncon([fd, God], [(-1, 0), (0, -2, -3, -4)]).numpy()
-    #     sum1_2b_2 = ncon([fod, Gd], [(-1, 0), (0, -2, -3, -4)]).numpy()
-    #     sum1_2b_3 = sum1_2b_1 - sum1_2b_2
-    #     sum1_2b_4 = np.transpose(sum1_2b_3, [1, 0, 2, 3])
-    #     sum1_2b_5 = sum1_2b_3 - sum1_2b_4
+    def decouple_OD(self):
+        """Inherits from WegnerGenerator.
 
-    #     # first term (P_kl piece)
-    #     sum1_2b_6 = ncon([fd, God], [(0, -3), (-1, -2, 0, -4)]).numpy()
-    #     sum1_2b_7 = ncon([fod, Gd], [(0, -3), (-1, -2, 0, -4)]).numpy()
-    #     sum1_2b_8 = sum1_2b_6 - sum1_2b_7
-    #     sum1_2b_9 = np.transpose(sum1_2b_8, [0, 1, 3, 2])
-    #     sum1_2b_10 = sum1_2b_8 - sum1_2b_9
+        Decouple the off-/diagonal elements from each other in
+        the one- and two-body tensors. This procedure is outlined in
+        An Advanced Course in Computation Nuclear Physics, Ch.10.
 
-    #     sum1_2b = sum1_2b_5 - sum1_2b_10
+        Returns:
 
-    #     # second term
-    #     sum2_2b_1 = ncon([occB, God], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
-    #     sum2_2b_2 = ncon([occB,  Gd], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
-    #     sum2_2b_3 = ncon([Gd,  sum2_2b_1], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
-    #     sum2_2b_4 = ncon([God, sum2_2b_2], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
-    #     sum2_2b = sum2_2b_3 - sum2_2b_4
+        (fd, -- diagonal part of f
+         fod, -- off-diagonal part of f
+         Gd, -- diagonal part of G
+         God, -- off-diagonal part of G
+         Wd, -- diagonal part of W
+         Wod) -- off-diagonal part of W"""
 
-    #     # third term
-    #     sum3_2b_1 = ncon([Gd, God], [(0, -1, 1, -3), (1, -2, 0, -4)]).numpy()
-    #     sum3_2b_2 = np.transpose(sum3_2b_1, [1, 0, 2, 3])
-    #     sum3_2b_3 = np.transpose(sum3_2b_1, [0, 1, 3, 2])
-    #     sum3_2b_4 = np.transpose(sum3_2b_1, [1, 0, 3, 2])
-    #     sum3_2b_5 = sum3_2b_1 - sum3_2b_2 - sum3_2b_3 + sum3_2b_4
-    #     sum3_2b = ncon([occA, sum3_2b_5], [(0, 1, -1, -2), (0, 1, -3, -4)]).numpy()
+        fd, fod, Gd, God = super().decouple_OD()
 
-    #     eta2B = sum1_2b + 0.5*sum2_2b + sum3_2b
+        W = self.W
 
-    #     return eta2B
+        holes = self._holes
+        particles = self._particles
 
-    # @property
-    # def eta1B(self):
-    #     return self._eta1B
+        Wod = np.zeros(W.shape)
+        Wod[np.ix_(particles, particles, particles, holes, holes, holes)] += W[np.ix_(particles, particles, particles, holes, holes, holes)]
+        Wod[np.ix_(holes, holes, holes, particles, particles, particles)] += W[np.ix_(holes, holes, holes, particles, particles, particles)]
+        Wd = W - Wod
 
-    # @property
-    # def eta2B(self):
-    #     return self._eta2B
+        return(fd, fod, Gd, God, Wd, Wod)
 
-    # @eta1B.setter
-    # def eta1B(self, occA):
-    #     fd = self._fd
-    #     Gd = self._Gd
-    #     fod = self._fod
-    #     God = self._God
+    def calc_eta(self):
+        """Inherits from WegnerGenerator.
 
-    #     holes = self._holes
-    #     particles = self._particles
+        Calculate the generator. The terms are defined in An
+        Advanced Course in Computation Nuclear Physics, Ch.10.
+        See also dx.doi.org/10.1016/j.physrep.2015.12.007
 
-    #     occA = self._occA
-    #     occC = self._occC
+        Returns:
 
-    #     # - Calculate 1B generator
-    #     # first term
-    #     sum1_1b_1 = ncon([fd, fod], [(-1, 0), (0, -2)]).numpy()
-    #     sum1_1b_2 = np.transpose(sum1_1b_1)
-    #     sum1_1b = sum1_1b_1 - sum1_1b_2
+        (eta1B, -- one-body generator
+         eta2B, -- two-body generator
+         eta3B) -- three-body generator"""
 
-    #     # second term
-    #     sum2_1b_1 = ncon([fd, God], [(0, 1), (1, -1, 0, -2)]).numpy()
-    #     sum2_1b_2 = ncon([fod, Gd], [(0, 1), (1, -1, 0, -2)]).numpy()
-    #     sum2_1b_3 = sum2_1b_1 - sum2_1b_2
-    #     sum2_1b = ncon([occA, sum2_1b_3],[(-1, -2, 0, 1), (0,1)]).numpy()
+         eta1B, eta2B = super().calc_eta()
 
-    #     # third term
-    #     sum3_1b_1 = ncon([occC, God], [(-1, -2, -3, 0, 1, 2), (0, 1, 2, -4)]).numpy()
-    #     sum3_1b_2 = ncon([Gd, sum3_1b_1], [(2, -1, 0, 1), (0, 1, 2, -2)]).numpy()
-    #     sum3_1b_3 = np.transpose(sum3_1b_2)
-    #     sum3_1b = sum3_1b_2 - sum3_1b_3
+        fd, fod, Gd, God, Wd, Wod = self.decouple_OD()
 
-    #     eta1B = sum1_1b + sum2_1b + 0.5*sum3_1b
+        holes = self._holes
+        particles = self._particles
 
-    #     self._eta1B = eta1B
-
-    # @eta2B.setter
-    # def eta2B(self, eta2B):
-    #     fd = self._fd
-    #     Gd = self._Gd
-    #     fod = self._fod
-    #     God = self._God
-
-    #     holes = self._holes
-    #     particles = self._particles
-
-    #     occA = self._occA
-    #     occB = self._occB
-
-    #     # - Calculate 2B generator
-    #     # first term (P_ij piece)
-    #     sum1_2b_1 = ncon([fd, God], [(-1, 0), (0, -2, -3, -4)]).numpy()
-    #     sum1_2b_2 = ncon([fod, Gd], [(-1, 0), (0, -2, -3, -4)]).numpy()
-    #     sum1_2b_3 = sum1_2b_1 - sum1_2b_2
-    #     sum1_2b_4 = np.transpose(sum1_2b_3, [1, 0, 2, 3])
-    #     sum1_2b_5 = sum1_2b_3 - sum1_2b_4
-
-    #     # first term (P_kl piece)
-    #     sum1_2b_6 = ncon([fd, God], [(0, -3), (-1, -2, 0, -4)]).numpy()
-    #     sum1_2b_7 = ncon([fod, Gd], [(0, -3), (-1, -2, 0, -4)]).numpy()
-    #     sum1_2b_8 = sum1_2b_6 - sum1_2b_7
-    #     sum1_2b_9 = np.transpose(sum1_2b_8, [0, 1, 3, 2])
-    #     sum1_2b_10 = sum1_2b_8 - sum1_2b_9
-
-    #     sum1_2b = sum1_2b_5 - sum1_2b_10
-
-    #     # second term
-    #     sum2_2b_1 = ncon([occB, God], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
-    #     sum2_2b_2 = ncon([occB,  Gd], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
-    #     sum2_2b_3 = ncon([Gd,  sum2_2b_1], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
-    #     sum2_2b_4 = ncon([God, sum2_2b_2], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
-    #     sum2_2b = sum2_2b_3 - sum2_2b_4
-
-    #     # third term
-    #     sum3_2b_1 = ncon([Gd, God], [(0, -1, 1, -3), (1, -2, 0, -4)]).numpy()
-    #     sum3_2b_2 = np.transpose(sum3_2b_1, [1, 0, 2, 3])
-    #     sum3_2b_3 = np.transpose(sum3_2b_1, [0, 1, 3, 2])
-    #     sum3_2b_4 = np.transpose(sum3_2b_1, [1, 0, 3, 2])
-    #     sum3_2b_5 = sum3_2b_1 - sum3_2b_2 - sum3_2b_3 + sum3_2b_4
-    #     sum3_2b = ncon([occA, sum3_2b_5], [(0, 1, -1, -2), (0, 1, -3, -4)]).numpy()
-
-    #     eta2B = sum1_2b + 0.5*sum2_2b + sum3_2b
-
-    #     self._eta2B = eta2B
+        occA = self._occA
+        occB = self._occB
+        occC = self._occC
+        occF = self._occF
+        occG = self._occG
+        occH = self._occH
+        occI = self._occI
+        occJ = self._occJ
