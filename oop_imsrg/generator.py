@@ -60,6 +60,7 @@ class WegnerGenerator(Generator):
         """Sets the two-body tensor."""
         self._G = G
 
+    # @classmethod
     def decouple_OD(self):
         """Decouple the off-/diagonal elements from each other in
         the one- and two-body tensors. This procedure is outlined in
@@ -90,6 +91,7 @@ class WegnerGenerator(Generator):
 
         return (fd, fod, Gd, God)
 
+    # @classmethod
     def calc_eta(self):
         """Calculate the generator. The terms are defined in An
         Advanced Course in Computation Nuclear Physics, Ch.10.
@@ -100,7 +102,11 @@ class WegnerGenerator(Generator):
         (eta1B, -- one-body generator
          eta2B) -- two-body generator"""
 
-        fd, fod, Gd, God = self.decouple_OD()
+        partition = self.decouple_OD()
+        fd = partition[0]
+        fod = partition[1]
+        Gd = partition[2]
+        God = partition[3]
 
         holes = self._holes
         particles = self._particles
@@ -211,6 +217,7 @@ class WegnerGenerator3B(WegnerGenerator):
         """Sets the three-body tensor."""
         self._W = W
 
+    # @classmethod
     def decouple_OD(self):
         """Inherits from WegnerGenerator.
 
@@ -227,7 +234,11 @@ class WegnerGenerator3B(WegnerGenerator):
          Wd, -- diagonal part of W
          Wod) -- off-diagonal part of W"""
 
-        fd, fod, Gd, God = super().decouple_OD()
+        partition = super().decouple_OD()
+        fd = partition[0]
+        fod = partition[1]
+        Gd = partition[2]
+        God = partition[3]
 
         W = self.W
 
@@ -241,12 +252,12 @@ class WegnerGenerator3B(WegnerGenerator):
 
         return(fd, fod, Gd, God, Wd, Wod)
 
+    # @classmethod
     def calc_eta(self):
         """Inherits from WegnerGenerator.
 
-        Calculate the generator. The terms are defined in An
-        Advanced Course in Computation Nuclear Physics, Ch.10.
-        See also dx.doi.org/10.1016/j.physrep.2015.12.007
+        Calculate the generator. See dx.doi.org/10.1016/j.physrep.2015.12.007,
+        Appendix B, for three-body flow equations.
 
         Returns:
 
@@ -254,9 +265,15 @@ class WegnerGenerator3B(WegnerGenerator):
          eta2B, -- two-body generator
          eta3B) -- three-body generator"""
 
-        eta1B, eta2B = super().calc_eta()
+        partition = self.decouple_OD()
+        fd = partition[0]
+        fod = partition[1]
+        Gd = partition[2]
+        God = partition[3]
+        Wd = partition[4]
+        Wod = partition[5]
 
-        fd, fod, Gd, God, Wd, Wod = self.decouple_OD()
+        eta1B, eta2B = super().calc_eta()
 
         holes = self._holes
         particles = self._particles
@@ -264,8 +281,32 @@ class WegnerGenerator3B(WegnerGenerator):
         occA = self._occA
         occB = self._occB
         occC = self._occC
+        occD = self._occD
         occF = self._occF
         occG = self._occG
         occH = self._occH
         occI = self._occI
         occJ = self._occJ
+
+        # Calculate 1B generator
+        # fourth term
+        sum4_1b_1 = np.matmul(np.transpose(occD,[2,3,0,1]), God)
+        sum4_1b_2 = np.matmul(np.transpose(occD,[2,3,0,1]), Gd)
+        sum4_1b_3 = ncon([Wd,  sum4_1b_1], [(0,1,-1,2,3,-2),(2,3,0,1)]).numpy()
+        sum4_1b_4 = ncon([Wod, sum4_1b_2], [(0,1,-1,2,3,-2),(2,3,0,1)]).numpy()
+        sum4_1b = sum4_1b_3 - sum4_1b_4
+
+        # fifth term
+        sum5_1b_1 = ncon([occF, Wd],
+                         [(-1,-3,-4,-5,-6,0,1,2,3,4), (0,1,-2,2,3,4)]).numpy()
+        sum5_1b_2 = ncon([occF, Wod],
+                         [(-1,-3,-4,-5,-6,0,1,2,3,4), (0,1,-2,2,3,4)]).numpy()
+        sum5_1b_3 = ncon([sum5_1b_1, Wod],
+                         [(0,1,-1,2,3,4), (2,3,4,0,1,-2)]).numpy()
+        sum5_1b_4 = ncon([sum5_1b_2, Wd],
+                         [(0,1,-1,2,3,4), (2,3,4,0,1,-2)]).numpy()
+        sum5_1b = sum5_1b_3 - sum5_1b_4
+
+        eta1B = 0.25*sum4_1b + (1/12)*sum5_1b
+
+        return eta1B
