@@ -48,14 +48,14 @@ class OccupationTensors(object):
     def occC(self):
         """Returns:
 
-        occC -- represents n_a*n_b + (1-n_a-n_b)*n_c"""
+        occC -- represents n_a*n_b*(1-n_c) + (1-n_a)*(1-n_b)*n_c"""
         return self._occC
 
     @property
     def occD(self):
         """Returns:
 
-        occD -- represents na*nb*(1-nc-nd) + na*nb*nc*nd"""
+        occD -- represents  n_a*n_b*(1-n_c)*(1-n_d)"""
         return self._occD
 
     @property
