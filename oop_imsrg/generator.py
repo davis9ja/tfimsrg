@@ -309,4 +309,16 @@ class WegnerGenerator3B(WegnerGenerator):
 
         eta1B = 0.25*sum4_1b + (1/12)*sum5_1b
 
+        # Calculate 2B generator
+        # fourth term
+        # occA_2 = 
+        sum4_2b_1 = np.matmul(-1*np.transpose(occA), fod)
+        sum4_2b_2 = np.matmul(-1*np.tranpose(occA), fd)
+        sum4_2b_3 = ncon([Wd,  sum4_2b_1], ([0,-1,-2,1,-3,-4], [1,0])).numpy()
+        sum4_2b_4 = ncon([Wod, sum4_2b_2], ([0,-1,-2,1,-3,-4], [1,0])).numpy()
+        sum4_2b = sum4_2b_3 - sum4_2b_4
+
+        #fifth term
+        sum5_2b_1 = ncon([occG, God], ([], [])).numpy()
+
         return eta1B
