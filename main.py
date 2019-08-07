@@ -23,7 +23,7 @@ from oop_imsrg.occupation_tensors import *
 from oop_imsrg.generator import *
 from oop_imsrg.flow import *
 from oop_imsrg.plot_data import *
-from oop_imsrg.display_memory import *
+# from oop_imsrg.display_memory import *
 import oop_imsrg.ci_pairing.cipy_pairing_plus_ph as ci_matrix
 
 # @profile
@@ -431,4 +431,4 @@ if __name__ == '__main__':
     occt = OccupationTensors(h.sp_basis, h.reference)
     wg3b = WegnerGenerator3B(h, occt)
     test = wg3b.calc_eta()
-    print(test.shape)
+    print(test[1].shape)
