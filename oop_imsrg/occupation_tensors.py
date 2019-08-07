@@ -20,6 +20,7 @@ class OccupationTensors(object):
         self._sp_basis = sp_basis
 
         self._occA = self.__get_occA()
+        self._occA2 = self.__get_occA(flag=1)
         self._occB = self.__get_occB()
         self._occC = self.__get_occC()
         self._occD = self.__get_occD(flag=1)
@@ -36,6 +37,14 @@ class OccupationTensors(object):
 
         occA -- represents n_a - n_b."""
         return self._occA
+
+    @property
+    def occA2(self):
+        """Built from flag = 1; rank2 tensor
+
+        Returns:
+
+        occA2 -- represents n_a - n_b."""
 
     @property
     def occB(self):
