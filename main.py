@@ -159,12 +159,12 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
 
 #         if iters %10 == 0: print("iter: {:>6d} \t scale param: {:0.4f} \t E = {:0.9f}".format(iters, solver.t, Es))
 
-        if len(E_vals) > 20 and abs(E_vals[-1] - E_vals[-2]) < 10**-8:
+        if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) < 10**-8 and E_vals[-1] != E_vals[0]:
             print("---- Energy converged at iter {:>06d} with energy {:1.8f}\n".format(iters,E_vals[-1]))
             convergence = 1
             break
 
-        if len(E_vals) > 20 and abs(E_vals[-1] - E_vals[-2]) > 1:
+        if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) > 1:
             print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
             break
 
@@ -424,11 +424,16 @@ def test_refs(plots_dir):
 #         print('{:2.4f} | {d}'.format(E_conv[i], d=refs_conv[i]))
 
 if __name__ == '__main__':
-    # test_refs('logs_refs\\')
+    test_refs('logs_refs\\')
     # test_exact('plots_exact\\')
     # print(ci_matrix.exact_diagonalization(1.0, 0.5, 0.1))
-    h = PairingHamiltonian2B(4,4)
-    occt = OccupationTensors(h.sp_basis, h.reference)
-    wg3b = WegnerGenerator3B(h, occt)
-    test = wg3b.calc_eta()
-    print(test[1].shape)
+
+
+    # h = PairingHamiltonian2B(4,4)
+    # occt = OccupationTensors(h.sp_basis, h.reference)
+    # wg3b = WegnerGenerator3B(h, occt)
+    # test = wg3b.calc_eta()
+    # eta1B = test[0]
+    # eta2B = test[1]
+    # print(eta1B)
+    # print(eta2B[0,1,4,5])
