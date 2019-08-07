@@ -45,6 +45,7 @@ class OccupationTensors(object):
         Returns:
 
         occA2 -- represents n_a - n_b."""
+        return self._occA2
 
     @property
     def occB(self):

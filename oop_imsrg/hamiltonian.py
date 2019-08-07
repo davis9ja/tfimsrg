@@ -1,4 +1,6 @@
 import numpy as np
+import tensorflow as tf
+# tf.enable_v2_behavior()
 from tensornetwork import *
 
 class Hamiltonian(object):

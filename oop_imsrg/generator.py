@@ -1,3 +1,5 @@
+import tensorflow as tf
+# tf.enable_v2_behavior()
 from tensornetwork import *
 import numpy as np
 from oop_imsrg.hamiltonian import *
@@ -313,8 +315,8 @@ class WegnerGenerator3B(WegnerGenerator):
 
         # Calculate 2B generator
         # fourth term
-        sum4_2b_1 = np.matmul(-1*np.transpose(occA2), fod)
-        sum4_2b_2 = np.matmul(-1*np.transpose(occA2),  fd)
+        sum4_2b_1 = np.matmul(-1.0*np.transpose(occA2), fod)
+        sum4_2b_2 = np.matmul(-1.0*np.transpose(occA2),  fd)
         sum4_2b_3 = ncon([Wd,  sum4_2b_1], [(0,-1,-2,1,-3,-4), (1,0)]).numpy()
         sum4_2b_4 = ncon([Wod, sum4_2b_2], [(0,-1,-2,1,-3,-4), (1,0)]).numpy()
         sum4_2b = sum4_2b_3 - sum4_2b_4
@@ -337,7 +339,7 @@ class WegnerGenerator3B(WegnerGenerator):
         sum6_2b = sum6_2b_3 - sum6_2b_4
 
         #seventh term
-        sum7_2b_1 = ncon([occI, Wod], [(-1,-2,-3,-4,0,1,2,3,4), (3,4,-5,0,1,-6)]).numpy()
+        sum7_2b_1 = ncon([occI, Wod], [(-1,-2,-3,-4,0,1,2,3), (2,3,-5,0,1,-6)]).numpy()
         sum7_2b_2 = ncon([Wd, sum7_2b_1], [(0,1,-1,2,3,-4),(2,3,-2,0,1,-3)]).numpy()
         sum7_2b = sum7_2b_2 - np.transpose(sum7_2b_2,[1,0,2,3]) - \
                               np.transpose(sum7_2b_2,[0,1,3,2]) + \
