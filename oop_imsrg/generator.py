@@ -195,6 +195,7 @@ class WegnerGenerator3B(WegnerGenerator):
         self._particles = h.particles
 
         self._occA = occ_t.occA
+        self._occA2 = occ_t.occA2
         self._occB = occ_t.occB
         self._occC = occ_t.occC
         self._occD = occ_t.occD
@@ -279,6 +280,7 @@ class WegnerGenerator3B(WegnerGenerator):
         particles = self._particles
 
         occA = self._occA
+        occA2 = self._occA2
         occB = self._occB
         occC = self._occC
         occD = self._occD
@@ -311,14 +313,30 @@ class WegnerGenerator3B(WegnerGenerator):
 
         # Calculate 2B generator
         # fourth term
-        # occA_2 = 
-        sum4_2b_1 = np.matmul(-1*np.transpose(occA), fod)
-        sum4_2b_2 = np.matmul(-1*np.tranpose(occA), fd)
-        sum4_2b_3 = ncon([Wd,  sum4_2b_1], ([0,-1,-2,1,-3,-4], [1,0])).numpy()
-        sum4_2b_4 = ncon([Wod, sum4_2b_2], ([0,-1,-2,1,-3,-4], [1,0])).numpy()
+        sum4_2b_1 = np.matmul(-1*np.transpose(occA2), fod)
+        sum4_2b_2 = np.matmul(-1*np.transpose(occA2),  fd)
+        sum4_2b_3 = ncon([Wd,  sum4_2b_1], [(0,-1,-2,1,-3,-4), (1,0)]).numpy()
+        sum4_2b_4 = ncon([Wod, sum4_2b_2], [(0,-1,-2,1,-3,-4), (1,0)]).numpy()
         sum4_2b = sum4_2b_3 - sum4_2b_4
 
         #fifth term
-        sum5_2b_1 = ncon([occG, God], ([], [])).numpy()
+        sum5_2b_1 = ncon([occG, God], [(-1,-2,-4,0,1,2), (1,2,0,-3)]).numpy()
+        sum5_2b_2 = ncon([occG,  Gd], [(-1,-2,-4,0,1,2), (1,2,0,-3)]).numpy()
+        sum5_2b_3 = ncon([Wd,  sum5_2b_1], [(0,-1,-2,1,2,-4), (1,2,0,-3)]).numpy()
+        sum5_2b_4 = ncon([Wod, sum5_2b_2], [(0,-1,-2,1,2,-4), (1,2,0,-3)]).numpy()
+        sum5_2b_5 = sum5_2b_3 - sum5_2b_4
+        sum5_2b_6 = sum5_2b_5 - np.transpose(sum5_2b_5, [3,2,0,1]) - \
+                    np.transpose(sum5_2b_5, [0,1,3,2]) + \
+                    np.transpose(sum5_2b_5, [2,3,0,1])
+
+        #sixth term
+        sum6_2b_1 = ncon([occH, Wod], [(-1,-2,-3,-4,0,1,2,3),(1,2,3,0,-5,-6)]).numpy()
+        sum6_2b_2 = ncon([occH, Wod], [(-3,-4,-5,-6,0,1,2,3),(0,-1,-2,1,2,3)]).numpy()
+        sum6_2b_3 = ncon([Wd, sum6_2b_1], [(0,-1,-2,1,2,3), (1,2,3,0,-3,-4)]).numpy()
+        sum6_2b_4 = ncon([Wd, sum6_2b_2], [(1,2,3,0,-3,-4), (0,-1,-2,1,2,3)]).numpy()
+        sum6_2b_5 = sum6_2b_3 - sum6_2b_4
+
+        #seventh term
+
 
         return eta1B
