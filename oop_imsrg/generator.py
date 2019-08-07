@@ -309,7 +309,7 @@ class WegnerGenerator3B(WegnerGenerator):
                          [(0,1,-1,2,3,4), (2,3,4,0,1,-2)]).numpy()
         sum5_1b = sum5_1b_3 - sum5_1b_4
 
-        eta1B = 0.25*sum4_1b + (1/12)*sum5_1b
+        eta1B += 0.25*sum4_1b + (1/12)*sum5_1b
 
         # Calculate 2B generator
         # fourth term
@@ -325,7 +325,7 @@ class WegnerGenerator3B(WegnerGenerator):
         sum5_2b_3 = ncon([Wd,  sum5_2b_1], [(0,-1,-2,1,2,-4), (1,2,0,-3)]).numpy()
         sum5_2b_4 = ncon([Wod, sum5_2b_2], [(0,-1,-2,1,2,-4), (1,2,0,-3)]).numpy()
         sum5_2b_5 = sum5_2b_3 - sum5_2b_4
-        sum5_2b_6 = sum5_2b_5 - np.transpose(sum5_2b_5, [3,2,0,1]) - \
+        sum5_2b = sum5_2b_5 - np.transpose(sum5_2b_5, [3,2,0,1]) - \
                     np.transpose(sum5_2b_5, [0,1,3,2]) + \
                     np.transpose(sum5_2b_5, [2,3,0,1])
 
@@ -334,9 +334,15 @@ class WegnerGenerator3B(WegnerGenerator):
         sum6_2b_2 = ncon([occH, Wod], [(-3,-4,-5,-6,0,1,2,3),(0,-1,-2,1,2,3)]).numpy()
         sum6_2b_3 = ncon([Wd, sum6_2b_1], [(0,-1,-2,1,2,3), (1,2,3,0,-3,-4)]).numpy()
         sum6_2b_4 = ncon([Wd, sum6_2b_2], [(1,2,3,0,-3,-4), (0,-1,-2,1,2,3)]).numpy()
-        sum6_2b_5 = sum6_2b_3 - sum6_2b_4
+        sum6_2b = sum6_2b_3 - sum6_2b_4
 
         #seventh term
+        sum7_2b_1 = ncon([occI, Wod], [(-1,-2,-3,-4,0,1,2,3,4), (3,4,-5,0,1,-6)]).numpy()
+        sum7_2b_2 = ncon([Wd, sum7_2b_1], [(0,1,-1,2,3,-4),(2,3,-2,0,1,-3)]).numpy()
+        sum7_2b = sum7_2b_2 - np.transpose(sum7_2b_2,[1,0,2,3]) - \
+                              np.transpose(sum7_2b_2,[0,1,3,2]) + \
+                              np.transpose(sum7_2b_2,[1,0,3,2])
 
+        eta2B += sum4_2b + 0.5*sum5_2b + (1/6)*sum6_2b + 0.25*sum7_2b
 
-        return eta1B
+        return (eta1B, eta2B)
