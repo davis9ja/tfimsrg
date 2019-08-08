@@ -347,4 +347,72 @@ class WegnerGenerator3B(WegnerGenerator):
 
         eta2B += sum4_2b + 0.5*sum5_2b + (1/6)*sum6_2b + 0.25*sum7_2b
 
-        return (eta1B, eta2B)
+        # Calculate 3B generator
+        #first, second, and third terms (one index contraction)
+
+        #terms with P(i/jk) -- line 1 and 2
+        sum1_3b_1 = ncon([fd, Wod], [(-1,0), (0,-2,-3,-4,-5,-6)]).numpy()
+        sum1_3b_2 = ncon([fod, Wd], [(-1,0), (0,-2,-3,-4,-5,-6)]).numpy()
+        sum1_3b_3 = sum1_3b_1 - sum1_3b_2
+        sum1_3b_4 = sum1_3b_3 - np.transpose(sum1_3b_3, [1,0,2,3,4,5]) - \
+                                np.transpose(sum1_3b_3, [2,1,0,3,4,5])
+
+        #terms with P(l/mn) -- line 1 and 2
+        sum1_3b_5 = ncon([fd, Wod], [(0,-4), (-1,-2,-3,0,-5,-6)]).numpy()
+        sum1_3b_6 = ncon([fod, Wd], [(0,-4), (-1,-2,-3,0,-5,-6)]).numpy()
+        sum1_3b_7 = sum1_3b_6 - sum1_3b_5
+        sum1_3b_8 = sum1_3b_7 - np.transpose(sum1_3b_7, [0,1,2,4,3,5]) - \
+                                np.transpose(sum1_3b_7, [0,1,2,5,4,3])
+
+        #terms with P(ij/k)P(l/mn) -- line 3
+        sum1_3b_9  = ncon([Gd, God], [(-1,-2,-4,0),(0,-3,-5,-6)])
+        sum1_3b_10 = ncon([God, Gd], [(-1,-2,-4,0),(0,-3,-5,-6)])
+        sum1_3b_11 = sum1_3b_9 - sum1_3b_10
+        sum1_3b_12 = sum1_3b_11 - np.transpose(sum1_3b_11, [0,1,2,4,3,5]) - \
+                                  np.transpose(sum1_3b_11, [0,1,2,5,4,3])
+        sum1_3b_13 = sum1_3b_12 - np.transpose(sum1_3b_12, [2,1,0,3,4,5]) - \
+                                  np.transpose(sum1_3b_12, [0,2,1,3,4,5])
+
+        sum1_3b = sum1_3b_4 + sum1_3b_8 + sum1_3b_13
+
+        #fourth term
+        sum4_3b_1 = ncon([Gd, occB, Wod], [(-1,-2,2,3),(2,3,0,1),(0,1,-3,-4,-5,-6)]).numpy()
+        sum4_3b_2 = ncon([God, occB, Wd], [(-1,-2,2,3),(2,3,0,1),(0,1,-3,-4,-5,-6)]).numpy()
+        sum4_3b_3 = sum4_3b_1 - sum4_3b_2
+        sum4_3b = sum4_3b_3 - np.transpose(sum4_3b_3, [1,0,2,3,4,5]) - \
+                              np.transpose(sum4_3b_3, [2,1,0,3,4,5])
+
+        #fifth term
+        sum5_3b_1 = ncon([Gd, occB, Wod], [(2,3,-4,-5),(2,3,0,1),(-1,-2,-3,0,1,-6)]).numpy()
+        sum5_3b_2 = ncon([God, occB, Wd], [(2,3,-4,-5),(2,3,0,1),(-1,-2,-3,0,1,-6)]).numpy()
+        sum5_3b_3 = sum5_3b_1 - sum5_3b_2
+        sum5_3b = sum5_3b_3 - np.transpose(sum5_3b_3, [0,1,2,5,4,3]) - \
+                              np.transpose(sum5_3b_3, [0,1,2,3,5,4])
+
+        #sixth term
+        sum6_3b_1 = ncon([Gd, occA, Wod], [(3,-1,2,-4),(2,3,0,1),(0,-2,-3,1,-5,-6)]).numpy()
+        sum6_3b_2 = ncon([God, occA, Wd], [(3,-1,2,-4),(2,3,0,1),(0,-2,-3,1,-5,-6)]).numpy()
+        sum6_3b_3 = sum6_3b_1 - sum6_3b_2
+        sum6_3b_4 = sum6_3b_3 - np.transpose(sum6_3b_3, [0,1,2,4,3,5]) - \
+                                np.transpose(sum6_3b_3, [0,1,2,5,4,3])
+        sum6_3b = sum6_3b_4 - np.transpose(sum6_3b_4, [1,0,2,3,4,5]) - \
+                              np.transpose(sum6_3b_4, [2,1,0,3,4,5])
+
+        #seventh term
+        sum7_3b_1 = ncon([Wd, occJ, Wod], [(-1,-2,-3,3,4,5), (3,4,5,0,1,2), (0,1,2,-4,-5,-6)]).numpy()
+        sum7_3b_2 = ncon([Wod, occJ, Wd], [(-1,-2,-3,3,4,5), (3,4,5,0,1,2), (0,1,2,-4,-5,-6)]).numpy()
+        sum7_3b = sum7_3b_1 - sum7_3b_2
+
+        #eighth term
+        sum8_3b_1 = ncon([Wd, occC, Wod], [(3,4,-3,5,-5,-6), (3,4,5,0,1,2), (2,-1,-2,0,1,-4)]).numpy()
+        sum8_3b_2 = ncon([Wd, occC, Wod], [(5,-2,-3,3,4,-6), (3,4,5,0,1,2), (-1,0,1,-4,-5,2)]).numpy()
+        sum8_3b_3 = sum8_3b_1 - sum8_3b_2
+        sum8_3b_4 = sum8_3b_3 - np.transpose(sum8_3b_3, [0,1,2,4,3,5]) - \
+                                np.transpose(sum8_3b_3, [0,1,2,5,4,3])
+        sum8_3b = sum8_3b_4 - np.transpose(sum8_3b_4, [2,1,0,3,4,5]) - \
+                              np.transpose(sum8_3b_4, [0,2,1,3,4,5])
+
+        eta3B = sum1_3b + 0.5*sum4_3b + (-0.5)*sum5_3b + (-1.0)*sum6_3b + (1/6)*sum7_3b + 0.5*sum8_3b
+
+
+        return (eta1B, eta2B, eta3B)
