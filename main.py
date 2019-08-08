@@ -424,16 +424,19 @@ def test_refs(plots_dir):
 #         print('{:2.4f} | {d}'.format(E_conv[i], d=refs_conv[i]))
 
 if __name__ == '__main__':
-    test_refs('logs_refs\\')
+    # test_refs('logs_refs\\')
     # test_exact('plots_exact\\')
     # print(ci_matrix.exact_diagonalization(1.0, 0.5, 0.1))
 
 
-    # h = PairingHamiltonian2B(4,4)
-    # occt = OccupationTensors(h.sp_basis, h.reference)
-    # wg3b = WegnerGenerator3B(h, occt)
-    # test = wg3b.calc_eta()
-    # eta1B = test[0]
-    # eta2B = test[1]
-    # print(eta1B)
-    # print(eta2B[0,1,4,5])
+    h = PairingHamiltonian2B(4,4)
+    occt = OccupationTensors(h.sp_basis, h.reference)
+    wg3b = WegnerGenerator3B(h, occt)
+    test = wg3b.calc_eta()
+    eta1B = test[0]
+    eta2B = test[1]
+    eta3B = test[2]
+    print(eta1B)
+    print(eta2B[0,1,4,5])
+    print(eta2B[4,5,0,1])
+    print(eta3B.shape)
