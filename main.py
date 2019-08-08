@@ -428,15 +428,18 @@ if __name__ == '__main__':
     # test_exact('plots_exact\\')
     # print(ci_matrix.exact_diagonalization(1.0, 0.5, 0.1))
 
+    test = main(4,4)
+    # test2 = ci_matrix.exact_diagonalization(1.0,0.5,0.001)
+    # print(test2)
 
-    h = PairingHamiltonian2B(4,4)
-    occt = OccupationTensors(h.sp_basis, h.reference)
-    wg3b = WegnerGenerator3B(h, occt)
-    test = wg3b.calc_eta()
-    eta1B = test[0]
-    eta2B = test[1]
-    eta3B = test[2]
-    print(eta1B)
-    print(eta2B[0,1,4,5])
-    print(eta2B[4,5,0,1])
-    print(eta3B.shape)
+    # h = PairingHamiltonian2B(4,4)
+    # occt = OccupationTensors(h.sp_basis, h.reference)
+    # wg3b = WegnerGenerator3B(h, occt)
+    # test = wg3b.calc_eta()
+    # eta1B = test[0]
+    # eta2B = test[1]
+    # eta3B = test[2]
+    # print(eta1B)
+    # print(eta2B[0,1,4,5])
+    # print(eta2B[4,5,0,1])
+    # print(eta3B.shape)
