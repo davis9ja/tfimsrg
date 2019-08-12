@@ -170,7 +170,7 @@ class WegnerGenerator(Generator):
         # sum2_2b = sum2_2b_3 - sum2_2b_4
 
         # third term
-        sum3_2b_1 = ncon([Gd, occA, God], [(3,-2,2,-4), (2,3,0,1), (0,-1,1,-3)]).numpy()
+        sum3_2b_1 = ncon([Gd, occA, God], [(2,-1,3,-3), (2,3,0,1), (1,-2,0,-4)]).numpy()
         sum3_2b_2 = sum3_2b_1 - np.transpose(sum3_2b_1, [0,1,3,2])
         sum3_2b = sum3_2b_2 - np.transpose(sum3_2b_2, [1,0,2,3])
         # sum3_2b_1 = ncon([Gd, God], [(0, -1, 1, -3), (1, -2, 0, -4)]).numpy()
