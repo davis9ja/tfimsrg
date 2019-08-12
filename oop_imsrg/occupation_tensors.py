@@ -260,7 +260,7 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
-        occE = np.zeros((n,n,n,n,n,n,n))
+        occE = np.zeros((n,n,n,n,n,n))
 
         for a in bas1B:
             for b in bas1B:

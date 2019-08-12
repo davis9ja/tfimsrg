@@ -1,4 +1,4 @@
-# Main program for IM-SRG.
+# Main program for IM-SRG(2).
 
 
 # Author: Jacob Davison
@@ -104,7 +104,7 @@ def ravel(y, bas_len):
 
 # @profile
 def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
-    """Main method uses scipy.integrate.ode to solve the IMSRG flow
+    """Main method uses scipy.integrate.ode to solve the IMSRG(2) flow
     equations."""
     start = time.time()
 
@@ -120,7 +120,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     initf = time.time()
     print("Initialized objects in {:2.4f} seconds\n".format(initf-initi))
 
-    print("""Pairing model IM-SRG flow:
+    print("""Pairing model IM-SRG(2) flow:
     d              = {:2.4f}
     g              = {:2.4f}
     pb             = {:2.4f}
@@ -431,22 +431,25 @@ if __name__ == '__main__':
     # test = main(4,4)
     # test2 = ci_matrix.exact_diagonalization(1.0,0.5,0.001)
     # print(test2)
-
-    h = PairingHamiltonian2B(4,4)
-    occt = OccupationTensors(h.sp_basis, h.reference)
-    wg2b = WegnerGenerator(h, occt)
-    wg3b = WegnerGenerator3B(h, occt)
-    test = wg3b.calc_eta()
-    test2 = wg2b.calc_eta()
-
-    eta1B_test = test2[0]
-    eta2B_test = test2[1]
-
-    eta1B = test[0]
-    eta2B = test[1]
-    eta3B = test[2]
-    print(eta1B)
-    print(eta2B[0,1,4,5])
-    print(eta2B[4,5,0,1])
-    print(eta2B_test[0,1,4,5])
-    print(eta3B.shape)
+    test = main3b(4,4)
+    # h = PairingHamiltonian2B(4,4)
+    # occt = OccupationTensors(h.sp_basis, h.reference)
+    # # wg2b = WegnerGenerator(h, occt)
+    # wg3b = WegnerGenerator3B(h, occt)
+    # fl = Flow_IMSRG3(h, occt)
+    # test = fl.flow(wg3b)
+    # print(test[0])
+    # test = wg3b.calc_eta()
+    # test2 = wg2b.calc_eta()
+    #
+    # eta1B_test = test2[0]
+    # eta2B_test = test2[1]
+    #
+    # eta1B = test[0]
+    # eta2B = test[1]
+    # eta3B = test[2]
+    # print(eta1B)
+    # print(eta2B[0,1,4,5])
+    # print(eta2B[4,5,0,1])
+    # print(eta2B_test[0,1,4,5])
+    # print(eta3B.shape)

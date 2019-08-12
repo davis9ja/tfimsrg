@@ -185,7 +185,6 @@ class WegnerGenerator(Generator):
         return (eta1B, eta2B)
 
 class WegnerGenerator3B(WegnerGenerator):
-
     """Calculate Wegner's generator for a normal ordered Hamiltonian.
        Truncate at three-body interactions. Inherits from WegnerGenerator."""
 
