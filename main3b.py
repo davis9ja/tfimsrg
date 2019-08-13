@@ -184,5 +184,58 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
 
     return (convergence, iters, d, g, pb, n_holes+n_particles, s_vals, E_vals, time_str)
 
+def test_exact(plots_dir):
+
+    assert isinstance(plots_dir, str), "Enter plots directory as string"
+    assert (plots_dir[-1] == '\\' or
+            plots_dir[-1] == '/'), "Directory must end in slash (\\ or /)"
+
+    if not os.path.exists(plots_dir):
+        os.mkdir(plots_dir)
+
+    start = -1.0
+    stop = 1.0
+    num = 21
+
+    g_vals = np.linspace(start, stop, num)
+
+    for pb in g_vals:
+        E_corrs = []
+        E_exacts = []
+        for g in g_vals:
+            data = main3b(4,4, d=1.0, g=g, pb=0.0)
+            E_vals = data[7]
+            E_corr = E_vals[-1]
+            E_exact = exact_diagonalization(1.0, g)
+
+            E_corrs.append(E_corr - (2-g))
+            E_exacts.append(E_exact - (2-g))
+
+            plt.figure(figsize=[12,8])
+            plt.plot(data[6], data[7])
+            plt.ylabel('Energy')
+            plt.xlabel('scale parameter')
+            plt.title('Convergence for \n g={:2.4f}, pb={:2.4f}'.format(g,pb))
+
+            pb_plots_dir = plots_dir+'pb{:2.4f}\\'.format(pb)
+            if not os.path.exists(pb_plots_dir):
+                os.mkdir(pb_plots_dir)
+
+            plt.savefig(pb_plots_dir+'g{:2.4f}_pb{:2.4f}.png'.format(g,pb))
+            plt.close()
+
+        plt.figure(figsize=[12,8])
+        plt.plot(g_vals, E_exacts, marker='s')
+        plt.plot(g_vals, E_corrs, marker='v')
+        plt.ylabel('E$_{corr}$')
+        plt.xlabel('g')
+        plt.legend(['exact', 'IMSRG(3)'])
+        plt.title('Correlation energy with pb = {:2.4f}'.format(pb))
+        plt.savefig(plots_dir+'pb{:2.4f}.png'.format(pb))
+        plt.close()
+        print(E_exacts)
+        break
+
+
 if __name__ == '__main__':
-    test = main3b(4,4)
+    test_exact("plots3b\\")

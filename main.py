@@ -424,14 +424,15 @@ def test_refs(plots_dir):
 #         print('{:2.4f} | {d}'.format(E_conv[i], d=refs_conv[i]))
 
 if __name__ == '__main__':
-    # test_refs('logs_refs\\')
+    test_refs('logs_refs\\')
     # test_exact('plots_exact\\')
     # print(ci_matrix.exact_diagonalization(1.0, 0.5,0.0))
     #
     # test = main(4,4)
-    # test2 = ci_matrix.exact_diagonalization(1.0,0.5,0.001)
-    # print(test2)
-    test = main3b(4,4)
+    # for pb in np.linspace(-1.0, 1.0, 10):
+    #     test2 = ci_matrix.exact_diagonalization(1.0,0.5,pb)
+    #     print(test2)
+    #     test = main(4,4, pb=pb)
     # h = PairingHamiltonian2B(4,4)
     # occt = OccupationTensors(h.sp_basis, h.reference)
     # # wg2b = WegnerGenerator(h, occt)
