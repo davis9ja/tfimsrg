@@ -12,7 +12,7 @@ import time
 import pickle
 import tracemalloc
 import os, sys
-from memory_profiler import profile
+#from memory_profiler import profile
 import itertools
 import random
 
@@ -108,21 +108,39 @@ def ravel(y, bas_len):
 def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     """Main method uses scipy.integrate.ode to solve the IMSRG3 flow
     equations."""
-    start = time.time()
+    tracemalloc.start()
 
-    initi = time.time()
+    start = time.time() # start full timer
+
+    initi = time.time() # start instantiation timer
+
     if ref == None:
         ha = PairingHamiltonian2B(n_holes, n_particles, d=d, g=g, pb=pb)
         ref = [1,1,1,1,0,0,0,0] # this is just for printing
     else:
         ha = PairingHamiltonian2B(n_holes, n_particles, ref=ref, d=d, g=g, pb=pb)
+    print("Built Hamiltonian")
+
     ot = OccupationTensors(ha.sp_basis, ha.reference)
+    print("Built occupation tensors")
+
     wg = WegnerGenerator3B(ha, ot)
+    print("Built Wegner's generator")
+
     fl = Flow_IMSRG3(ha, ot)
-    initf = time.time()
+    print("Built IMSRG3 flow object")
+
+    initf = time.time() # finish instatiation timer
+
     print("Initialized objects in {:2.4f} seconds\n".format(initf-initi))
 
-    print("""Pairing model IM-SRG flow:
+    snapshot = tracemalloc.take_snapshot()
+    top_stats = snapshot.statistics('lineno')
+    total = sum(stat.size for stat in top_stats)
+    print("Total allocated size: %.1f GB" % (total / 1024**3))
+
+
+    print("""Pairing model IM-SRG(3) flow:
     d              = {:2.4f}
     g              = {:2.4f}
     pb             = {:2.4f}
@@ -159,7 +177,7 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
 
         iters += 1
 
-#         if iters %10 == 0: print("iter: {:>6d} \t scale param: {:0.4f} \t E = {:0.9f}".format(iters, solver.t, Es))
+        if iters %10 == 0: print("iter: {:>6d} \t scale param: {:0.4f} \t E = {:0.9f}".format(iters, solver.t, Es))
 
         if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) < 10**-8 and E_vals[-1] != E_vals[0]:
             print("---- Energy converged at iter {:>06d} with energy {:1.8f}\n".format(iters,E_vals[-1]))
@@ -177,10 +195,11 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
         if iters % 1000 == 0:
             print('Iteration {:>06d}'.format(iters))
 
-    end = time.time()
-    time_str = "{:2.5f}\n".format(end-start)
+    end = time.time() # finish full timer
 
-    del ha, ot, wg, fl, solver, y0, sfinal, ds
+    time_str = "Program finished in {:2.5f} seconds\n".format(end-start) # output total time
+
+    del ha, ot, wg, fl, solver, y0, sfinal, ds # clear resources
 
     return (convergence, iters, d, g, pb, n_holes+n_particles, s_vals, E_vals, time_str)
 
@@ -238,4 +257,21 @@ def test_exact(plots_dir):
 
 
 if __name__ == '__main__':
-    test_exact("plots3b\\")
+    # test_exact("plots3b\\")
+    test = main3b(4,4)
+    
+    #tracemalloc.start()
+    
+    # for i in range(5):
+    #     test = main3b(4,4)
+    #     print(test[-1])
+
+    #     snapshot = tracemalloc.take_snapshot()
+    #     top_stats = snapshot.statistics('lineno')
+    #     total = sum(stat.size for stat in top_stats)
+    #     print("Total allocated size: %.1f KiB" % (total / 1024))
+    
+    # snapshot = tracemalloc.take_snapshot()
+    # top_stats = snapshot.statistics('lineno')
+    # total = sum(stat.size for stat in top_stats)
+    # print("Final allocated size: %.1f KiB" % (total / 1024))

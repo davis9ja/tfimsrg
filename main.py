@@ -10,9 +10,12 @@ from scipy.integrate import odeint, ode
 import numpy as np
 import time
 import pickle
+import tensorflow as tf
+#tf.enable_v2_behavior()
+print("GPU available: ",tf.test.is_gpu_available())
 import tracemalloc
 import os, sys
-from memory_profiler import profile
+#from memory_profiler import profile
 import itertools
 import random
 
@@ -106,18 +109,23 @@ def ravel(y, bas_len):
 def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     """Main method uses scipy.integrate.ode to solve the IMSRG(2) flow
     equations."""
-    start = time.time()
 
-    initi = time.time()
+    start = time.time() # start full timer
+
+    initi = time.time() # start instantiation timer
+
     if ref == None:
         ha = PairingHamiltonian2B(n_holes, n_particles, d=d, g=g, pb=pb)
         ref = [1,1,1,1,0,0,0,0] # this is just for printing
     else:
         ha = PairingHamiltonian2B(n_holes, n_particles, ref=ref, d=d, g=g, pb=pb)
+
     ot = OccupationTensors(ha.sp_basis, ha.reference)
     wg = WegnerGenerator(ha, ot)
-    fl = Flow_IMSRG2(ha, ot)
-    initf = time.time()
+    fl = Flow_IMSRG2(ha, ot) 
+
+    initf = time.time() # finish instantiation timer
+
     print("Initialized objects in {:2.4f} seconds\n".format(initf-initi))
 
     print("""Pairing model IM-SRG(2) flow:
@@ -132,6 +140,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
                                         d=ref) )
 
     print("Flowing...")
+    flowi = time.time()
 
     # --- Solve the IM-SRG flow
     y0 = unravel(ha.E, ha.f, ha.G)
@@ -174,12 +183,13 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
 
         if iters % 1000 == 0:
             print('Iteration {:>06d}'.format(iters))
-
+    flowf = time.time()
     end = time.time()
     time_str = "{:2.5f}\n".format(end-start)
+    print("IM-SRG(2) converged in {:2.5f} seconds".format(flowf-flowi))
 
     del ha, ot, wg, fl, solver, y0, sfinal, ds
-
+    
     return (convergence, iters, d, g, pb, n_holes+n_particles, s_vals, E_vals, time_str)
 
 def exact_diagonalization(d, g):
@@ -424,33 +434,23 @@ def test_refs(plots_dir):
 #         print('{:2.4f} | {d}'.format(E_conv[i], d=refs_conv[i]))
 
 if __name__ == '__main__':
-    test_refs('logs_refs\\')
+    # test_refs('logs_refs\\')
     # test_exact('plots_exact\\')
     # print(ci_matrix.exact_diagonalization(1.0, 0.5,0.0))
-    #
-    # test = main(4,4)
-    # for pb in np.linspace(-1.0, 1.0, 10):
-    #     test2 = ci_matrix.exact_diagonalization(1.0,0.5,pb)
-    #     print(test2)
-    #     test = main(4,4, pb=pb)
-    # h = PairingHamiltonian2B(4,4)
-    # occt = OccupationTensors(h.sp_basis, h.reference)
-    # # wg2b = WegnerGenerator(h, occt)
-    # wg3b = WegnerGenerator3B(h, occt)
-    # fl = Flow_IMSRG3(h, occt)
-    # test = fl.flow(wg3b)
-    # print(test[0])
-    # test = wg3b.calc_eta()
-    # test2 = wg2b.calc_eta()
-    #
-    # eta1B_test = test2[0]
-    # eta2B_test = test2[1]
-    #
-    # eta1B = test[0]
-    # eta2B = test[1]
-    # eta3B = test[2]
-    # print(eta1B)
-    # print(eta2B[0,1,4,5])
-    # print(eta2B[4,5,0,1])
-    # print(eta2B_test[0,1,4,5])
-    # print(eta3B.shape)
+    
+    tracemalloc.start()
+    
+    for i in range(5):
+        test = main(4,4)
+        print(test[-1])
+
+        snapshot = tracemalloc.take_snapshot()
+        top_stats = snapshot.statistics('lineno')
+        total = sum(stat.size for stat in top_stats)
+        print("Total allocated size: %.1f KiB" % (total / 1024))
+    
+    snapshot = tracemalloc.take_snapshot()
+    top_stats = snapshot.statistics('lineno')
+    total = sum(stat.size for stat in top_stats)
+    print("Final allocated size: %.1f KiB" % (total / 1024))
+    
