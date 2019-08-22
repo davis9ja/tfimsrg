@@ -284,7 +284,7 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
-        occF = np.zeros((n,n,n,n,n,n,n,n,n,n))
+        occF = np.zeros((n,n,n,n,n,n,n,n,n,n),dtype=np.float32)
 
         for a in bas1B:
             for b in bas1B:

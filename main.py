@@ -161,29 +161,31 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
 
         ys = solver.integrate(sfinal, step=True)
         Es, fs, Gs = ravel(ys, ha.n_sp_states)
-        s_vals.append(solver.t)
-        E_vals.append(Es)
+        #s_vals.append(solver.t)
+        #E_vals.append(Es)
 
         iters += 1
-
+        if iters == 176:
+            break
 #         if iters %10 == 0: print("iter: {:>6d} \t scale param: {:0.4f} \t E = {:0.9f}".format(iters, solver.t, Es))
 
-        if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) < 10**-8 and E_vals[-1] != E_vals[0]:
-            print("---- Energy converged at iter {:>06d} with energy {:1.8f}\n".format(iters,E_vals[-1]))
-            convergence = 1
-            break
+        # if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) < 10**-8 and E_vals[-1] != E_vals[0]:
+    #         print("---- Energy converged at iter {:>06d} with energy {:1.8f}\n".format(iters,E_vals[-1]))
+    #         convergence = 1
+    #         break
 
-        if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) > 1:
-            print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
-            break
+    #     if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) > 1:
+    #         print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
+    #         break
 
-        if iters > 20000:
-            print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
-            break
+    #     if iters > 20000:
+    #         print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
+    #         break
 
-        if iters % 1000 == 0:
-            print('Iteration {:>06d}'.format(iters))
-    flowf = time.time()
+    #     if iters % 1000 == 0:
+    #         print('Iteration {:>06d}'.format(iters))
+    # flow
+    f = time.time()
     end = time.time()
     time_str = "{:2.5f}\n".format(end-start)
     print("IM-SRG(2) converged in {:2.5f} seconds".format(flowf-flowi))
