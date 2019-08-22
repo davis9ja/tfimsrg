@@ -184,8 +184,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
 
     #     if iters % 1000 == 0:
     #         print('Iteration {:>06d}'.format(iters))
-    # flow
-    f = time.time()
+    flowf = time.time()
     end = time.time()
     time_str = "{:2.5f}\n".format(end-start)
     print("IM-SRG(2) converged in {:2.5f} seconds".format(flowf-flowi))
