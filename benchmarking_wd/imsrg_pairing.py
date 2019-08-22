@@ -910,34 +910,34 @@ def main(n_holes):
   print(dE)
   
   # integrate flow equations 
-  # solver = ode(derivative_wrapper,jac=None)
-  # solver.set_integrator('vode', method='bdf', order=5, nsteps=1000)
-  # solver.set_f_params(user_data)
-  # solver.set_initial_value(y0, 0.)
+  solver = ode(derivative_wrapper,jac=None)
+  solver.set_integrator('vode', method='bdf', order=5, nsteps=1000)
+  solver.set_f_params(user_data)
+  solver.set_initial_value(y0, 0.)
 
-  # sfinal = 50
-  # ds = 0.1
+  sfinal = 50
+  ds = 0.1
 
-  # print("%-8s   %-14s   %-14s   %-14s   %-14s   %-14s   %-14s   %-14s   %-14s"%(
-  #   "s", "E" , "DE(2)", "DE(3)", "E+DE", "dE/ds", 
-  #   "||eta||", "||fod||", "||Gammaod||"))
-  # # print "-----------------------------------------------------------------------------------------------------------------"
-  # print("-" * 148)
-  # while solver.successful() and solver.t < sfinal:
-  #   ys = solver.integrate(sfinal, step=True)
+  print("%-8s   %-14s   %-14s   %-14s   %-14s   %-14s   %-14s   %-14s   %-14s"%(
+    "s", "E" , "DE(2)", "DE(3)", "E+DE", "dE/ds", 
+    "||eta||", "||fod||", "||Gammaod||"))
+  # print "-----------------------------------------------------------------------------------------------------------------"
+  print("-" * 148)
+  while solver.successful() and solver.t < sfinal:
+    ys = solver.integrate(sfinal, step=True)
     
-  #   dim2B = dim1B*dim1B
-  #   E, f, Gamma = get_operator_from_y(ys, dim1B, dim2B)
+    dim2B = dim1B*dim1B
+    E, f, Gamma = get_operator_from_y(ys, dim1B, dim2B)
 
-  #   DE2 = calc_mbpt2(f, Gamma, user_data)
-  #   DE3 = calc_mbpt3(f, Gamma, user_data)
+    DE2 = calc_mbpt2(f, Gamma, user_data)
+    DE3 = calc_mbpt3(f, Gamma, user_data)
 
-  #   norm_fod     = calc_fod_norm(f, user_data)
-  #   norm_Gammaod = calc_Gammaod_norm(Gamma, user_data)
+    norm_fod     = calc_fod_norm(f, user_data)
+    norm_Gammaod = calc_Gammaod_norm(Gamma, user_data)
 
-  #   print("%8.5f %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f"%(
-  #     solver.t, E , DE2, DE3, E+DE2+DE3, user_data["dE"], user_data["eta_norm"], norm_fod, norm_Gammaod))
-  #   if abs(DE2/E) < 10e-8: break
+    print("%8.5f %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f"%(
+      solver.t, E , DE2, DE3, E+DE2+DE3, user_data["dE"], user_data["eta_norm"], norm_fod, norm_Gammaod))
+    if abs(DE2/E) < 10e-8: break
 
 
 #    solver.integrate(solver.t + ds)

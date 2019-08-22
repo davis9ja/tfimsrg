@@ -435,23 +435,28 @@ def test_refs(plots_dir):
 #         print('{:2.4f} | {d}'.format(E_conv[i], d=refs_conv[i]))
 
 if __name__ == '__main__':
+#<<<<<<< Updated upstream
     # test_refs('logs_refs\\')
-    # test_exact('plots_exact\\')
-    # print(ci_matrix.exact_diagonalization(1.0, 0.5,0.0))
+#=======
+    #test_refs('logs_refs\\')
+    test = main(4,4)
+# >>>>>>> Stashed changes
+#     # test_exact('plots_exact\\')
+#     # print(ci_matrix.exact_diagonalization(1.0, 0.5,0.0))
     
-    tracemalloc.start()
+#     tracemalloc.start()
     
-    for i in range(5):
-        test = main(4,4)
-        print(test[-1])
+#     for i in range(5):
+#         test = main(4,4)
+#         print(test[-1])
 
-        snapshot = tracemalloc.take_snapshot()
-        top_stats = snapshot.statistics('lineno')
-        total = sum(stat.size for stat in top_stats)
-        print("Total allocated size: %.1f KiB" % (total / 1024))
+#         snapshot = tracemalloc.take_snapshot()
+#         top_stats = snapshot.statistics('lineno')
+#         total = sum(stat.size for stat in top_stats)
+#         print("Total allocated size: %.1f KiB" % (total / 1024))
     
-    snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
-    total = sum(stat.size for stat in top_stats)
-    print("Final allocated size: %.1f KiB" % (total / 1024))
+#     snapshot = tracemalloc.take_snapshot()
+#     top_stats = snapshot.statistics('lineno')
+#     total = sum(stat.size for stat in top_stats)
+#     print("Final allocated size: %.1f KiB" % (total / 1024))
     
