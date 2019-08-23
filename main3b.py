@@ -199,7 +199,7 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     end = time.time() # finish full timer
 
     time_str = "Program finished in {:2.5f} seconds\n".format(end-start) # output total time
-
+    print(time_str)
     del ha, ot, wg, fl, solver, y0, sfinal, ds # clear resources
 
     return (convergence, iters, d, g, pb, n_holes+n_particles, s_vals, E_vals, time_str)
