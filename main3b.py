@@ -15,6 +15,7 @@ import os, sys
 #from memory_profiler import profile
 import itertools
 import random
+import tensornetwork
 
 # user files
 # sys.path.append('C:\\Users\\davison\\Research\\exact_diagonalization\\')

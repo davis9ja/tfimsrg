@@ -1,4 +1,4 @@
-import tensorflow as tf
+#import tensorflow as tf
 # tf.enable_v2_behavior()
 from tensornetwork import *
 import numpy as np
