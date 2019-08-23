@@ -438,24 +438,7 @@ if __name__ == '__main__':
 
     #test_refs('logs_refs\\')
 #    test = main(4,4)
-    import os
-    print(os.environ)
+
 #     # test_exact('plots_exact\\')
 #     # print(ci_matrix.exact_diagonalization(1.0, 0.5,0.0))
-    
-#     tracemalloc.start()
-    
-#     for i in range(5):
-#         test = main(4,4)
-#         print(test[-1])
-
-#         snapshot = tracemalloc.take_snapshot()
-#         top_stats = snapshot.statistics('lineno')
-#         total = sum(stat.size for stat in top_stats)
-#         print("Total allocated size: %.1f KiB" % (total / 1024))
-    
-#     snapshot = tracemalloc.take_snapshot()
-#     top_stats = snapshot.statistics('lineno')
-#     total = sum(stat.size for stat in top_stats)
-#     print("Final allocated size: %.1f KiB" % (total / 1024))
     

@@ -73,10 +73,10 @@ def unravel(E, f, G, W):
     Returns:
 
     concatenation of tensors peeled into 1D arrays"""
-    unravel_E = np.reshape(E, -1)
-    unravel_f = np.reshape(f, -1)
-    unravel_G = np.reshape(G, -1)
-    unravel_W = np.reshape(W, -1)
+    unravel_E = np.reshape(E, -1).astype(np.float32)
+    unravel_f = np.reshape(f, -1).astype(np.float32)
+    unravel_G = np.reshape(G, -1).astype(np.float32)
+    unravel_W = np.reshape(W, -1).astype(np.float32)
 
     return np.concatenate([unravel_E, unravel_f, unravel_G, unravel_W], axis=0)
 
@@ -96,14 +96,14 @@ def ravel(y, bas_len):
 
     # bas_len = len(np.append(holes,particles))
 
-    ravel_E = np.reshape(y[0], ())
-    ravel_f = np.reshape(y[1:bas_len**2+1], (bas_len, bas_len))
+    ravel_E = np.reshape(y[0], ()).astype(np.float32)
+    ravel_f = np.reshape(y[1:bas_len**2+1], (bas_len, bas_len)).astype(np.float32)
     ravel_G = np.reshape(y[bas_len**2+1:bas_len**2+1+bas_len**4],
-                         (bas_len, bas_len, bas_len, bas_len))
+                         (bas_len, bas_len, bas_len, bas_len)).astype(np.float32)
     ravel_W = np.reshape(y[bas_len**2+1+bas_len**4:bas_len**2+1+bas_len**4+bas_len**6],
-                         (bas_len,bas_len,bas_len,bas_len,bas_len,bas_len))
+                         (bas_len,bas_len,bas_len,bas_len,bas_len,bas_len)).astype(np.float32)
 
-    return(ravel_E, ravel_f, ravel_G, ravel_W)
+    return (ravel_E, ravel_f, ravel_G, ravel_W)
 
 def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     """Main method uses scipy.integrate.ode to solve the IMSRG3 flow

@@ -233,7 +233,7 @@ class Flow_IMSRG3(Flow_IMSRG2):
         eta1B = partition[0]
         eta2B = partition[1]
         eta3B = partition[2]
-        # print(eta3B.shape)
+
         occA = self._occA
         occA2 = self._occA2
         occB = self._occB
@@ -260,13 +260,13 @@ class Flow_IMSRG3(Flow_IMSRG2):
         sum4_1b = sum4_1b_3 - sum4_1b_4
 
         # fifth term
-        sum5_1b_1 = ncon([occF, eta3B],
+        sum5_1b_1 = ncon([occF, eta3B.astype(np.float32)],
                          [(-1,-3,-4,-5,-6,0,1,2,3,4), (0,1,-2,2,3,4)]).numpy()
-        sum5_1b_2 = ncon([occF, W],
+        sum5_1b_2 = ncon([occF, W.astype(np.float32)],
                          [(-1,-3,-4,-5,-6,0,1,2,3,4), (0,1,-2,2,3,4)]).numpy()
-        sum5_1b_3 = ncon([sum5_1b_1, W],
+        sum5_1b_3 = ncon([sum5_1b_1, W.astype(np.float32)],
                          [(0,1,-1,2,3,4), (2,3,4,0,1,-2)]).numpy()
-        sum5_1b_4 = ncon([sum5_1b_2, eta3B],
+        sum5_1b_4 = ncon([sum5_1b_2, eta3B.astype(np.float32)],
                          [(0,1,-1,2,3,4), (2,3,4,0,1,-2)]).numpy()
         sum5_1b = sum5_1b_3 - sum5_1b_4
 

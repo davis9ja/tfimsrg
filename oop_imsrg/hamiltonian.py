@@ -40,9 +40,9 @@ class PairingHamiltonian2B(Hamiltonian):
         else:
             self._reference = ref
 
-        self._holes = np.arange(n_hole_states, dtype=np.int64)
+        self._holes = np.arange(n_hole_states, dtype=np.int32)
         self._n_sp_states = n_hole_states + n_particle_states
-        self._particles = np.arange(n_hole_states,self.n_sp_states, dtype=np.int64)
+        self._particles = np.arange(n_hole_states,self.n_sp_states, dtype=np.int32)
         self._sp_basis = np.append(self.holes, self.particles)
 
         self._H1B, self._H2B = self.construct()
@@ -217,7 +217,7 @@ class PairingHamiltonian2B(Hamiltonian):
 
         # two body part of Hamiltonian constructed from four indices
         # with non-zero elements defined by pairing term
-        H2B = np.zeros(np.ones(4, dtype=np.int64)*self.n_sp_states)
+        H2B = np.zeros(np.ones(4, dtype=np.int32)*self.n_sp_states,dtype=np.float32)
         for p in bas1B:
             for q in bas1B:
                 for r in bas1B:
@@ -260,7 +260,7 @@ class PairingHamiltonian2B(Hamiltonian):
         tb_contract = 0.5*net.contract(flatten).tensor.numpy()
 
         E = ob_contract + tb_contract
-
+        E = E.astype(np.float32)
 
         # - Calculate 1B piece
         ob_node1b = net.add_node(H1B_t)
@@ -270,7 +270,7 @@ class PairingHamiltonian2B(Hamiltonian):
         tb_contract = net.contract(tb_ihjh)
 
         f = ob_node1b.tensor.numpy() + tb_contract.tensor.numpy()
-
+        f = f.astype(np.float32)
         G = H2B_t
 
         del net

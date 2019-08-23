@@ -30,6 +30,7 @@ class WegnerGenerator(Generator):
         self.f = h.f
         self.G = h.G
 
+
         self._holes = h.holes
         self._particles = h.particles
 
@@ -81,12 +82,12 @@ class WegnerGenerator(Generator):
         particles = self._particles
 
         # - Decouple off-diagonal 1B and 2B pieces
-        fod = np.zeros(f.shape)
+        fod = np.zeros(f.shape, dtype=np.float32)
         fod[np.ix_(particles, holes)] += f[np.ix_(particles, holes)]
         fod[np.ix_(holes, particles)] += f[np.ix_(holes, particles)]
         fd = f - fod
 
-        God = np.zeros(G.shape)
+        God = np.zeros(G.shape, dtype=np.float32)
         God[np.ix_(particles, particles, holes, holes)] += G[np.ix_(particles, particles, holes, holes)]
         God[np.ix_(holes, holes, particles, particles)] += G[np.ix_(holes, holes, particles, particles)]
         Gd = G - God
@@ -116,6 +117,7 @@ class WegnerGenerator(Generator):
         occA = self._occA
         occB = self._occB
         occC = self._occC
+
 
         # - Calculate 1B generator
         # first term
@@ -201,7 +203,7 @@ class WegnerGenerator3B(WegnerGenerator):
 
         self.f = h.f
         self.G = h.G
-        self.W = np.zeros(h.n_sp_states*np.ones(6,dtype=np.int64))
+        self.W = np.zeros(h.n_sp_states*np.ones(6,dtype=np.int32),dtype=np.float32)
 
         self._holes = h.holes
         self._particles = h.particles
@@ -252,13 +254,13 @@ class WegnerGenerator3B(WegnerGenerator):
         fod = partition[1]
         Gd = partition[2]
         God = partition[3]
-
+        
         W = self.W
-
+        
         holes = self._holes
         particles = self._particles
 
-        Wod = np.zeros(W.shape)
+        Wod = np.zeros(W.shape, dtype=np.float32)
         Wod[np.ix_(particles, particles, particles, holes, holes, holes)] += W[np.ix_(particles, particles, particles, holes, holes, holes)]
         Wod[np.ix_(holes, holes, holes, particles, particles, particles)] += W[np.ix_(holes, holes, holes, particles, particles, particles)]
         Wd = W - Wod
@@ -285,7 +287,7 @@ class WegnerGenerator3B(WegnerGenerator):
         God = partition[3]
         Wd = partition[4]
         Wod = partition[5]
-
+        
         eta1B, eta2B = super().calc_eta()
 
         holes = self._holes
@@ -302,6 +304,7 @@ class WegnerGenerator3B(WegnerGenerator):
         occI = self._occI
         occJ = self._occJ
 
+
         # Calculate 1B generator
         # fourth term
         sum4_1b_1 = np.matmul(np.transpose(occD,[2,3,0,1]), God)
@@ -311,13 +314,13 @@ class WegnerGenerator3B(WegnerGenerator):
         sum4_1b = sum4_1b_3 - sum4_1b_4
 
         # fifth term
-        sum5_1b_1 = ncon([occF, Wd],
+        sum5_1b_1 = ncon([occF, Wd.astype(np.float32)],
                          [(-1,-3,-4,-5,-6,0,1,2,3,4), (0,1,-2,2,3,4)]).numpy()
-        sum5_1b_2 = ncon([occF, Wod],
+        sum5_1b_2 = ncon([occF, Wod.astype(np.float32)],
                          [(-1,-3,-4,-5,-6,0,1,2,3,4), (0,1,-2,2,3,4)]).numpy()
-        sum5_1b_3 = ncon([sum5_1b_1, Wod],
+        sum5_1b_3 = ncon([sum5_1b_1, Wod.astype(np.float32)],
                          [(0,1,-1,2,3,4), (2,3,4,0,1,-2)]).numpy()
-        sum5_1b_4 = ncon([sum5_1b_2, Wd],
+        sum5_1b_4 = ncon([sum5_1b_2, Wd.astype(np.float32)],
                          [(0,1,-1,2,3,4), (2,3,4,0,1,-2)]).numpy()
         sum5_1b = sum5_1b_3 - sum5_1b_4
 
@@ -375,8 +378,8 @@ class WegnerGenerator3B(WegnerGenerator):
                                 np.transpose(sum1_3b_7, [0,1,2,5,4,3])
 
         #terms with P(ij/k)P(l/mn) -- line 3
-        sum1_3b_9  = ncon([Gd, God], [(-1,-2,-4,0),(0,-3,-5,-6)])
-        sum1_3b_10 = ncon([God, Gd], [(-1,-2,-4,0),(0,-3,-5,-6)])
+        sum1_3b_9  = ncon([Gd, God], [(-1,-2,-4,0),(0,-3,-5,-6)]).numpy()
+        sum1_3b_10 = ncon([God, Gd], [(-1,-2,-4,0),(0,-3,-5,-6)]).numpy()
         sum1_3b_11 = sum1_3b_9 - sum1_3b_10
         sum1_3b_12 = sum1_3b_11 - np.transpose(sum1_3b_11, [0,1,2,4,3,5]) - \
                                   np.transpose(sum1_3b_11, [0,1,2,5,4,3])
@@ -423,6 +426,5 @@ class WegnerGenerator3B(WegnerGenerator):
                               np.transpose(sum8_3b_4, [0,2,1,3,4,5])
 
         eta3B = sum1_3b + 0.5*sum4_3b + (-0.5)*sum5_3b + (-1.0)*sum6_3b + (1/6)*sum7_3b + 0.5*sum8_3b
-
 
         return (eta1B, eta2B, eta3B)

@@ -130,14 +130,14 @@ class OccupationTensors(object):
         n = len(bas1B)
 
         if flag == 0: # default
-            occA = np.zeros((n,n,n,n))
+            occA = np.zeros((n,n,n,n),dtype=np.float32)
 
             for a in bas1B:
                 for b in bas1B:
                     occA[a,b,a,b] = ref[a] - ref[b]
 
         if flag == 1:
-            occA = np.zeros((n,n))
+            occA = np.zeros((n,n),dtype=np.float32)
 
             for a in bas1B:
                 for b in bas1B:
@@ -161,14 +161,14 @@ class OccupationTensors(object):
         n = len(bas1B)
 
         if flag == 0: # default
-            occB = np.zeros((n,n,n,n))
+            occB = np.zeros((n,n,n,n),dtype=np.float32)
 
             for a in bas1B:
                 for b in bas1B:
                     occB[a,b,a,b] = 1 - ref[a] - ref[b]
 
         if flag == 1:
-            occB = np.zeros((n,n))
+            occB = np.zeros((n,n),dtype=np.float32)
 
             for a in bas1B:
                 for b in bas1B:
@@ -192,7 +192,7 @@ class OccupationTensors(object):
         n = len(bas1B)
 
         if flag == 0: # default
-            occC = np.zeros((n,n,n,n,n,n))
+            occC = np.zeros((n,n,n,n,n,n),dtype=np.float32)
 
             for a in bas1B:
                 for b in bas1B:
@@ -202,7 +202,7 @@ class OccupationTensors(object):
 
 
         if flag == 1:
-            occC = np.zeros((n,n,n))
+            occC = np.zeros((n,n,n),dtype=np.float32)
 
             for a in bas1B:
                 for b in bas1B:
@@ -227,7 +227,7 @@ class OccupationTensors(object):
         n = len(bas1B)
 
         if flag == 0: # default
-            occD = np.zeros((n,n,n,n,n,n,n,n))
+            occD = np.zeros((n,n,n,n,n,n,n,n),dtype=np.float32)
 
             for a in bas1B:
                 for b in bas1B:
@@ -237,7 +237,7 @@ class OccupationTensors(object):
                                                     (1-ref[c])*(1-ref[d])
 
         if flag == 1:
-            occD = np.zeros((n,n,n,n))
+            occD = np.zeros((n,n,n,n),dtype=np.float32)
 
             for a in bas1B:
                 for b in bas1B:
@@ -260,7 +260,7 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
-        occE = np.zeros((n,n,n,n,n,n))
+        occE = np.zeros((n,n,n,n,n,n),dtype=np.float32)
 
         for a in bas1B:
             for b in bas1B:
@@ -308,7 +308,7 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
-        occG = np.zeros((n,n,n,n,n,n))
+        occG = np.zeros((n,n,n,n,n,n),dtype=np.float32)
 
         for a in bas1B:
             for b in bas1B:
@@ -328,7 +328,7 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
-        occH = np.zeros((n,n,n,n,n,n,n,n))
+        occH = np.zeros((n,n,n,n,n,n,n,n),dtype=np.float32)
 
         for a in bas1B:
             for b in bas1B:
@@ -350,7 +350,7 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
-        occI = np.zeros((n,n,n,n,n,n,n,n))
+        occI = np.zeros((n,n,n,n,n,n,n,n),dtype=np.float32)
 
         for a in bas1B:
             for b in bas1B:
@@ -371,7 +371,7 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
-        occJ = np.zeros((n,n,n,n,n,n))
+        occJ = np.zeros((n,n,n,n,n,n),dtype=np.float32)
 
         for a in bas1B:
             for b in bas1B:
