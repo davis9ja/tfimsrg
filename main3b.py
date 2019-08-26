@@ -156,7 +156,7 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
 
     # --- Solve the IM-SRG flow
     y0 = unravel(ha.E, ha.f, ha.G, wg.W)
-
+    print('sum(Ws**2)',np.sum(wg.W**2))
     solver = ode(derivative,jac=None)
     solver.set_integrator('vode', method='bdf', order=5, nsteps=500)
     solver.set_f_params(ha, ot, wg, fl)
@@ -175,7 +175,7 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
         Es, fs, Gs, Ws = ravel(ys, ha.n_sp_states)
         s_vals.append(solver.t)
         E_vals.append(Es)
-
+        print('sum(Ws**2)',np.sum(Ws**2))
         iters += 1
 
         if iters %10 == 0: print("iter: {:>6d} \t scale param: {:0.4f} \t E = {:0.9f}".format(iters, solver.t, Es))

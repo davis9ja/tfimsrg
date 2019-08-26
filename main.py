@@ -18,7 +18,8 @@ import os, sys
 #from memory_profiler import profile
 import itertools
 import random
-
+sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
+sess.close()
 # user files
 # sys.path.append('C:\\Users\\davison\\Research\\exact_diagonalization\\')
 from oop_imsrg.hamiltonian import *
