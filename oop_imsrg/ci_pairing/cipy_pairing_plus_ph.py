@@ -158,7 +158,7 @@ def exact_diagonalization(d, g, pb):
 
     w,v = np.linalg.eig(hme)
     w_sort = w[np.argsort(w)]
-    print("--- Ground state energy: {:2.4f}\n".format(w_sort[0]))
+    print("--- Ground state energy: {:2.8f}\n".format(w_sort[0]))
     return w_sort[0] # ground state energy
 #
 # hme = matrix(states, 1.0, 0.5, 0.1) # delta, g, f
