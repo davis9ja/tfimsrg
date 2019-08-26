@@ -18,4 +18,4 @@
     * [ ] investigate where level crossing may occur for values of pb and g
       * [ ] use exact diagonalization results to verify
     * [ ] scan reference state configurations to find ground state for values of pb and g
-  * [ ] using TN to implement the IMSRG(3)
+  * [x] using TN to implement the IMSRG(3)
