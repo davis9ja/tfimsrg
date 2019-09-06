@@ -20,6 +20,7 @@ import itertools
 import random
 sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
 sess.close()
+
 # user files
 # sys.path.append('C:\\Users\\davison\\Research\\exact_diagonalization\\')
 from oop_imsrg.hamiltonian import *
@@ -195,38 +196,53 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     
     return (convergence, iters, d, g, pb, n_holes+n_particles, s_vals, E_vals, time_str)
 
-def exact_diagonalization(d, g):
-    """Result of exact diagonalization in spin=0 block of
-    pairing Hamiltonian, given 8 single particle states (4 hole states
-    and 4 particle states).
-
-    Arguments:
-
-    d -- energy level spacing
-    g -- pairing strength
-
-    Returns:
-
-    E -- ground state energy
-    """
-    H = [[2*d-g, -g/2, -g/2, -g/2, -g/2, 0],
-         [-g/2, 4*d-g, -g/2, -g/2, 0, -g/2],
-         [-g/2, -g/2, 6*d-g, 0, -g/2, -g/2],
-         [-g/2, -g/2, 0, 6*d-g, -g/2, -g/2],
-         [-g/2, 0, -g/2, -g/2, 8*d-g, -g/2],
-         [0, -g/2, -g/2, -g/2, -g/2, 10*d-g]]
-
-    w, v = np.linalg.eig(H)
-    E = w[0]
-
-    return E
-
 
 if __name__ == '__main__':
 
     #test_refs('logs_refs\\')
-    print(ci_matrix.exact_diagonalization(1.0, 0.5,0.0))
-    test = main(4,4)
+    # print(ci_matrix.exact_diagonalization(1.0, 0.5,0.0))
+   #test = main(4,4)
+    # occt = OccupationTensors(np.array([0,1,2,3,4,5,6,7]), np.array([1,1,1,1,0,0,0,0]))
+    # bas1B = [0,1,2,3,4,5,6,7]
+    # occE = occt.occE
+    # for a in bas1B:
+    #     for b in bas1B:
+    #         for c in bas1B:
+    #             for d in bas1B:
+    #                 for e in bas1B:
+    #                     for f in bas1B:
+    #                         val = occE[a,b,c,d,e,f]
+    #                         if val != 0:
+    #                             with open('occE_nonzero.txt', 'a') as fi:
+    #                                 fi.write('%s %s %s %s %s %s -- %s\n' % (a,b,c,d,e,f,val))
 
-#     # test_exact('plots_exact\\')
-    # print(exact_diagonalization(1.0,0.5))
+    #test_exact('plots_exact_2b/', main)
+    
+    bas1B = np.array([0,1,2,3,4,5,6,7])
+    ref = np.array([1,1,1,1,0,0,0,0],dtype=np.float16)
+    occt = OccupationTensors(bas1B,ref)
+    occF = occt.occF
+    
+    test1 = np.einsum('i,j,k,l,m->ijklm',ref,ref,(1-ref),(1-ref),(1-ref))
+    test1e = np.einsum('ijklm,nopqr->ijklmnopqr',test1,test1)
+    test2 = np.einsum('i,j,k,l,m->ijklm',(1-ref),(1-ref),ref,ref,ref)
+    test2e = np.einsum('ijklm,nopqr->ijklmnopqr',test2,test2)
+    test = test1e + test2e
+    # test = np.einsum('ijklm,nopqr->ijklmnopqr',test3,test3)
+    print(occF.dtype, test.dtype)
+    print(occF.shape, test.shape)
+    print(np.array_equal(occF, test))
+    
+    # for a in bas1B:
+    #     for b in bas1B:
+    #         for c in bas1B:
+    #             for d in bas1B:
+    #                 for e in bas1B:
+    #                     for f in bas1B:
+    #                         val1 = test[a,b,c,d,e,f]
+    #                         val2 = occC[a,b,c,d,e,f]
+    #                         if val1 != val2:
+    #                             print('conflict found for ',a,b,c,d,e,f'-',val1,val2)
+                            
+    #                         with open('occE_nonzero_test.txt', 'a') as fi:
+    #                             fi.write('%s %s %s %s %s -- %s\n' % (a,b,c,d,e,val))

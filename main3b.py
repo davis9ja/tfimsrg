@@ -156,7 +156,7 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
 
     # --- Solve the IM-SRG flow
     y0 = unravel(ha.E, ha.f, ha.G, wg.W)
-    print('sum(Ws**2)',np.sum(wg.W**2))
+    
     solver = ode(derivative,jac=None)
     solver.set_integrator('vode', method='bdf', order=5, nsteps=500)
     solver.set_f_params(ha, ot, wg, fl)
@@ -175,9 +175,10 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
         Es, fs, Gs, Ws = ravel(ys, ha.n_sp_states)
         s_vals.append(solver.t)
         E_vals.append(Es)
-        print('sum(Ws**2)',np.sum(Ws**2))
+        
         iters += 1
-
+        # if iters == 1:
+        #     break
         if iters %10 == 0: print("iter: {:>6d} \t scale param: {:0.4f} \t E = {:0.9f}".format(iters, solver.t, Es))
 
         if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) < 10**-8 and E_vals[-1] != E_vals[0]:
@@ -219,47 +220,46 @@ def test_exact(plots_dir):
 
     g_vals = np.linspace(start, stop, num)
 
-    for pb in g_vals:
-        E_corrs = []
-        E_exacts = []
-        for g in g_vals:
-            data = main3b(4,4, d=1.0, g=g, pb=0.0)
-            E_vals = data[7]
-            E_corr = E_vals[-1]
-            E_exact = exact_diagonalization(1.0, g)
+    E_corrs = []
+    E_exacts = []
+    for g in g_vals:
+        data = main3b(4,4, d=1.0, g=g, pb=0.0)
+        E_vals = data[7]
+        E_corr = E_vals[-1]
+        E_exact = ci_matrix.exact_diagonalization(1.0, g, 0.0)
 
-            E_corrs.append(E_corr - (2-g))
-            E_exacts.append(E_exact - (2-g))
-
-            plt.figure(figsize=[12,8])
-            plt.plot(data[6], data[7])
-            plt.ylabel('Energy')
-            plt.xlabel('scale parameter')
-            plt.title('Convergence for \n g={:2.4f}, pb={:2.4f}'.format(g,pb))
-
-            pb_plots_dir = plots_dir+'pb{:2.4f}\\'.format(pb)
-            if not os.path.exists(pb_plots_dir):
-                os.mkdir(pb_plots_dir)
-
-            plt.savefig(pb_plots_dir+'g{:2.4f}_pb{:2.4f}.png'.format(g,pb))
-            plt.close()
+        E_corrs.append(E_corr - (2-g))
+        E_exacts.append(E_exact - (2-g))
 
         plt.figure(figsize=[12,8])
-        plt.plot(g_vals, E_exacts, marker='s')
-        plt.plot(g_vals, E_corrs, marker='v')
-        plt.ylabel('E$_{corr}$')
-        plt.xlabel('g')
-        plt.legend(['exact', 'IMSRG(3)'])
-        plt.title('Correlation energy with pb = {:2.4f}'.format(pb))
-        plt.savefig(plots_dir+'pb{:2.4f}.png'.format(pb))
+        plt.plot(data[6], data[7])
+        plt.ylabel('Energy')
+        plt.xlabel('scale parameter')
+        plt.title('Convergence for \n g={:2.4f}, pb={:2.4f}'.format(g,0.0))
+        
+        pb_plots_dir = plots_dir+'pb{:2.4f}\\'.format(0.0)
+        if not os.path.exists(pb_plots_dir):
+            os.mkdir(pb_plots_dir)
+
+        plt.savefig(pb_plots_dir+'g{:2.4f}_pb{:2.4f}.png'.format(g,0.0))
         plt.close()
-        print(E_exacts)
-        break
+
+    plt.figure(figsize=[12,8])
+    plt.plot(g_vals, E_exacts, marker='s')
+    plt.plot(g_vals, E_corrs, marker='v')
+    plt.ylabel('E$_{corr}$')
+    plt.xlabel('g')
+    plt.legend(['exact', 'IMSRG(3)'])
+    plt.title('Correlation energy with pb = {:2.4f}'.format(pb))
+    plt.savefig(plots_dir+'pb{:2.4f}.png'.format(pb))
+    plt.close()
+    print(E_exacts)
+
 
 
 if __name__ == '__main__':
-    # test_exact("plots3b\\")
-    test = main3b(4,4)
+    test_exact("plots3b\\")
+    #test = main3b(4,4)
     
     #tracemalloc.start()
     

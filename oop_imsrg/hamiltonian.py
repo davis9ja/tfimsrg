@@ -36,9 +36,10 @@ class PairingHamiltonian2B(Hamiltonian):
         self._g = g
         self._pb = pb
         if ref == None:
-            self._reference = np.append(np.ones(n_hole_states), np.zeros(n_particle_states))
+            self._reference = np.append(np.ones(n_hole_states,dtype=np.float32),
+                                        np.zeros(n_particle_states,dtype=np.float32))
         else:
-            self._reference = ref
+            self._reference = np.asarray(ref,dtype=np.float32)
 
         self._holes = np.arange(n_hole_states, dtype=np.int32)
         self._n_sp_states = n_hole_states + n_particle_states

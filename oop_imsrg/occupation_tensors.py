@@ -191,6 +191,18 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
+        # occC1 = np.einsum('i,j,k->ijk', ref,ref,(1-ref))
+        # occC2 = np.einsum('i,j,k->ijk', (1-ref),(1-ref),ref)
+        # occC3 = occC1 + occC2
+        
+        # if flag == 0: # default
+        #     occC = np.einsum('ijk,lmn->ijklmn', occC3, occC3)
+        #     return occC
+        
+        # if flag == 1:
+        #     occC = occC3
+        #     return occC
+
         if flag == 0: # default
             occC = np.zeros((n,n,n,n,n,n),dtype=np.float32)
 
@@ -199,8 +211,7 @@ class OccupationTensors(object):
                     for c in bas1B:
                         occC[a,b,c,a,b,c] = ref[a]*ref[b]*(1-ref[c]) + \
                                             (1-ref[a])*(1-ref[b])*ref[c]
-
-
+        
         if flag == 1:
             occC = np.zeros((n,n,n),dtype=np.float32)
 
@@ -225,7 +236,14 @@ class OccupationTensors(object):
         bas1B = self._sp_basis
         ref = self._reference
         n = len(bas1B)
-
+        # occD = np.einsum('i,j,k,l->ijkl',ref,ref,(1-ref),(1-ref))
+        
+        # if flag == 0: # default
+        #     occD = np.einsum('ijkl,mnop->ijklmnop', occD, occD)
+        #     return occD
+        # if flag == 1:
+        #     return occD
+        
         if flag == 0: # default
             occD = np.zeros((n,n,n,n,n,n,n,n),dtype=np.float32)
 
@@ -245,9 +263,8 @@ class OccupationTensors(object):
                         for d in bas1B:
                             occD[a,b,c,d] = ref[a]*ref[b]*\
                                             (1-ref[c])*(1-ref[d])
-
         return occD
-
+                            
 # ---- ALL ABOVE REQUIRED FOR IMSRG(2) ---
 
     def __get_occE(self):
@@ -260,19 +277,22 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
-        occE = np.zeros((n,n,n,n,n,n),dtype=np.float32)
+        occE = np.einsum('i,j,k,l,m,n->ijklmn',ref,ref,ref,(1-ref),(1-ref),(1-ref))
+        
+        # occE = np.zeros((n,n,n,n,n,n),dtype=np.float32)
 
-        for a in bas1B:
-            for b in bas1B:
-                for c in bas1B:
-                    for d in bas1B:
-                        for e in bas1B:
-                            for f in bas1B:
-                                occE[a,b,c,d,e,f] = ref[a]*ref[b]*ref[c]*\
-                                                    (1-ref[d])*(1-ref[e])*\
-                                                    (1-ref[f])
+        # for a in bas1B:
+        #     for b in bas1B:
+        #         for c in bas1B:
+        #             for d in bas1B:
+        #                 for e in bas1B:
+        #                     for f in bas1B:
+        #                         occE[a,b,c,d,e,f] = ref[a]*ref[b]*ref[c]*\
+        #                                             (1-ref[d])*(1-ref[e])*\
+        #                                             (1-ref[f])
 
         return occE
+    
     def __get_occF(self):
         """Builds the occupation tensor __get_occF. Treat as a rank 10 tensor.
 
@@ -284,6 +304,11 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
+        # occF1 = np.einsum('i,j,k,l,m->ijklm',ref,ref,(1-ref),(1-ref),(1-ref))
+        # occF2 = np.einsum('i,j,k,l,m->ijklm',(1-ref),(1-ref),ref,ref,ref)
+        # occF3 = occF1 + occF2
+        # occF = np.einsum('ijklm,nopqr->ijklmnopqr',occF3,occF3)
+        
         occF = np.zeros((n,n,n,n,n,n,n,n,n,n),dtype=np.float32)
 
         for a in bas1B:
