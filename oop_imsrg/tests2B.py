@@ -150,7 +150,7 @@ def test_exact(plots_dir, main):
             data = main(4,4, d=1.0, g=g, pb=0.0)
             E_vals = data[7]
             E_corr = E_vals[-1]
-            E_exact = exact_diagonalization(1.0, g)
+            E_exact = ci_matrix.exact_diagonalization(1.0, g)
 
             E_corrs.append(E_corr - (2-g))
             E_exacts.append(E_exact - (2-g))
