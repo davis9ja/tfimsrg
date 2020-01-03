@@ -829,12 +829,12 @@ def calc_mbpt3(f, Gamma, user_data):
 # Main program
 #------------------------------------------------------------------------------
 #@profile
-def main(n_holes):
+def main(n_holes, g=0.5):
   # grab delta and g from the command line
   # delta      = float(argv[1])
   # g          = float(argv[2])
   delta = 1
-  g = 0.5
+  #g = g
   
   particles  = n_holes
 
@@ -923,6 +923,7 @@ def main(n_holes):
     "||eta||", "||fod||", "||Gammaod||"))
   # print "-----------------------------------------------------------------------------------------------------------------"
   print("-" * 148)
+  count = 0
   while solver.successful() and solver.t < sfinal:
     ys = solver.integrate(sfinal, step=True)
     
@@ -935,9 +936,14 @@ def main(n_holes):
     norm_fod     = calc_fod_norm(f, user_data)
     norm_Gammaod = calc_Gammaod_norm(Gamma, user_data)
 
-    print("%8.5f %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f"%(
-      solver.t, E , DE2, DE3, E+DE2+DE3, user_data["dE"], user_data["eta_norm"], norm_fod, norm_Gammaod))
+    if count % 10 == 0:
+      print("%8.5f %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f"%(
+        solver.t, E , DE2, DE3, E+DE2+DE3, user_data["dE"], user_data["eta_norm"], norm_fod, norm_Gammaod))
+    count += 1
+
     if abs(DE2/E) < 10e-8: break
+
+  return E
 
 
 #    solver.integrate(solver.t + ds)
@@ -946,7 +952,7 @@ def main(n_holes):
 # make executable
 #------------------------------------------------------------------------------
 if __name__ == "__main__": 
-  main(int(argv[1]))
+  main(4)
 
 import pytest
 

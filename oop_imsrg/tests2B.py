@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import random
 
 import oop_imsrg.ci_pairing.cipy_pairing_plus_ph as ci_matrix
+import benchmarking_wd.imsrg_pairing as pypairing
 
 def test_refs(plots_dir, main):
     """The purpose of this test is to compare the result of full 
@@ -144,16 +145,20 @@ def test_exact(plots_dir, main):
     g_vals = np.linspace(start, stop, num)
 
     for pb in g_vals:
+        pb = 0.0
         E_corrs = []
         E_exacts = []
+        E_pys = []
         for g in g_vals:
             data = main(4,4, d=1.0, g=g, pb=0.0)
             E_vals = data[7]
             E_corr = E_vals[-1]
-            E_exact = ci_matrix.exact_diagonalization(1.0, g)
+            E_exact = ci_matrix.exact_diagonalization(1.0, g, pb)
+            E_py = pypairing.main(4, g)
 
             E_corrs.append(E_corr - (2-g))
             E_exacts.append(E_exact - (2-g))
+            E_pys.append(E_py - (2-g))
 
             plt.figure(figsize=[12,8])
             plt.plot(data[6], data[7])
@@ -161,7 +166,7 @@ def test_exact(plots_dir, main):
             plt.xlabel('scale parameter')
             plt.title('Convergence for \n g={:2.4f}, pb={:2.4f}'.format(g,pb))
 
-            pb_plots_dir = plots_dir+'pb{:2.4f}\\'.format(pb)
+            pb_plots_dir = plots_dir+'pb{:2.4f}/'.format(pb)
             if not os.path.exists(pb_plots_dir):
                 os.mkdir(pb_plots_dir)
 
@@ -171,13 +176,14 @@ def test_exact(plots_dir, main):
         plt.figure(figsize=[12,8])
         plt.plot(g_vals, E_exacts, marker='s')
         plt.plot(g_vals, E_corrs, marker='v')
+        plt.plot(g_vals, E_pys, marker='x')
         plt.ylabel('E$_{corr}$')
         plt.xlabel('g')
-        plt.legend(['exact', 'IMSRG(2)'])
+        plt.legend(['CI', 'IMSRG(2) TN', 'IMSRG(2) PY'])
         plt.title('Correlation energy with pb = {:2.4f}'.format(pb))
         plt.savefig(plots_dir+'pb{:2.4f}.png'.format(pb))
         plt.close()
-        print(E_exacts)
+        #print(E_exacts)
         break
 
 def scan_params(main):

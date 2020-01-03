@@ -1,9 +1,10 @@
 #import tensorflow as tf
 # tf.enable_v2_behavior()
-from tensornetwork import *
+import tensornetwork as tn
 import numpy as np
 from oop_imsrg.hamiltonian import *
 from oop_imsrg.occupation_tensors import *
+tn.set_default_backend("tensorflow") 
 
 class Generator(object):
     """Parent class for organization purposes. Ideally, all Generator
@@ -121,24 +122,24 @@ class WegnerGenerator(Generator):
 
         # - Calculate 1B generator
         # first term
-        sum1_1b_1 = ncon([fd, fod], [(-1, 0), (0, -2)]).numpy()
+        sum1_1b_1 = tn.ncon([fd, fod], [(-1, 1), (1, -2)]).numpy()
         sum1_1b_2 = np.transpose(sum1_1b_1)
         sum1_1b = sum1_1b_1 - sum1_1b_2
 
         # second term
-        sum2_1b_1 = ncon([fd, occA, God], [(2,3), (2,3,0,1), (1,-1,0,-2)]).numpy()
-        sum2_1b_2 = ncon([fod, occA, Gd], [(2,3), (2,3,0,1), (1,-1,0,-2)]).numpy()
+        sum2_1b_1 = tn.ncon([fd, occA, God], [(3,4), (3,4,1,2), (2,-1,1,-2)]).numpy()
+        sum2_1b_2 = tn.ncon([fod, occA, Gd], [(3,4), (3,4,1,2), (2,-1,1,-2)]).numpy()
         sum2_1b = sum2_1b_1 - sum2_1b_2
-        # sum2_1b_1 = ncon([fd, God], [(0, 1), (1, -1, 0, -2)]).numpy()
-        # sum2_1b_2 = ncon([fod, Gd], [(0, 1), (1, -1, 0, -2)]).numpy()
+        # sum2_1b_1 = tn.ncon([fd, God], [(0, 1), (1, -1, 0, -2)]).numpy()
+        # sum2_1b_2 = tn.ncon([fod, Gd], [(0, 1), (1, -1, 0, -2)]).numpy()
         # sum2_1b_3 = sum2_1b_1 - sum2_1b_2
-        # sum2_1b = ncon([occA, sum2_1b_3],[(-1, -2, 0, 1), (0,1)]).numpy()
+        # sum2_1b = tn.ncon([occA, sum2_1b_3],[(-1, -2, 0, 1), (0,1)]).numpy()
 
         # third term
-        sum3_1b_1 = ncon([Gd, occC, God], [(5,-1,3,4), (3,4,5,0,1,2), (0,1,2,-2)]).numpy()
+        sum3_1b_1 = tn.ncon([Gd, occC, God], [(6,-1,4,5), (4,5,6,1,2,3), (1,2,3,-2)]).numpy()
         sum3_1b = sum3_1b_1 - np.transpose(sum3_1b_1)
-        # sum3_1b_1 = ncon([occC, God], [(-1, -2, -3, 0, 1, 2), (0, 1, 2, -4)]).numpy()
-        # sum3_1b_2 = ncon([Gd, sum3_1b_1], [(2, -1, 0, 1), (0, 1, 2, -2)]).numpy()
+        # sum3_1b_1 = tn.ncon([occC, God], [(-1, -2, -3, 0, 1, 2), (0, 1, 2, -4)]).numpy()
+        # sum3_1b_2 = tn.ncon([Gd, sum3_1b_1], [(2, -1, 0, 1), (0, 1, 2, -2)]).numpy()
         # sum3_1b_3 = np.transpose(sum3_1b_2)
         # sum3_1b = sum3_1b_2 - sum3_1b_3
 
@@ -146,15 +147,15 @@ class WegnerGenerator(Generator):
 
         # - Calculate 2B generator
         # first term (P_ij piece)
-        sum1_2b_1 = ncon([fd, God], [(-1, 0), (0, -2, -3, -4)]).numpy()
-        sum1_2b_2 = ncon([fod, Gd], [(-1, 0), (0, -2, -3, -4)]).numpy()
+        sum1_2b_1 = tn.ncon([fd, God], [(-1, 1), (1, -2, -3, -4)]).numpy()
+        sum1_2b_2 = tn.ncon([fod, Gd], [(-1, 1), (1, -2, -3, -4)]).numpy()
         sum1_2b_3 = sum1_2b_1 - sum1_2b_2
         sum1_2b_4 = np.transpose(sum1_2b_3, [1, 0, 2, 3])
         sum1_2b_5 = sum1_2b_3 - sum1_2b_4
 
         # first term (P_kl piece)
-        sum1_2b_6 = ncon([fd, God], [(0, -3), (-1, -2, 0, -4)]).numpy()
-        sum1_2b_7 = ncon([fod, Gd], [(0, -3), (-1, -2, 0, -4)]).numpy()
+        sum1_2b_6 = tn.ncon([fd, God], [(1, -3), (-1, -2, 1, -4)]).numpy()
+        sum1_2b_7 = tn.ncon([fod, Gd], [(1, -3), (-1, -2, 1, -4)]).numpy()
         sum1_2b_8 = sum1_2b_6 - sum1_2b_7
         sum1_2b_9 = np.transpose(sum1_2b_8, [0, 1, 3, 2])
         sum1_2b_10 = sum1_2b_8 - sum1_2b_9
@@ -162,25 +163,25 @@ class WegnerGenerator(Generator):
         sum1_2b = sum1_2b_5 - sum1_2b_10
 
         # second term
-        sum2_2b_1 = ncon([Gd, occB, God], [(-1,-2,2,3), (2,3,0,1), (0,1,-3,-4)]).numpy()
-        sum2_2b_2 = ncon([God, occB, Gd], [(-1,-2,2,3), (2,3,0,1), (0,1,-3,-4)]).numpy()
+        sum2_2b_1 = tn.ncon([Gd, occB, God], [(-1,-2,3,4), (3,4,1,2), (1,2,-3,-4)]).numpy()
+        sum2_2b_2 = tn.ncon([God, occB, Gd], [(-1,-2,3,4), (3,4,1,2), (1,2,-3,-4)]).numpy()
         sum2_2b = sum2_2b_1 - sum2_2b_2
-        # sum2_2b_1 = ncon([occB, God], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
-        # sum2_2b_2 = ncon([occB,  Gd], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
-        # sum2_2b_3 = ncon([Gd,  sum2_2b_1], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
-        # sum2_2b_4 = ncon([God, sum2_2b_2], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
+        # sum2_2b_1 = tn.ncon([occB, God], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
+        # sum2_2b_2 = tn.ncon([occB,  Gd], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
+        # sum2_2b_3 = tn.ncon([Gd,  sum2_2b_1], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
+        # sum2_2b_4 = tn.ncon([God, sum2_2b_2], [(-1, -2, 0, 1), (0, 1, -3, -4)]).numpy()
         # sum2_2b = sum2_2b_3 - sum2_2b_4
 
         # third term
-        sum3_2b_1 = ncon([Gd, occA, God], [(2,-1,3,-3), (2,3,0,1), (1,-2,0,-4)]).numpy()
+        sum3_2b_1 = tn.ncon([Gd, occA, God], [(3,-1,4,-3), (3,4,1,2), (2,-2,1,-4)]).numpy()
         sum3_2b_2 = sum3_2b_1 - np.transpose(sum3_2b_1, [0,1,3,2])
         sum3_2b = sum3_2b_2 - np.transpose(sum3_2b_2, [1,0,2,3])
-        # sum3_2b_1 = ncon([Gd, God], [(0, -1, 1, -3), (1, -2, 0, -4)]).numpy()
+        # sum3_2b_1 = tn.ncon([Gd, God], [(0, -1, 1, -3), (1, -2, 0, -4)]).numpy()
         # sum3_2b_2 = np.transpose(sum3_2b_1, [1, 0, 2, 3])
         # sum3_2b_3 = np.transpose(sum3_2b_1, [0, 1, 3, 2])
         # sum3_2b_4 = np.transpose(sum3_2b_1, [1, 0, 3, 2])
         # sum3_2b_5 = sum3_2b_1 - sum3_2b_2 - sum3_2b_3 + sum3_2b_4
-        # sum3_2b = ncon([occA, sum3_2b_5], [(0, 1, -1, -2), (0, 1, -3, -4)]).numpy()
+        # sum3_2b = tn.ncon([occA, sum3_2b_5], [(0, 1, -1, -2), (0, 1, -3, -4)]).numpy()
 
         eta2B = sum1_2b + 0.5*sum2_2b + sum3_2b
 
@@ -309,25 +310,25 @@ class WegnerGenerator3B(WegnerGenerator):
         # fourth term
         sum4_1b_1 = np.matmul(np.transpose(occD,[2,3,0,1]), God)
         sum4_1b_2 = np.matmul(np.transpose(occD,[2,3,0,1]), Gd)
-        sum4_1b_3 = ncon([Wd,  sum4_1b_1], [(0,1,-1,2,3,-2),(2,3,0,1)]).numpy()
-        sum4_1b_4 = ncon([Wod, sum4_1b_2], [(0,1,-1,2,3,-2),(2,3,0,1)]).numpy()
+        sum4_1b_3 = tn.ncon([Wd,  sum4_1b_1], [(0,1,-1,2,3,-2),(2,3,0,1)]).numpy()
+        sum4_1b_4 = tn.ncon([Wod, sum4_1b_2], [(0,1,-1,2,3,-2),(2,3,0,1)]).numpy()
         sum4_1b = sum4_1b_3 - sum4_1b_4
 
         # fifth term
-        sum5_1b_1 = ncon([Wd, occF, Wod], [(5,6,-1,7,8,9),
+        sum5_1b_1 = tn.ncon([Wd, occF, Wod], [(5,6,-1,7,8,9),
                                            (5,6,7,8,9,0,1,2,3,4),
                                            (2,3,4,0,1,-2)]).numpy()
-        sum5_1b_2 = ncon([Wod, occF, Wd], [(5,6,-1,7,8,9),
+        sum5_1b_2 = tn.ncon([Wod, occF, Wd], [(5,6,-1,7,8,9),
                                            (5,6,7,8,9,0,1,2,3,4),
                                            (2,3,4,0,1,-2)]).numpy()
         sum5_1b = sum5_1b_1 - sum5_1b_2
-        # sum5_1b_1 = ncon([occF, Wd.astype(np.float32)],
+        # sum5_1b_1 = tn.ncon([occF, Wd.astype(np.float32)],
         #                  [(-1,-3,-4,-5,-6,0,1,2,3,4), (0,1,-2,2,3,4)]).numpy()
-        # sum5_1b_2 = ncon([occF, Wod.astype(np.float32)],
+        # sum5_1b_2 = tn.ncon([occF, Wod.astype(np.float32)],
         #                  [(-1,-3,-4,-5,-6,0,1,2,3,4), (0,1,-2,2,3,4)]).numpy()
-        # sum5_1b_3 = ncon([sum5_1b_1, Wod.astype(np.float32)],
+        # sum5_1b_3 = tn.ncon([sum5_1b_1, Wod.astype(np.float32)],
         #                  [(0,1,-1,2,3,4), (2,3,4,0,1,-2)]).numpy()
-        # sum5_1b_4 = ncon([sum5_1b_2, Wd.astype(np.float32)],
+        # sum5_1b_4 = tn.ncon([sum5_1b_2, Wd.astype(np.float32)],
         #                  [(0,1,-1,2,3,4), (2,3,4,0,1,-2)]).numpy()
         # sum5_1b = sum5_1b_3 - sum5_1b_4
 
@@ -337,55 +338,55 @@ class WegnerGenerator3B(WegnerGenerator):
         # fourth term
         sum4_2b_1 = np.matmul(-1.0*np.transpose(occA2), fod)
         sum4_2b_2 = np.matmul(-1.0*np.transpose(occA2),  fd)
-        sum4_2b_3 = ncon([Wd,  sum4_2b_1], [(0,-1,-2,1,-3,-4), (1,0)]).numpy()
-        sum4_2b_4 = ncon([Wod, sum4_2b_2], [(0,-1,-2,1,-3,-4), (1,0)]).numpy()
+        sum4_2b_3 = tn.ncon([Wd,  sum4_2b_1], [(0,-1,-2,1,-3,-4), (1,0)]).numpy()
+        sum4_2b_4 = tn.ncon([Wod, sum4_2b_2], [(0,-1,-2,1,-3,-4), (1,0)]).numpy()
         sum4_2b = sum4_2b_3 - sum4_2b_4
 
         #fifth term
-        sum5_2b_1 = ncon([Wd, occG, God], [(3,-1,-2,4,5,-4),
+        sum5_2b_1 = tn.ncon([Wd, occG, God], [(3,-1,-2,4,5,-4),
                                            (3,4,5,0,1,2),
                                            (1,2,0,-3)]).numpy()
-        sum5_2b_2 = ncon([Wod, occG, Gd], [(3,-1,-2,4,5,-4),
+        sum5_2b_2 = tn.ncon([Wod, occG, Gd], [(3,-1,-2,4,5,-4),
                                            (3,4,5,0,1,2),
                                            (1,2,0,-3)]).numpy()
         sum5_2b = sum5_2b_2 - np.transpose(sum5_2b_2, [3,2,0,1]) - \
                     np.transpose(sum5_2b_2, [0,1,3,2]) + \
                     np.transpose(sum5_2b_2, [2,3,0,1])
 
-        # sum5_2b_1 = ncon([occG, God], [(-1,-2,-4,0,1,2), (1,2,0,-3)]).numpy()
-        # sum5_2b_2 = ncon([occG,  Gd], [(-1,-2,-4,0,1,2), (1,2,0,-3)]).numpy()
-        # sum5_2b_3 = ncon([Wd,  sum5_2b_1], [(0,-1,-2,1,2,-4), (1,2,0,-3)]).numpy()
-        # sum5_2b_4 = ncon([Wod, sum5_2b_2], [(0,-1,-2,1,2,-4), (1,2,0,-3)]).numpy()
+        # sum5_2b_1 = tn.ncon([occG, God], [(-1,-2,-4,0,1,2), (1,2,0,-3)]).numpy()
+        # sum5_2b_2 = tn.ncon([occG,  Gd], [(-1,-2,-4,0,1,2), (1,2,0,-3)]).numpy()
+        # sum5_2b_3 = tn.ncon([Wd,  sum5_2b_1], [(0,-1,-2,1,2,-4), (1,2,0,-3)]).numpy()
+        # sum5_2b_4 = tn.ncon([Wod, sum5_2b_2], [(0,-1,-2,1,2,-4), (1,2,0,-3)]).numpy()
         # sum5_2b_5 = sum5_2b_3 - sum5_2b_4
         # sum5_2b = sum5_2b_5 - np.transpose(sum5_2b_5, [3,2,0,1]) - \
         #             np.transpose(sum5_2b_5, [0,1,3,2]) + \
         #             np.transpose(sum5_2b_5, [2,3,0,1])
 
         #sixth term
-        sum6_2b_1 = ncon([Wd, occH, Wod], [(4,-1,-2,5,6,7),
+        sum6_2b_1 = tn.ncon([Wd, occH, Wod], [(4,-1,-2,5,6,7),
                                            (4,5,6,7,0,1,2,3),
                                            (1,2,3,0,-3,-4)]).numpy()
-        sum6_2b_2 = ncon([Wd, occH, Wod], [(5,6,7,4,-3,-4),
+        sum6_2b_2 = tn.ncon([Wd, occH, Wod], [(5,6,7,4,-3,-4),
                                            (4,5,6,7,0,1,2,3),
                                            (0,-1,-2,1,2,3)]).numpy()
         sum6_2b = sum6_2b_1 - sum6_2b_2
 
-        # sum6_2b_1 = ncon([occH, Wod], [(-1,-2,-3,-4,0,1,2,3),(1,2,3,0,-5,-6)]).numpy()
-        # sum6_2b_2 = ncon([occH, Wod], [(-3,-4,-5,-6,0,1,2,3),(0,-1,-2,1,2,3)]).numpy()
-        # sum6_2b_3 = ncon([Wd, sum6_2b_1], [(0,-1,-2,1,2,3), (1,2,3,0,-3,-4)]).numpy()
-        # sum6_2b_4 = ncon([Wd, sum6_2b_2], [(1,2,3,0,-3,-4), (0,-1,-2,1,2,3)]).numpy()
+        # sum6_2b_1 = tn.ncon([occH, Wod], [(-1,-2,-3,-4,0,1,2,3),(1,2,3,0,-5,-6)]).numpy()
+        # sum6_2b_2 = tn.ncon([occH, Wod], [(-3,-4,-5,-6,0,1,2,3),(0,-1,-2,1,2,3)]).numpy()
+        # sum6_2b_3 = tn.ncon([Wd, sum6_2b_1], [(0,-1,-2,1,2,3), (1,2,3,0,-3,-4)]).numpy()
+        # sum6_2b_4 = tn.ncon([Wd, sum6_2b_2], [(1,2,3,0,-3,-4), (0,-1,-2,1,2,3)]).numpy()
         # sum6_2b = sum6_2b_3 - sum6_2b_4
 
         #seventh term
-        sum7_2b_1 = ncon([Wd, occI, Wod], [(4,5,-1,6,7,-4),
+        sum7_2b_1 = tn.ncon([Wd, occI, Wod], [(4,5,-1,6,7,-4),
                                            (4,5,6,7,0,1,2,3),
                                            (2,3,-2,0,1,-3)]).numpy()
         sum7_2b = sum7_2b_1 - np.transpose(sum7_2b_1,[1,0,2,3]) - \
                               np.transpose(sum7_2b_1,[0,1,3,2]) + \
                               np.transpose(sum7_2b_1,[1,0,3,2])
 
-        # sum7_2b_1 = ncon([occI, Wod], [(-1,-2,-3,-4,0,1,2,3), (2,3,-5,0,1,-6)]).numpy()
-        # sum7_2b_2 = ncon([Wd, sum7_2b_1], [(0,1,-1,2,3,-4),(2,3,-2,0,1,-3)]).numpy()
+        # sum7_2b_1 = tn.ncon([occI, Wod], [(-1,-2,-3,-4,0,1,2,3), (2,3,-5,0,1,-6)]).numpy()
+        # sum7_2b_2 = tn.ncon([Wd, sum7_2b_1], [(0,1,-1,2,3,-4),(2,3,-2,0,1,-3)]).numpy()
         # sum7_2b = sum7_2b_2 - np.transpose(sum7_2b_2,[1,0,2,3]) - \
         #                       np.transpose(sum7_2b_2,[0,1,3,2]) + \
         #                       np.transpose(sum7_2b_2,[1,0,3,2])
@@ -396,22 +397,22 @@ class WegnerGenerator3B(WegnerGenerator):
         #first, second, and third terms (one index contraction)
 
         #terms with P(i/jk) -- line 1 and 2
-        sum1_3b_1 = ncon([fd, Wod], [(-1,0), (0,-2,-3,-4,-5,-6)]).numpy()
-        sum1_3b_2 = ncon([fod, Wd], [(-1,0), (0,-2,-3,-4,-5,-6)]).numpy()
+        sum1_3b_1 = tn.ncon([fd, Wod], [(-1,0), (0,-2,-3,-4,-5,-6)]).numpy()
+        sum1_3b_2 = tn.ncon([fod, Wd], [(-1,0), (0,-2,-3,-4,-5,-6)]).numpy()
         sum1_3b_3 = sum1_3b_1 - sum1_3b_2
         sum1_3b_4 = sum1_3b_3 - np.transpose(sum1_3b_3, [1,0,2,3,4,5]) - \
                                 np.transpose(sum1_3b_3, [2,1,0,3,4,5])
 
         #terms with P(l/mn) -- line 1 and 2
-        sum1_3b_5 = ncon([fd, Wod], [(0,-4), (-1,-2,-3,0,-5,-6)]).numpy()
-        sum1_3b_6 = ncon([fod, Wd], [(0,-4), (-1,-2,-3,0,-5,-6)]).numpy()
+        sum1_3b_5 = tn.ncon([fd, Wod], [(0,-4), (-1,-2,-3,0,-5,-6)]).numpy()
+        sum1_3b_6 = tn.ncon([fod, Wd], [(0,-4), (-1,-2,-3,0,-5,-6)]).numpy()
         sum1_3b_7 = sum1_3b_6 - sum1_3b_5
         sum1_3b_8 = sum1_3b_7 - np.transpose(sum1_3b_7, [0,1,2,4,3,5]) - \
                                 np.transpose(sum1_3b_7, [0,1,2,5,4,3])
 
         #terms with P(ij/k)P(l/mn) -- line 3
-        sum1_3b_9  = ncon([Gd, God], [(-1,-2,-4,0),(0,-3,-5,-6)]).numpy()
-        sum1_3b_10 = ncon([God, Gd], [(-1,-2,-4,0),(0,-3,-5,-6)]).numpy()
+        sum1_3b_9  = tn.ncon([Gd, God], [(-1,-2,-4,0),(0,-3,-5,-6)]).numpy()
+        sum1_3b_10 = tn.ncon([God, Gd], [(-1,-2,-4,0),(0,-3,-5,-6)]).numpy()
         sum1_3b_11 = sum1_3b_9 - sum1_3b_10
         sum1_3b_12 = sum1_3b_11 - np.transpose(sum1_3b_11, [0,1,2,4,3,5]) - \
                                   np.transpose(sum1_3b_11, [0,1,2,5,4,3])
@@ -421,22 +422,22 @@ class WegnerGenerator3B(WegnerGenerator):
         sum1_3b = sum1_3b_4 + sum1_3b_8 + sum1_3b_13
 
         #fourth term
-        sum4_3b_1 = ncon([Gd, occB, Wod], [(-1,-2,2,3),(2,3,0,1),(0,1,-3,-4,-5,-6)]).numpy()
-        sum4_3b_2 = ncon([God, occB, Wd], [(-1,-2,2,3),(2,3,0,1),(0,1,-3,-4,-5,-6)]).numpy()
+        sum4_3b_1 = tn.ncon([Gd, occB, Wod], [(-1,-2,2,3),(2,3,0,1),(0,1,-3,-4,-5,-6)]).numpy()
+        sum4_3b_2 = tn.ncon([God, occB, Wd], [(-1,-2,2,3),(2,3,0,1),(0,1,-3,-4,-5,-6)]).numpy()
         sum4_3b_3 = sum4_3b_1 - sum4_3b_2
         sum4_3b = sum4_3b_3 - np.transpose(sum4_3b_3, [1,0,2,3,4,5]) - \
                               np.transpose(sum4_3b_3, [2,1,0,3,4,5])
 
         #fifth term
-        sum5_3b_1 = ncon([Gd, occB, Wod], [(2,3,-4,-5),(2,3,0,1),(-1,-2,-3,0,1,-6)]).numpy()
-        sum5_3b_2 = ncon([God, occB, Wd], [(2,3,-4,-5),(2,3,0,1),(-1,-2,-3,0,1,-6)]).numpy()
+        sum5_3b_1 = tn.ncon([Gd, occB, Wod], [(2,3,-4,-5),(2,3,0,1),(-1,-2,-3,0,1,-6)]).numpy()
+        sum5_3b_2 = tn.ncon([God, occB, Wd], [(2,3,-4,-5),(2,3,0,1),(-1,-2,-3,0,1,-6)]).numpy()
         sum5_3b_3 = sum5_3b_1 - sum5_3b_2
         sum5_3b = sum5_3b_3 - np.transpose(sum5_3b_3, [0,1,2,5,4,3]) - \
                               np.transpose(sum5_3b_3, [0,1,2,3,5,4])
 
         #sixth term
-        sum6_3b_1 = ncon([Gd, occA, Wod], [(3,-1,2,-4),(2,3,0,1),(0,-2,-3,1,-5,-6)]).numpy()
-        sum6_3b_2 = ncon([God, occA, Wd], [(3,-1,2,-4),(2,3,0,1),(0,-2,-3,1,-5,-6)]).numpy()
+        sum6_3b_1 = tn.ncon([Gd, occA, Wod], [(3,-1,2,-4),(2,3,0,1),(0,-2,-3,1,-5,-6)]).numpy()
+        sum6_3b_2 = tn.ncon([God, occA, Wd], [(3,-1,2,-4),(2,3,0,1),(0,-2,-3,1,-5,-6)]).numpy()
         sum6_3b_3 = sum6_3b_1 - sum6_3b_2
         sum6_3b_4 = sum6_3b_3 - np.transpose(sum6_3b_3, [0,1,2,4,3,5]) - \
                                 np.transpose(sum6_3b_3, [0,1,2,5,4,3])
@@ -444,13 +445,13 @@ class WegnerGenerator3B(WegnerGenerator):
                               np.transpose(sum6_3b_4, [2,1,0,3,4,5])
 
         #seventh term
-        sum7_3b_1 = ncon([Wd, occJ, Wod], [(-1,-2,-3,3,4,5), (3,4,5,0,1,2), (0,1,2,-4,-5,-6)]).numpy()
-        sum7_3b_2 = ncon([Wod, occJ, Wd], [(-1,-2,-3,3,4,5), (3,4,5,0,1,2), (0,1,2,-4,-5,-6)]).numpy()
+        sum7_3b_1 = tn.ncon([Wd, occJ, Wod], [(-1,-2,-3,3,4,5), (3,4,5,0,1,2), (0,1,2,-4,-5,-6)]).numpy()
+        sum7_3b_2 = tn.ncon([Wod, occJ, Wd], [(-1,-2,-3,3,4,5), (3,4,5,0,1,2), (0,1,2,-4,-5,-6)]).numpy()
         sum7_3b = sum7_3b_1 - sum7_3b_2
 
         #eighth term
-        sum8_3b_1 = ncon([Wd, occC, Wod], [(3,4,-3,5,-5,-6), (3,4,5,0,1,2), (2,-1,-2,0,1,-4)]).numpy()
-        sum8_3b_2 = ncon([Wd, occC, Wod], [(5,-2,-3,3,4,-6), (3,4,5,0,1,2), (-1,0,1,-4,-5,2)]).numpy()
+        sum8_3b_1 = tn.ncon([Wd, occC, Wod], [(3,4,-3,5,-5,-6), (3,4,5,0,1,2), (2,-1,-2,0,1,-4)]).numpy()
+        sum8_3b_2 = tn.ncon([Wd, occC, Wod], [(5,-2,-3,3,4,-6), (3,4,5,0,1,2), (-1,0,1,-4,-5,2)]).numpy()
         sum8_3b_3 = sum8_3b_1 - sum8_3b_2
         sum8_3b_4 = sum8_3b_3 - np.transpose(sum8_3b_3, [0,1,2,4,3,5]) - \
                                 np.transpose(sum8_3b_3, [0,1,2,5,4,3])

@@ -216,22 +216,24 @@ if __name__ == '__main__':
     #                             with open('occE_nonzero.txt', 'a') as fi:
     #                                 fi.write('%s %s %s %s %s %s -- %s\n' % (a,b,c,d,e,f,val))
 
-    #test_exact('plots_exact_2b/', main)
+    test_exact('plots_exact_2b/', main)
+
+    main(4,4)
     
-    bas1B = np.array([0,1,2,3,4,5,6,7])
-    ref = np.array([1,1,1,1,0,0,0,0],dtype=np.float16)
-    occt = OccupationTensors(bas1B,ref)
-    occF = occt.occF
+    # bas1B = np.array([0,1,2,3,4,5,6,7])
+    # ref = np.array([1,1,1,1,0,0,0,0],dtype=np.float16)
+    # occt = OccupationTensors(bas1B,ref)
+    # occF = occt.occF
     
-    test1 = np.einsum('i,j,k,l,m->ijklm',ref,ref,(1-ref),(1-ref),(1-ref))
-    test1e = np.einsum('ijklm,nopqr->ijklmnopqr',test1,test1)
-    test2 = np.einsum('i,j,k,l,m->ijklm',(1-ref),(1-ref),ref,ref,ref)
-    test2e = np.einsum('ijklm,nopqr->ijklmnopqr',test2,test2)
-    test = test1e + test2e
-    # test = np.einsum('ijklm,nopqr->ijklmnopqr',test3,test3)
-    print(occF.dtype, test.dtype)
-    print(occF.shape, test.shape)
-    print(np.array_equal(occF, test))
+    # test1 = np.einsum('i,j,k,l,m->ijklm',ref,ref,(1-ref),(1-ref),(1-ref))
+    # test1e = np.einsum('ijklm,nopqr->ijklmnopqr',test1,test1)
+    # test2 = np.einsum('i,j,k,l,m->ijklm',(1-ref),(1-ref),ref,ref,ref)
+    # test2e = np.einsum('ijklm,nopqr->ijklmnopqr',test2,test2)
+    # test = test1e + test2e
+    # # test = np.einsum('ijklm,nopqr->ijklmnopqr',test3,test3)
+    # print(occF.dtype, test.dtype)
+    # print(occF.shape, test.shape)
+    # print(np.array_equal(occF, test))
     
     # for a in bas1B:
     #     for b in bas1B:
