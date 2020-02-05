@@ -1,4 +1,8 @@
 import numpy as np
+import os
+from oop_imsrg.hamiltonian import *
+import sys
+import numba
 
 class OccupationTensors(object):
     """Functions as a container for important occupation tensors
@@ -30,6 +34,11 @@ class OccupationTensors(object):
         self._occH = self.__get_occH()
         self._occI = self.__get_occI()
         self._occJ = self.__get_occJ()
+
+        if not os.path.exists("occ_storage/"):
+            os.mkdir("occ_storage/")
+        
+        
 
     @property
     def occA(self):
@@ -112,8 +121,9 @@ class OccupationTensors(object):
         return self._occJ
 
 
-# ---- BUILD OCCUPATION TENSORS ---
-
+    # ---- BUILD OCCUPATION TENSORS ---
+    
+    #@jit#(nopython=True)
     def __get_occA(self, flag=0):
         """Builds the occupation tensor occA.
 
@@ -130,11 +140,48 @@ class OccupationTensors(object):
         n = len(bas1B)
 
         if flag == 0: # default
-            occA = np.zeros((n,n,n,n),dtype=np.float32)
 
-            for a in bas1B:
-                for b in bas1B:
-                    occA[a,b,a,b] = ref[a] - ref[b]
+            # occA = np.zeros((n,n,n,n),dtype=np.float32)
+
+            # for a in bas1B:
+            #     for b in bas1B:
+            #         occA[a,b,a,b] = ref[a] - ref[b]
+
+            # print(sys.getsizeof(occA)/10**6)
+
+
+            # TENSOR TRAIN DECOMPOSITION
+            # We find a TT-decomposition by hand, because the the tensor we want 
+            # to decompose is small enough to do so. This is an exact decomposition
+            # of the rank 2 tensor described by n_a-n_b.
+
+            #Ga = tn.Node(np.array([ [1,1], [1,1], [1,1], [1,1], [0,1], [0,1], [0,1], [0,1] ]))
+            #Gb = tn.Node(np.transpose(np.array([ [1,-1], [1,-1], [1,-1], [1,-1], [1,0], [1,0], [1,0], [1,0] ])))
+
+            Ga = tn.Node(np.append(ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(int))
+            Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(int)))
+            Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
+            final = tn.outer_product(Gab, tn.Node(np.ones((n,n)))).tensor
+
+            # PARALLELIZE NESTED LOOPS FOR BETTER PERFORMANCE
+            @numba.jit(nopython=True)
+            def enforce_delta(n, tensor):
+
+                bas1B = range(n)
+            
+                for a in bas1B:
+                    for b in bas1B:
+                        for c in bas1B:
+                            for d in bas1B:
+                                if not(a == c and b == d):
+                                    tensor[a,b,c,d] = 0
+
+                return tensor
+
+            occA = tn.Node(enforce_delta(n, final))
+
+#            print(sys.getsizeof(occA)/10**6)
+            
 
         if flag == 1:
             occA = np.zeros((n,n),dtype=np.float32)
@@ -161,11 +208,41 @@ class OccupationTensors(object):
         n = len(bas1B)
 
         if flag == 0: # default
-            occB = np.zeros((n,n,n,n),dtype=np.float32)
+            # occB = np.zeros((n,n,n,n),dtype=np.float32)
 
-            for a in bas1B:
-                for b in bas1B:
-                    occB[a,b,a,b] = 1 - ref[a] - ref[b]
+            # for a in bas1B:
+            #     for b in bas1B:
+            #         occB[a,b,a,b] = 1 - ref[a] - ref[b]
+
+            #occB = tn.Node(1 - self.occA.tensor)
+            
+            # TENSOR TRAIN DECOMPOSITION of rank 4 tensor with elements given 
+            # by 1 - n_a - n_b.
+
+            #Ga = tn.Node(np.array([ [0,1], [0,1], [0,1], [0,1], [1,1], [1,1], [1,1], [1,1] ]))
+            #Gb = tn.Node(np.transpose(np.array([ [1,-1], [1,-1], [1,-1], [1,-1], [1,0], [1,0], [1,0], [1,0] ])))
+
+            Ga = tn.Node(np.append(1-ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(int))
+            Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(int)))
+            Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
+            final = tn.outer_product(Gab, tn.Node(np.ones((n,n)))).tensor
+
+            # PARALLELIZE NESTED LOOPS FOR BETTER PERFORMANCE
+            @numba.jit(nopython=True)
+            def enforce_delta(n, tensor):
+
+                bas1B = range(n)
+
+                for a in bas1B:
+                    for b in bas1B:
+                        for c in bas1B:
+                            for d in bas1B:
+                                if not(a == c and b == d):
+                                    tensor[a,b,c,d] = 0
+
+                return tensor
+
+            occB = tn.Node(enforce_delta(n, final))
 
         if flag == 1:
             occB = np.zeros((n,n),dtype=np.float32)
@@ -191,27 +268,66 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
-        # occC1 = np.einsum('i,j,k->ijk', ref,ref,(1-ref))
-        # occC2 = np.einsum('i,j,k->ijk', (1-ref),(1-ref),ref)
-        # occC3 = occC1 + occC2
-        
-        # if flag == 0: # default
-        #     occC = np.einsum('ijk,lmn->ijklmn', occC3, occC3)
-        #     return occC
-        
-        # if flag == 1:
-        #     occC = occC3
-        #     return occC
-
         if flag == 0: # default
-            occC = np.zeros((n,n,n,n,n,n),dtype=np.float32)
 
-            for a in bas1B:
-                for b in bas1B:
-                    for c in bas1B:
-                        occC[a,b,c,a,b,c] = ref[a]*ref[b]*(1-ref[c]) + \
-                                            (1-ref[a])*(1-ref[b])*ref[c]
-        
+            # occC = np.zeros((n,n,n,n,n,n),dtype=np.float32)
+
+            # for a in bas1B:
+            #     for b in bas1B:
+            #         for c in bas1B:
+            #             occC[a,b,c,a,b,c] = ref[a]*ref[b]*(1-ref[c]) + \
+            #                                 (1-ref[a])*(1-ref[b])*ref[c]
+
+            # print(sys.getsizeof(occC)/10**6)
+
+            # TENSOR TRAIN DECOMPOSITION of rank 6 tensor with elements
+            # given by n_a*n_b + (1 - n_b - n_a)*n_c.
+
+            #Ga = tn.Node(np.array([ [1,1,1,1], [1,1,1,1], [1,1,1,1], [1,1,1,1], [0,1,1,0], [0,1,1,0], [0,1,1,0], [0,1,1,0] ]))
+            # Gb = tn.Node(np.array([ [[1,0,0,0], [0,1,0,0],[0,0,-1,0],[0,0,0,-1]], 
+            #                         [[1,0,0,0], [0,1,0,0],[0,0,-1,0],[0,0,0,-1]], 
+            #                         [[1,0,0,0], [0,1,0,0],[0,0,-1,0],[0,0,0,-1]],
+            #                         [[1,0,0,0], [0,1,0,0],[0,0,-1,0],[0,0,0,-1]], 
+            #                         [[0,0,0,0], [0,1,0,0],[0,0,0,0],[0,0,0,-1]],
+            #                         [[0,0,0,0], [0,1,0,0],[0,0,0,0],[0,0,0,-1]],
+            #                         [[0,0,0,0], [0,1,0,0],[0,0,0,0],[0,0,0,-1]],
+            #                         [[0,0,0,0], [0,1,0,0],[0,0,0,0],[0,0,0,-1]] ]))
+            #Gc = tn.Node(np.transpose(np.array([ [1,1,1,1], [1,1,1,1], [1,1,1,1], [1,1,1,1], [1,0,0,0], [1,0,0,0], [1,0,0,0], [1,0,0,0] ])))
+
+            Ga1 = np.append(ref[:,np.newaxis], np.ones((n,2)),axis=1).astype(int)
+            Ga2 = np.append(Ga1, ref[:,np.newaxis],axis=1).astype(int)
+            Ga = tn.Node(Ga2) 
+
+            Gb1= np.append(ref[np.newaxis,np.newaxis,:],np.zeros((1,1,n)),axis=1).astype(int)
+            Gb2= np.append(Gb1, np.append(np.zeros((1,1,n)), np.ones((1,1,n)),axis=1), axis=0).astype(int)
+            Gb3 = np.array([[1,0],[0,-1]])
+            Gb = tn.Node(np.kron(Gb3, np.transpose(Gb2)))
+           
+            Gc1 = np.append(np.ones((n,1)), np.repeat(ref[:,np.newaxis],3,axis=1), axis=1).astype(int)
+            Gc = tn.Node(np.transpose(Gc1))
+
+            Gabc = tn.ncon([Ga, Gb, Gc], [(-1, 1), (-2, 1, 2), (2, -3)])
+
+            final = tn.outer_product(Gabc, tn.Node(np.ones((n,n,n)))).tensor
+
+            @numba.jit(nopython=True)#, parallel=True)
+            def enforce_delta(n, tensor):
+
+                bas1B = range(n)
+
+                for a in bas1B:
+                    for b in bas1B:
+                        for c in bas1B:
+                            for d in bas1B:
+                                for e in bas1B:
+                                    for f in bas1B:
+                                        if not(a == d and b == e and c == f):
+                                            tensor[a,b,c,d,e,f] = 0
+                return tensor
+
+            
+            occC = tn.Node(enforce_delta(n, final))
+     
         if flag == 1:
             occC = np.zeros((n,n,n),dtype=np.float32)
 
@@ -245,24 +361,65 @@ class OccupationTensors(object):
         #     return occD
         
         if flag == 0: # default
-            occD = np.zeros((n,n,n,n,n,n,n,n),dtype=np.float32)
 
-            for a in bas1B:
-                for b in bas1B:
-                    for c in bas1B:
-                        for d in bas1B:
-                            occD[a,b,c,d,a,b,c,d] = ref[a]*ref[b]*\
-                                                    (1-ref[c])*(1-ref[d])
+            # occD = np.zeros((n,n,n,n,n,n,n,n),dtype=np.float32)
+
+            # for a in bas1B:
+            #     for b in bas1B:
+            #         for c in bas1B:
+            #             for d in bas1B:
+            #                 occD[a,b,c,d,a,b,c,d] = ref[a]*ref[b]*\
+            #                                         (1-ref[c])*(1-ref[d])
+
+            
+            Ga = tn.Node(np.array([ [1,0],[1,0],[1,0],[1,0],[0,0],[0,0],[0,0],[0,0] ]))
+            Gb = tn.Node(np.transpose(np.array([ [1,0],[1,0],[1,0],[1,0],[0,0],[0,0],[0,0],[0,0] ])))
+            Gc = tn.Node(np.array([ [0,0],[0,0],[0,0],[0,0],[1,0],[1,0],[1,0],[1,0] ]))
+            Gd = tn.Node(np.transpose(np.array([ [0,0],[0,0],[0,0],[0,0],[1,0],[1,0],[1,0],[1,0] ])))
+
+            Gabcd = tn.ncon([Ga,Gb,Gc,Gd], [(-1,1),(1,-2),(-3,2),(2,-4)])
+
+            final = tn.outer_product(Gabcd, tn.Node(np.ones((8,8,8,8)))).tensor
+
+            @numba.jit(nopython=True)#, parallel=True)
+            def enforce_delta(n, tensor):
+
+                bas1B = range(n)
+
+                for a in bas1B:
+                    for b in bas1B:
+                        for c in bas1B:
+                            for d in bas1B:
+                                for e in bas1B:
+                                    for f in bas1B:
+                                        for g in bas1B:
+                                            for h in bas1B:
+                                                if not(a == e and b == f and c == g and d == h):
+                                                    tensor[a,b,c,d,e,f,g,h] = 0
+                return tensor
+
+            occD = tn.Node(enforce_delta(n, final))
+
 
         if flag == 1:
-            occD = np.zeros((n,n,n,n),dtype=np.float32)
+            # occD = np.zeros((n,n,n,n),dtype=np.float32)
 
-            for a in bas1B:
-                for b in bas1B:
-                    for c in bas1B:
-                        for d in bas1B:
-                            occD[a,b,c,d] = ref[a]*ref[b]*\
-                                            (1-ref[c])*(1-ref[d])
+            # for a in bas1B:
+            #     for b in bas1B:
+            #         for c in bas1B:
+            #             for d in bas1B:
+            #                 occD[a,b,c,d] = ref[a]*ref[b]*\
+            #                                 (1-ref[c])*(1-ref[d])
+
+            Ga = tn.Node(np.array([ [1,0],[1,0],[1,0],[1,0],[0,0],[0,0],[0,0],[0,0] ]))
+            Gb = tn.Node(np.transpose(np.array([ [1,0],[1,0],[1,0],[1,0],[0,0],[0,0],[0,0],[0,0] ])))
+            Gc = tn.Node(np.array([ [0,0],[0,0],[0,0],[0,0],[1,0],[1,0],[1,0],[1,0] ]))
+            Gd = tn.Node(np.transpose(np.array([ [0,0],[0,0],[0,0],[0,0],[1,0],[1,0],[1,0],[1,0] ])))
+
+            Gabcd = tn.ncon([Ga,Gb,Gc,Gd], [(-1,1),(1,-2),(-3,2),(2,-4)])
+
+            occD = Gabcd
+
         return occD
                             
 # ---- ALL ABOVE REQUIRED FOR IMSRG(2) ---

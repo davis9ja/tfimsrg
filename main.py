@@ -10,16 +10,18 @@ from scipy.integrate import odeint, ode
 import numpy as np
 import time
 import pickle
-import tensorflow as tf
+#import tensorflow as tf
 #tf.enable_v2_behavior()
-print("GPU available: ",tf.test.is_gpu_available())
+#print("GPU available: ",tf.test.is_gpu_available())
 import tracemalloc
 import os, sys
 #from memory_profiler import profile
 import itertools
 import random
-sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
-sess.close()
+#import tensornetwork as tn
+#tn.set_default_backend("tensorflow")
+#sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
+#sess.close()
 
 # user files
 # sys.path.append('C:\\Users\\davison\\Research\\exact_diagonalization\\')
@@ -58,12 +60,25 @@ def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
 
     E, f, G = ravel(y, hamiltonian.n_sp_states)
 
-    generator.f = f
-    generator.G = G
+#    timefi = time.time()
+    generator.f = tn.Node(f)
+#    timeff = time.time()
 
+#    timegi = time.time()
+    generator.G = tn.Node(G)
+#    timegf = time.time()
+
+#    timefli = time.time()
     dE, df, dG = flow.flow(generator)
+#    timeflf = time.time()
 
-    dy = unravel(dE, df, dG)
+    # print("""
+    # f time:     {:2.4f} s
+    # G time:     {:2.4f} s
+    # Flow time:  {:2.4f} s
+    # """.format(timeff-timefi, timegf-timegi, timeflf-timefli))
+
+    dy = unravel(dE.tensor, df.tensor, dG.tensor)
 
     return dy
 
@@ -105,6 +120,7 @@ def ravel(y, bas_len):
     ravel_f = np.reshape(y[1:bas_len**2+1], (bas_len, bas_len))
     ravel_G = np.reshape(y[bas_len**2+1:bas_len**2+1+bas_len**4],
                          (bas_len, bas_len, bas_len, bas_len))
+    
 
     return(ravel_E, ravel_f, ravel_G)
 
@@ -119,7 +135,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
 
     if ref == None:
         ha = PairingHamiltonian2B(n_holes, n_particles, d=d, g=g, pb=pb)
-        ref = [1,1,1,1,0,0,0,0] # this is just for printing
+        ref = ha.reference # this is just for printing
     else:
         ha = PairingHamiltonian2B(n_holes, n_particles, ref=ref, d=d, g=g, pb=pb)
 
@@ -146,8 +162,8 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     flowi = time.time()
 
     # --- Solve the IM-SRG flow
-    y0 = unravel(ha.E, ha.f, ha.G)
-
+    y0 = unravel(ha.E.tensor, ha.f.tensor, ha.G.tensor)
+    #print(y0)
     solver = ode(derivative,jac=None)
     solver.set_integrator('vode', method='bdf', order=5, nsteps=500)
     solver.set_f_params(ha, ot, wg, fl)
@@ -216,7 +232,7 @@ if __name__ == '__main__':
     #                             with open('occE_nonzero.txt', 'a') as fi:
     #                                 fi.write('%s %s %s %s %s %s -- %s\n' % (a,b,c,d,e,f,val))
 
-    test_exact('plots_exact_2b/', main)
+    #test_exact('plots_exact_2b/', main)
 
     main(4,4)
     

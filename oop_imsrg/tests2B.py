@@ -9,6 +9,7 @@ import numpy as np
 import itertools
 import matplotlib.pyplot as plt
 import random
+import pickle
 
 import oop_imsrg.ci_pairing.cipy_pairing_plus_ph as ci_matrix
 import benchmarking_wd.imsrg_pairing as pypairing
@@ -159,30 +160,38 @@ def test_exact(plots_dir, main):
             E_corrs.append(E_corr - (2-g))
             E_exacts.append(E_exact - (2-g))
             E_pys.append(E_py - (2-g))
+            
+            # plt.figure(figsize=[12,8])
+            # plt.plot(data[6], data[7])
+            # plt.ylabel('Energy')
+            # plt.xlabel('scale parameter')
+            # plt.title('Convergence for \n g={:2.4f}, pb={:2.4f}'.format(g,pb))
 
-            plt.figure(figsize=[12,8])
-            plt.plot(data[6], data[7])
-            plt.ylabel('Energy')
-            plt.xlabel('scale parameter')
-            plt.title('Convergence for \n g={:2.4f}, pb={:2.4f}'.format(g,pb))
+            # pb_plots_dir = plots_dir+'pb{:2.4f}/'.format(pb)
+            # if not os.path.exists(pb_plots_dir):
+            #     os.mkdir(pb_plots_dir)
 
-            pb_plots_dir = plots_dir+'pb{:2.4f}/'.format(pb)
-            if not os.path.exists(pb_plots_dir):
-                os.mkdir(pb_plots_dir)
+            # plt.savefig(pb_plots_dir+'g{:2.4f}_pb{:2.4f}.png'.format(g,pb))
+            #plt.close()
 
-            plt.savefig(pb_plots_dir+'g{:2.4f}_pb{:2.4f}.png'.format(g,pb))
-            plt.close()
-
-        plt.figure(figsize=[12,8])
-        plt.plot(g_vals, E_exacts, marker='s')
-        plt.plot(g_vals, E_corrs, marker='v')
-        plt.plot(g_vals, E_pys, marker='x')
-        plt.ylabel('E$_{corr}$')
-        plt.xlabel('g')
-        plt.legend(['CI', 'IMSRG(2) TN', 'IMSRG(2) PY'])
-        plt.title('Correlation energy with pb = {:2.4f}'.format(pb))
-        plt.savefig(plots_dir+'pb{:2.4f}.png'.format(pb))
-        plt.close()
+        # plt.figure(figsize=[12,8])
+        # plt.plot(g_vals, E_exacts, marker='s')
+        # plt.plot(g_vals, E_corrs, marker='v')
+        # plt.plot(g_vals, E_pys, marker='x')
+        # plt.ylabel('E$_{corr}$')
+        # plt.xlabel('g')
+        # plt.legend(['CI', 'IMSRG(2) TN', 'IMSRG(2) PY'])
+        # plt.title('Correlation energy with pb = {:2.4f}'.format(pb))
+        # plt.savefig(plots_dir+'pb{:2.4f}.png'.format(pb))
+        
+        if not os.path.exists('data_pickles/'):
+            os.mkdir('data_pickles/')
+            
+        fulldata = [g_vals, E_exacts, E_corrs, E_pys]
+        with open('data_pickles/fulldata.pickle', 'wb') as f:
+            pickle.dump(fulldata, f, pickle.HIGHEST_PROTOCOL)
+        
+        #plt.close()
         #print(E_exacts)
         break
 

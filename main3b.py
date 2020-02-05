@@ -15,7 +15,7 @@ import os, sys
 #from memory_profiler import profile
 import itertools
 import random
-import tensornetwork
+import tensornetwork as tn
 
 # user files
 # sys.path.append('C:\\Users\\davison\\Research\\exact_diagonalization\\')
@@ -258,7 +258,8 @@ def test_exact(plots_dir):
 
 
 if __name__ == '__main__':
-    test_exact("plots3b\\")
+    #test_exact("plots3b/")
+    main3b(4,4)
     #test = main3b(4,4)
     
     #tracemalloc.start()
