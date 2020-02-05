@@ -61,11 +61,11 @@ def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
     E, f, G = ravel(y, hamiltonian.n_sp_states)
 
 #    timefi = time.time()
-    generator.f = tn.Node(f)
+    generator.f = f
 #    timeff = time.time()
 
 #    timegi = time.time()
-    generator.G = tn.Node(G)
+    generator.G = G
 #    timegf = time.time()
 
 #    timefli = time.time()
@@ -78,7 +78,7 @@ def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
     # Flow time:  {:2.4f} s
     # """.format(timeff-timefi, timegf-timegi, timeflf-timefli))
 
-    dy = unravel(dE.tensor, df.tensor, dG.tensor)
+    dy = unravel(dE, df, dG)
 
     return dy
 
@@ -162,8 +162,8 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     flowi = time.time()
 
     # --- Solve the IM-SRG flow
-    y0 = unravel(ha.E.tensor, ha.f.tensor, ha.G.tensor)
-    #print(y0)
+    y0 = unravel(ha.E, ha.f, ha.G)
+
     solver = ode(derivative,jac=None)
     solver.set_integrator('vode', method='bdf', order=5, nsteps=500)
     solver.set_f_params(ha, ot, wg, fl)

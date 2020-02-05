@@ -268,7 +268,7 @@ class PairingHamiltonian2B(Hamiltonian):
         # ob_contract = tn.contract(ob_ii).tensor#.tensor.numpy()
         # tb_contract = 0.5*tn.contract(flatten).tensor#.tensor.numpy()
 
-        E = ob_contract + tn.Node(0.5)*tb_contract
+        E = ob_contract.tensor + 0.5*tb_contract.tensor
         #E = E.astype(np.float32)
 
         # - Calculate 1B piece
@@ -282,11 +282,11 @@ class PairingHamiltonian2B(Hamiltonian):
         # tb_contract = tn.contract(tb_ihjh)
 
         #f = ob_node1b.tensor.numpy() + tb_contract.tensor.numpy()
-        f = (ob_node1b + tb_contract)
+        f = ob_node1b.tensor + tb_contract.tensor
         #f = f.astype(np.float32)
 
         # - Calculate 2B piece
-        G = tn.Node(H2B_t)
+        G = H2B_t
 
 
         return (E, f, G)
