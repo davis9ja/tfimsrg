@@ -24,8 +24,9 @@ class OccupationTensors(object):
         self._sp_basis = sp_basis
 
         self._occA = self.__get_occA()
-        self._occA2 = self.__get_occA(flag=1)
+        self._occA4 = self.__get_occA(flag=1)
         self._occB = self.__get_occB()
+        self._occB4 = self.__get_occB(flag=1)
         self._occC = self.__get_occC()
         self._occD = self.__get_occD(flag=1)
         self._occE = self.__get_occE()
@@ -48,13 +49,13 @@ class OccupationTensors(object):
         return self._occA
 
     @property
-    def occA2(self):
-        """Built from flag = 1; rank2 tensor
+    def occA4(self):
+        """Built from flag = 1; rank 4 tensor
 
         Returns:
 
-        occA2 -- represents n_a - n_b."""
-        return self._occA2
+        occA4 -- represents n_a - n_b."""
+        return self._occA4
 
     @property
     def occB(self):
@@ -62,6 +63,13 @@ class OccupationTensors(object):
 
         occB -- represents 1 - n_a - n_b."""
         return self._occB
+
+    @property
+    def occB4(self):
+        """Returns:
+
+        occB4 -- represents 1 - n_a - n_b."""
+        return self._occB4
 
     @property
     def occC(self):
@@ -161,34 +169,42 @@ class OccupationTensors(object):
             Ga = tn.Node(np.append(ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(int))
             Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(int)))
             Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
-            final = tn.outer_product(Gab, tn.Node(np.ones((n,n)))).tensor
+            #final = tn.outer_product(Gab, tn.Node(np.ones((n,n)))).tensor
 
             # PARALLELIZE NESTED LOOPS FOR BETTER PERFORMANCE
-            @numba.jit(nopython=True)
-            def enforce_delta(n, tensor):
+            # @numba.jit(nopython=True)
+            # def enforce_delta(n, tensor):
 
-                bas1B = range(n)
+            #     bas1B = range(n)
             
-                for a in bas1B:
-                    for b in bas1B:
-                        for c in bas1B:
-                            for d in bas1B:
-                                if not(a == c and b == d):
-                                    tensor[a,b,c,d] = 0
+            #     for a in bas1B:
+            #         for b in bas1B:
+            #             for c in bas1B:
+            #                 for d in bas1B:
+            #                     if not(a == c and b == d):
+            #                         tensor[a,b,c,d] = 0
 
-                return tensor
+            #     return tensor
 
-            occA = tn.Node(enforce_delta(n, final))
+            occA = Gab#tn.Node(enforce_delta(n, final))
 
 #            print(sys.getsizeof(occA)/10**6)
             
 
         if flag == 1:
-            occA = np.zeros((n,n),dtype=np.float32)
+            # occA = np.zeros((n,n),dtype=np.float32)
 
-            for a in bas1B:
-                for b in bas1B:
-                    occA[a,b] = ref[a] - ref[b]
+            # for a in bas1B:
+            #     for b in bas1B:
+            #         occA[a,b] = ref[a] - ref[b]
+
+            Ga = tn.Node(np.append(ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(int))
+            Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(int)))
+            Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
+            
+            final = tn.outer_product(Gab, tn.Node(np.ones((n,n))))
+
+            occA = final
 
         return occA
 
@@ -225,31 +241,39 @@ class OccupationTensors(object):
             Ga = tn.Node(np.append(1-ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(int))
             Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(int)))
             Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
-            final = tn.outer_product(Gab, tn.Node(np.ones((n,n)))).tensor
+            #final = tn.outer_product(Gab, tn.Node(np.ones((n,n)))).tensor
 
             # PARALLELIZE NESTED LOOPS FOR BETTER PERFORMANCE
-            @numba.jit(nopython=True)
-            def enforce_delta(n, tensor):
+            # @numba.jit(nopython=True)
+            # def enforce_delta(n, tensor):
 
-                bas1B = range(n)
+            #     bas1B = range(n)
 
-                for a in bas1B:
-                    for b in bas1B:
-                        for c in bas1B:
-                            for d in bas1B:
-                                if not(a == c and b == d):
-                                    tensor[a,b,c,d] = 0
+            #     for a in bas1B:
+            #         for b in bas1B:
+            #             for c in bas1B:
+            #                 for d in bas1B:
+            #                     if not(a == c and b == d):
+            #                         tensor[a,b,c,d] = 0
 
-                return tensor
+            #     return tensor
 
-            occB = tn.Node(enforce_delta(n, final))
+            #occB = tn.Node(enforce_delta(n, final))
+            occB = Gab
 
         if flag == 1:
-            occB = np.zeros((n,n),dtype=np.float32)
+            # occB = np.zeros((n,n),dtype=np.float32)
 
-            for a in bas1B:
-                for b in bas1B:
-                    occB[a,b] = 1 - ref[a] - ref[b]
+            # for a in bas1B:
+            #     for b in bas1B:
+            #         occB[a,b] = 1 - ref[a] - ref[b]
+
+            Ga = tn.Node(np.append(1-ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(int))
+            Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(int)))
+            Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
+            final = tn.outer_product(Gab, tn.Node(np.ones((8,8))))
+
+            occB = final
 
         return occB
 
@@ -308,25 +332,25 @@ class OccupationTensors(object):
 
             Gabc = tn.ncon([Ga, Gb, Gc], [(-1, 1), (-2, 1, 2), (2, -3)])
 
-            final = tn.outer_product(Gabc, tn.Node(np.ones((n,n,n)))).tensor
+            # final = tn.outer_product(Gabc, tn.Node(np.ones((n,n,n)))).tensor
 
-            @numba.jit(nopython=True)#, parallel=True)
-            def enforce_delta(n, tensor):
+            # @numba.jit(nopython=True)#, parallel=True)
+            # def enforce_delta(n, tensor):
 
-                bas1B = range(n)
+            #     bas1B = range(n)
 
-                for a in bas1B:
-                    for b in bas1B:
-                        for c in bas1B:
-                            for d in bas1B:
-                                for e in bas1B:
-                                    for f in bas1B:
-                                        if not(a == d and b == e and c == f):
-                                            tensor[a,b,c,d,e,f] = 0
-                return tensor
+            #     for a in bas1B:
+            #         for b in bas1B:
+            #             for c in bas1B:
+            #                 for d in bas1B:
+            #                     for e in bas1B:
+            #                         for f in bas1B:
+            #                             if not(a == d and b == e and c == f):
+            #                                 tensor[a,b,c,d,e,f] = 0
+            #     return tensor
 
             
-            occC = tn.Node(enforce_delta(n, final))
+            occC = tn.outer_product(Gabc, tn.Node(np.ones(n))) #tn.Node(enforce_delta(n, final))
      
         if flag == 1:
             occC = np.zeros((n,n,n),dtype=np.float32)
