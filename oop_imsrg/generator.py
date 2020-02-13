@@ -36,7 +36,9 @@ class WegnerGenerator(Generator):
         self._particles = h.particles
 
         self._occA = occ_t.occA
+        self._occA4 = occ_t.occA4
         self._occB = occ_t.occB
+        self._occB4 = occ_t.occB4
         self._occC = occ_t.occC
         self._occD = occ_t.occD
 
@@ -116,7 +118,9 @@ class WegnerGenerator(Generator):
         particles = self._particles
 
         occA = self._occA
+        occA4 = self._occA4
         occB = self._occB
+        occB4 = self._occB4
         occC = self._occC
 
 
@@ -127,17 +131,29 @@ class WegnerGenerator(Generator):
         sum1_1b = sum1_1b_1 - sum1_1b_2
 
         # second term
-        sum2_1b_1 = tn.ncon([fd, occA, God], [(3,4), (3,4,1,2), (2,-1,1,-2)])#.numpy()
-        sum2_1b_2 = tn.ncon([fod, occA, Gd], [(3,4), (3,4,1,2), (2,-1,1,-2)])#.numpy()
+        # sum2_1b_1 = tn.ncon([fd, occA, God], [(3,4), (3,4,1,2), (2,-1,1,-2)])#.numpy()
+        # sum2_1b_2 = tn.ncon([fod, occA, Gd], [(3,4), (3,4,1,2), (2,-1,1,-2)])#.numpy()
+        # sum2_1b = sum2_1b_1 - sum2_1b_2
+
+        fdPrime = np.multiply(occA.tensor, fd)
+        fodPrime = np.multiply(occA.tensor, fod)
+        sum2_1b_1 = tn.ncon([fdPrime, God], [(1,2), (2,-1,1,-2)])
+        sum2_1b_2 = tn.ncon([fodPrime, Gd], [(1,2), (2,-1,1,-2)])
         sum2_1b = sum2_1b_1 - sum2_1b_2
+
         # sum2_1b_1 = tn.ncon([fd, God], [(0, 1), (1, -1, 0, -2)])#.numpy()
         # sum2_1b_2 = tn.ncon([fod, Gd], [(0, 1), (1, -1, 0, -2)])#.numpy()
         # sum2_1b_3 = sum2_1b_1 - sum2_1b_2
         # sum2_1b = tn.ncon([occA, sum2_1b_3],[(-1, -2, 0, 1), (0,1)])#.numpy()
 
         # third term
-        sum3_1b_1 = tn.ncon([Gd, occC, God], [(6,-1,4,5), (4,5,6,1,2,3), (1,2,3,-2)])#.numpy()
-        sum3_1b = sum3_1b_1 - np.transpose(sum3_1b_1)
+        #sum3_1b_1 = tn.ncon([Gd, occC, God], [(6,-1,4,5), (4,5,6,1,2,3), (1,2,3,-2)])#.numpy()
+        #sum3_1b = sum3_1b_1 - np.transpose(sum3_1b_1)
+
+        sum3_1b_1 = np.multiply(occC.tensor, God)#np.multiply(tn.outer_product(tn.Node(occC), tn.Node(np.ones(8))).tensor, God)
+        sum3_1b_2 = tn.ncon([Gd, God], [(3,-1,1,2),(1,2,3,-2)])
+        sum3_1b = sum3_1b_2 - np.transpose(sum3_1b_2)
+
         # sum3_1b_1 = tn.ncon([occC, God], [(-1, -2, -3, 0, 1, 2), (0, 1, 2, -4)])#.numpy()
         # sum3_1b_2 = tn.ncon([Gd, sum3_1b_1], [(2, -1, 0, 1), (0, 1, 2, -2)])#.numpy()
         # sum3_1b_3 = np.transpose(sum3_1b_2)
@@ -163,16 +179,20 @@ class WegnerGenerator(Generator):
         sum1_2b = sum1_2b_5 - sum1_2b_10
 
         # second term
-        sum2_2b_1 = tn.ncon([Gd, occB, God], [(-1,-2,3,4), (3,4,1,2), (1,2,-3,-4)])#.numpy()
-        sum2_2b_2 = tn.ncon([God, occB, Gd], [(-1,-2,3,4), (3,4,1,2), (1,2,-3,-4)])#.numpy()
+        #sum2_2b_1 = tn.ncon([Gd, occB, God], [(-1,-2,3,4), (3,4,1,2), (1,2,-3,-4)])#.numpy()
+        #sum2_2b_2 = tn.ncon([God, occB, Gd], [(-1,-2,3,4), (3,4,1,2), (1,2,-3,-4)])#.numpy()
 
-        # sum2_2b_1 = tn.ncon([Gd, occB, occB, God], [(-1,-2,3,4), (3,4),(1,2), (1,2,-3,-4)])#.numpy()
-        # sum2_2b_2 = tn.ncon([God, occB, occB, Gd], [(-1,-2,3,4), (3,4),(1,2), (1,2,-3,-4)])#.numpy()
+        
+        GodPrime = np.multiply(occB4.tensor, God)
+        GdPrime = np.multiply(occB4.tensor, Gd)
+        sum2_2b_1 = tn.ncon([Gd, GodPrime], [(-1,-2,1,2), (1,2,-3,-4)])
+        sum2_2b_2 = tn.ncon([God, GdPrime], [(-1,-2,1,2), (1,2,-3,-4)])
 
 #        sum2_2b_1 = tn.ncon([Gd, occB[:,:,None],occB[None,:,:], God], [(-1,-2,4,5), (4,5,1), (1,2,3), (2,3,-3,-4)])#.numpy()
 #        sum2_2b_2 = tn.ncon([God, occB[:,:,None],occB[None,:,:], Gd], [(-1,-2,4,5), (4,5,1), (1,2,3), (2,3,-3,-4)])#.numpy()
 
         sum2_2b = sum2_2b_1 - sum2_2b_2
+
         # sum2_2b_1 = tn.ncon([occB, God], [(-1, -2, 0, 1), (0, 1, -3, -4)])#.numpy()
         # sum2_2b_2 = tn.ncon([occB,  Gd], [(-1, -2, 0, 1), (0, 1, -3, -4)])#.numpy()
         # sum2_2b_3 = tn.ncon([Gd,  sum2_2b_1], [(-1, -2, 0, 1), (0, 1, -3, -4)])#.numpy()
@@ -180,9 +200,15 @@ class WegnerGenerator(Generator):
         # sum2_2b = sum2_2b_3 - sum2_2b_4
 
         # third term
-        sum3_2b_1 = tn.ncon([Gd, occA, God], [(3,-1,4,-3), (3,4,1,2), (2,-2,1,-4)])#.numpy()
+        # sum3_2b_1 = tn.ncon([Gd, occA, God], [(3,-1,4,-3), (3,4,1,2), (2,-2,1,-4)])#.numpy()
+        # sum3_2b_2 = sum3_2b_1 - np.transpose(sum3_2b_1, [0,1,3,2])
+        # sum3_2b = sum3_2b_2 - np.transpose(sum3_2b_2, [1,0,2,3])
+
+        GodPrime = np.multiply(np.transpose(occA4.tensor, [0,2,1,3]), God)
+        sum3_2b_1 = tn.ncon([Gd, GodPrime], [(2,-2,1,-4), (1,-1,2,-3)])
         sum3_2b_2 = sum3_2b_1 - np.transpose(sum3_2b_1, [0,1,3,2])
         sum3_2b = sum3_2b_2 - np.transpose(sum3_2b_2, [1,0,2,3])
+
         # sum3_2b_1 = tn.ncon([Gd, God], [(0, -1, 1, -3), (1, -2, 0, -4)])#.numpy()
         # sum3_2b_2 = np.transpose(sum3_2b_1, [1, 0, 2, 3])
         # sum3_2b_3 = np.transpose(sum3_2b_1, [0, 1, 3, 2])
