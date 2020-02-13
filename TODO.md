@@ -19,3 +19,11 @@
       * [ ] use exact diagonalization results to verify
     * [ ] scan reference state configurations to find ground state for values of pb and g
   * [x] using TN to implement the IMSRG(3)
+
+* [ ] data for committee meeting
+  * [ ] get scaling data for various IMSRG(2) implementations
+  * [ ] benchmark IMSRG(2) results against full CI and Heiko's python code (check energy convergence discrepancy)
+
+* [ ] test IMSRG(3)
+  * [ ] TT decompose IMSRG(3)-relevant occupation tensors (should speed things up)
+  * [ ] compare energy divergence to IMSRG(2)

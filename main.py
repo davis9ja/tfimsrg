@@ -232,9 +232,9 @@ if __name__ == '__main__':
     #                             with open('occE_nonzero.txt', 'a') as fi:
     #                                 fi.write('%s %s %s %s %s %s -- %s\n' % (a,b,c,d,e,f,val))
 
-    #test_exact('plots_exact_2b/', main)
+    test_exact('plots_exact_2b/', main)
 
-    main(4,4)
+    #main(4,4)
     
     # bas1B = np.array([0,1,2,3,4,5,6,7])
     # ref = np.array([1,1,1,1,0,0,0,0],dtype=np.float16)
