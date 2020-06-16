@@ -42,6 +42,8 @@ class WegnerGenerator(Generator):
         self._occC = occ_t.occC
         self._occD = occ_t.occD
 
+#        self._occRef1 = 
+
     @property
     def f(self):
         """Returns:
@@ -85,6 +87,7 @@ class WegnerGenerator(Generator):
         particles = self._particles
 
         # - Decouple off-diagonal 1B and 2B pieces
+ #       fod1 = tn.ncon([])
         fod = np.zeros(f.shape, dtype=np.float32)
         fod[np.ix_(particles, holes)] += f[np.ix_(particles, holes)]
         fod[np.ix_(holes, particles)] += f[np.ix_(holes, particles)]

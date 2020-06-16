@@ -22,6 +22,7 @@ from scipy.integrate import odeint, ode
 
 from sys import argv
 
+import time
 #-----------------------------------------------------------------------------------
 # basis and index functions
 #-----------------------------------------------------------------------------------
@@ -899,7 +900,7 @@ def main(n_holes, g=0.5):
   H1B, H2B = pairing_hamiltonian(delta, g, user_data)
   
   E, f, Gamma = normal_order(H1B, H2B, user_data) 
-  print(E)
+  #print(E)
 
   # reshape Hamiltonian into a linear array (initial ODE vector)
   y0   = np.append([E], np.append(reshape(f, -1), reshape(Gamma, -1)))
@@ -907,7 +908,7 @@ def main(n_holes, g=0.5):
   t = 1
   dy = derivative_wrapper(t, y0, user_data)
   dE, df, dG = get_operator_from_y(dy, dim1B, dim1B*dim1B)
-  print(dE)
+  #print(dE)
   
   # integrate flow equations 
   solver = ode(derivative_wrapper,jac=None)
@@ -952,7 +953,11 @@ def main(n_holes, g=0.5):
 # make executable
 #------------------------------------------------------------------------------
 if __name__ == "__main__": 
-  main(4)
+  for n in range(2,14,2):
+    ti = time.time()
+    main(n)
+    tf = time.time()
+    print('Total time: {:2.5f}'.format(tf-ti))
 
 import pytest
 

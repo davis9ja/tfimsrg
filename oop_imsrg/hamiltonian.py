@@ -29,6 +29,7 @@ class PairingHamiltonian2B(Hamiltonian):
         Keyword arguments:
 
         ref -- the reference state. must match dimensions imposed by arugments (default: [1,1,1,1,0,0,0,0])
+        p -
         d -- the energy level spacing (default: 1.0)
         g -- the pairing strength (default: 0.5)
         pb -- strength of the pair-breaking term (operates in double particle basis) (default: 0.0)"""
