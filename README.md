@@ -8,7 +8,8 @@ We solve the IMSRG flow in two architectures; 1) pure TensorFlow and 2) TensorNe
 #### HOW TO IMPORT PACKAGE:
 For practical use, include these lines at the top of your Python code:
 
-`sys.path.append('../im-srg_tensorflow/')
+`sys.path.append('../im-srg_tensorflow/')`
+
 `from main import main`
 
 
