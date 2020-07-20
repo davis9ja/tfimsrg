@@ -18,7 +18,7 @@ class Hamiltonian(object):
 class PairingHamiltonian2B(Hamiltonian):
     """Generate the two-body pairing Hamiltonian. Inherits from Hamiltonian."""
 
-    def __init__(self, n_hole_states, n_particle_states, ref=None, d=1.0, g=0.5, pb=0.0):
+    def __init__(self, n_hole_states, n_particle_states, ref=[], d=1.0, g=0.5, pb=0.0):
         """Class constructor. Instantiate PairingHamiltonian2B object.
 
         Arguments:
@@ -37,7 +37,7 @@ class PairingHamiltonian2B(Hamiltonian):
         self._d = d
         self._g = g
         self._pb = pb
-        if ref == None:
+        if ref == []:
             self._reference = np.append(np.ones(n_hole_states,dtype=np.float32),
                                         np.zeros(n_particle_states,dtype=np.float32))
         else:

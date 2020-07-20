@@ -12,6 +12,8 @@ class OccupationTensors(object):
     index is occupied, or 0 if the same index is unoccupied,
     in the reference state."""
 
+    DATA_TYPE = float
+
     def __init__(self, sp_basis, reference):
         """Class constructor. Instantiates an OccupationTensors object.
 
@@ -184,8 +186,8 @@ class OccupationTensors(object):
             #Ga = tn.Node(np.array([ [1,1], [1,1], [1,1], [1,1], [0,1], [0,1], [0,1], [0,1] ]))
             #Gb = tn.Node(np.transpose(np.array([ [1,-1], [1,-1], [1,-1], [1,-1], [1,0], [1,0], [1,0], [1,0] ])))
 
-            Ga = tn.Node(np.append(ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(int))
-            Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(int)))
+            Ga = tn.Node(np.append(ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(self.DATA_TYPE))
+            Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(self.DATA_TYPE)))
             Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
             #final = tn.outer_product(Gab, tn.Node(np.ones((n,n)))).tensor
 
@@ -216,8 +218,8 @@ class OccupationTensors(object):
             #     for b in bas1B:
             #         occA[a,b] = ref[a] - ref[b]
 
-            Ga = tn.Node(np.append(ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(int))
-            Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(int)))
+            Ga = tn.Node(np.append(ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(self.DATA_TYPE))
+            Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(self.DATA_TYPE)))
             Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
             
             final = tn.outer_product(Gab, tn.Node(np.ones((n,n))))
@@ -256,8 +258,8 @@ class OccupationTensors(object):
             #Ga = tn.Node(np.array([ [0,1], [0,1], [0,1], [0,1], [1,1], [1,1], [1,1], [1,1] ]))
             #Gb = tn.Node(np.transpose(np.array([ [1,-1], [1,-1], [1,-1], [1,-1], [1,0], [1,0], [1,0], [1,0] ])))
 
-            Ga = tn.Node(np.append(1-ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(int))
-            Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(int)))
+            Ga = tn.Node(np.append(1-ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(self.DATA_TYPE))
+            Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(self.DATA_TYPE)))
             Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
             #final = tn.outer_product(Gab, tn.Node(np.ones((n,n)))).tensor
 
@@ -286,8 +288,8 @@ class OccupationTensors(object):
             #     for b in bas1B:
             #         occB[a,b] = 1 - ref[a] - ref[b]
 
-            Ga = tn.Node(np.append(1-ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(int))
-            Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(int)))
+            Ga = tn.Node(np.append(1-ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(self.DATA_TYPE))
+            Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(self.DATA_TYPE)))
             Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
             final = tn.outer_product(Gab, tn.Node(np.ones((n,n))))
 
@@ -336,16 +338,16 @@ class OccupationTensors(object):
             #                         [[0,0,0,0], [0,1,0,0],[0,0,0,0],[0,0,0,-1]] ]))
             #Gc = tn.Node(np.transpose(np.array([ [1,1,1,1], [1,1,1,1], [1,1,1,1], [1,1,1,1], [1,0,0,0], [1,0,0,0], [1,0,0,0], [1,0,0,0] ])))
 
-            Ga1 = np.append(ref[:,np.newaxis], np.ones((n,2)),axis=1).astype(int)
-            Ga2 = np.append(Ga1, ref[:,np.newaxis],axis=1).astype(int)
+            Ga1 = np.append(ref[:,np.newaxis], np.ones((n,2)),axis=1).astype(self.DATA_TYPE)
+            Ga2 = np.append(Ga1, ref[:,np.newaxis],axis=1).astype(self.DATA_TYPE)
             Ga = tn.Node(Ga2) 
 
-            Gb1= np.append(ref[np.newaxis,np.newaxis,:],np.zeros((1,1,n)),axis=1).astype(int)
-            Gb2= np.append(Gb1, np.append(np.zeros((1,1,n)), np.ones((1,1,n)),axis=1), axis=0).astype(int)
+            Gb1= np.append(ref[np.newaxis,np.newaxis,:],np.zeros((1,1,n)),axis=1).astype(self.DATA_TYPE)
+            Gb2= np.append(Gb1, np.append(np.zeros((1,1,n)), np.ones((1,1,n)),axis=1), axis=0).astype(self.DATA_TYPE)
             Gb3 = np.array([[1,0],[0,-1]])
             Gb = tn.Node(np.kron(Gb3, np.transpose(Gb2)))
            
-            Gc1 = np.append(np.ones((n,1)), np.repeat(ref[:,np.newaxis],3,axis=1), axis=1).astype(int)
+            Gc1 = np.append(np.ones((n,1)), np.repeat(ref[:,np.newaxis],3,axis=1), axis=1).astype(self.DATA_TYPE)
             Gc = tn.Node(np.transpose(Gc1))
 
             Gabc = tn.ncon([Ga, Gb, Gc], [(-1, 1), (-2, 1, 2), (2, -3)])
@@ -419,9 +421,9 @@ class OccupationTensors(object):
             # Gc = tn.Node(np.array([ [0,0],[0,0],[0,0],[0,0],[1,0],[1,0],[1,0],[1,0] ]))
             # Gd = tn.Node(np.transpose(np.array([ [0,0],[0,0],[0,0],[0,0],[1,0],[1,0],[1,0],[1,0] ])))
 
-            Ga = tn.Node(np.transpose(np.append(ref[np.newaxis,:], np.zeros((1,n)), axis=0).astype(int)))
+            Ga = tn.Node(np.transpose(np.append(ref[np.newaxis,:], np.zeros((1,n)), axis=0).astype(self.DATA_TYPE)))
             Gb = tn.Node(np.transpose(Ga.tensor))
-            Gc = tn.Node(np.transpose(np.append(ref[::-1][np.newaxis,:],np.zeros((1,n)), axis=0).astype(int)))
+            Gc = tn.Node(np.transpose(np.append(ref[::-1][np.newaxis,:],np.zeros((1,n)), axis=0).astype(self.DATA_TYPE)))
             Gd = tn.Node(np.transpose(Gc.tensor))
 
             Gabcd = tn.ncon([Ga,Gb,Gc,Gd], [(-1,1),(1,-2),(-3,2),(2,-4)])
@@ -463,9 +465,9 @@ class OccupationTensors(object):
             # Gc = tn.Node(np.array([ [0,0],[0,0],[0,0],[0,0],[1,0],[1,0],[1,0],[1,0] ]))
             # Gd = tn.Node(np.transpose(np.array([ [0,0],[0,0],[0,0],[0,0],[1,0],[1,0],[1,0],[1,0] ])))
 
-            Ga = tn.Node(np.transpose(np.append(ref[np.newaxis,:], np.zeros((1,n)), axis=0).astype(int)))
+            Ga = tn.Node(np.transpose(np.append(ref[np.newaxis,:], np.zeros((1,n)), axis=0).astype(self.DATA_TYPE)))
             Gb = tn.Node(np.transpose(Ga.tensor))
-            Gc = tn.Node(np.transpose(np.append(ref[::-1][np.newaxis,:],np.zeros((1,n)), axis=0).astype(int)))
+            Gc = tn.Node(np.transpose(np.append(ref[::-1][np.newaxis,:],np.zeros((1,n)), axis=0).astype(self.DATA_TYPE)))
             Gd = tn.Node(np.transpose(Gc.tensor))
 
             Gabcd = tn.ncon([Ga,Gb,Gc,Gd], [(-1,1),(1,-2),(-3,2),(2,-4)])

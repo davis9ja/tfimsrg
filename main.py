@@ -10,6 +10,8 @@ from scipy.integrate import odeint, ode
 import numpy as np
 import time
 import pickle
+
+import matplotlib.pyplot as plt
 #import tensorflow as tf
 #tf.enable_v2_behavior()
 #print("GPU available: ",tf.test.is_gpu_available())
@@ -18,7 +20,7 @@ import os, sys
 #from memory_profiler import profile
 import itertools
 import random
-#import tensornetwork as tn
+import tensornetwork as tn
 #tn.set_default_backend("tensorflow")
 #sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
 #sess.close()
@@ -33,6 +35,20 @@ from oop_imsrg.plot_data import *
 # from oop_imsrg.display_memory import *
 import oop_imsrg.ci_pairing.cipy_pairing_plus_ph as ci_matrix
 from oop_imsrg.tests2B import *
+
+def get_vacuum_coeffs(E, f, G, basis, holes):
+
+    H2B = G
+    H1B = f - np.trace(G[np.ix_(basis,holes,basis,holes)], axis1=1,axis2=3) 
+
+    Gnode = tn.Node(G[np.ix_(holes,holes,holes,holes)])
+    Gnode[0] ^ Gnode[2]
+    Gnode[1] ^ Gnode[3]
+    result = Gnode @ Gnode
+    H0B = E - np.trace(f[np.ix_(holes,holes)]) + 0.5*result.tensor
+
+    return (H0B, H1B, H2B)
+
 
 # @profile
 def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
@@ -125,7 +141,7 @@ def ravel(y, bas_len):
     return(ravel_E, ravel_f, ravel_G)
 
 # @profile
-def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1):
+def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1):
     """Main method uses scipy.integrate.ode to solve the IMSRG(2) flow
     equations."""
 
@@ -133,7 +149,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1):
 
     initi = time.time() # start instantiation timer
 
-    if ref == None:
+    if ref == []:
         ha = PairingHamiltonian2B(n_holes, n_particles, d=d, g=g, pb=pb)
         ref = ha.reference # this is just for printing
     else:
@@ -165,6 +181,8 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1):
 
     # --- Solve the IM-SRG flow
     y0 = unravel(ha.E, ha.f, ha.G)
+    coeffs = get_vacuum_coeffs(ha.E, ha.f, ha.G, ha.sp_basis, ha.holes)
+    pickle.dump( coeffs, open( "./vac_coeffs_unevolved.p", "wb" ) )
 
     solver = ode(derivative,jac=None)
     solver.set_integrator('vode', method='bdf', order=5, nsteps=500)
@@ -190,10 +208,17 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1):
         #     break
         if iters %10 == 0 and verbose: print("iter: {:>6d} \t scale param: {:0.4f} \t E = {:0.8f}".format(iters, solver.t, Es))
 
+#        if iters %20 == 0 and verbose:
+#            coeffs = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
+#            pickle.dump( coeffs, open( "mixed_state_test/pickled_coeffs/vac_coeffs_s{}.p".format(iters), "wb" ) )
+
         if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) < 10**-8 and E_vals[-1] != E_vals[0]:
 
             if verbose: print("---- Energy converged at iter {:>06d} with energy {:1.8f}\n".format(iters,E_vals[-1]))
             convergence = 1
+            coeffs = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
+            #pickle.dump( coeffs, open( "mixed_state_test/pickled_coeffs/vac_coeffs_evolved.p", "wb" ) )
+            pickle.dump(coeffs, open('vac_coeffs_evolved.p', 'wb'))
             break
 
         if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) > 1:
@@ -206,6 +231,8 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1):
 
         if iters % 1000 == 0 and verbose:
             print('Iteration {:>06d}'.format(iters))
+
+        
     flowf = time.time()
     end = time.time()
     time_str = "{:2.5f}".format(end-start)
@@ -221,9 +248,91 @@ if __name__ == '__main__':
 
 
     #test_exact('plots_exact_2b/', main)
+    # refs = list(map("".join, itertools.permutations('11110000')))
+    # refs = list(dict.fromkeys(refs)) # remove duplicates
+    # refs = [list(map(int, list(ref))) for ref in refs]
 
-    main(4,4)
 
+    # TESTING MIXED STATE --------------------------------------------
+    # refs = [[1,1,1,1,0,0,0,0],[1,1,0,0,1,1,0,0],[1,1,0,0,0,0,1,1],
+    #         [0,0,1,1,1,1,0,0],[0,0,1,1,0,0,1,1],[0,0,0,0,1,1,1,1]]
+    
+
+    # gsws = [0.99, 0.985,0.975,0.95,0.9,0.85,0.8]#,0.75,0.7,0.65,0.6,0.55,0.5]
+    
+    # E_data_full = []
+    # for gsw in gsws:
+    #     E_data = []
+    #     count = 0
+    #     rsw = (1-gsw)
+    #     for i in range(len(refs)):
+    #         ref = np.zeros_like(refs[0])
+    #         E = 0.0
+    #         if i == 0: 
+    #             ref = refs[0]
+    #             data = main(4,4,ref=ref,verbose=0)
+    #             E = (data[7])[-1]
+    #             count += 1
+    #         else:
+    #             esum = np.zeros_like(refs[0])
+    #             for state in refs[1:count+1]:
+    #                 esum = np.add(esum,state)
+    #             print(esum)
+    #             ref = gsw*np.array(refs[0]) + rsw/count*(esum)
+    #             data = main(4,4,ref=ref,verbose=0)
+    #             E = (data[7])[-1]
+    #             count += 1
+    #         print("{:0.8f}, {}, {f}".format(E, sum(ref), f=ref))
+    #         E_data.append(E)
+    #     E_data_full.append(E_data)
+
+    # exact = ci_matrix.exact_diagonalization(1.0, 0.5, 0.0)
+
+    # pickle.dump( E_data_full, open( "save.p", "wb" ) )
+
+    # ----------------------------------------------------------------
+
+    refs = [[1,1,1,1,0,0,0,0],[1,1,0,0,1,1,0,0],[1,1,0,0,0,0,1,1],
+            [0,0,1,1,1,1,0,0],[0,0,1,1,0,0,1,1]]
+
+    ref = 0.985*np.asarray(refs[0]) + (1.0-0.985)/4.0*(np.asarray(refs[1]) + np.asarray(refs[2]) + np.asarray(refs[3]) + np.asarray(refs[4]))
+    main(4,4, g=0.95, ref=[1,1,1,1,0,0,0,0])
+    # H1B_true, H2B_true = pickle.load(open('comparison.p','rb'))
+    # H1B, H2B = pickle.load(open('vac_coeffs_unevolved.p', 'rb'))
+    # print(H1B, H1B_true)
+
+    
+    #print(np.array_equal(H2B_true, H2B))
+    #main(4,4)
+    
+
+    # ref1 = 0.9*refs[0] + 0.1*refs[1]
+    # data = main(4,4,ref=ref1)
+    # E1 = data[7]
+
+    # ref2 = 0.9*refs[0] + 0.05*(refs[1] + refs[2])
+    # data = main(4,4,ref=ref2)
+        
+#    ref = 0.9*np.array([1,1,1,1,0,0,0,0])+0.1*np.array([0,1,1,1,1,0,0,0])
+    
+    #main(4,4,ref=ref)
+
+    # exact = ci_matrix.exact_diagonalization(1.0, 0.5, 0.0)
+
+    # fig = plt.figure()
+
+    # for i in range(0,10):
+    #     data = main(4,4)
+    #     s_vals = data[6]
+    #     E_vals = data[7]/exact
+    #     plt.plot(s_vals, E_vals)
+    # plt.ylim([1+10**-8, 1+10**-6])
+    # plt.xlabel('scale param (s)')
+    # plt.ylabel('energy')
+    # plt.show()
+
+
+    #-- TESTING TIMINGS -------------------------
     #holes = int(sys.argv[1])
 
     # print('convergence,iters,d,g,pb,num states,GS energy,total time')

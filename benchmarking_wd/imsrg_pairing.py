@@ -23,6 +23,7 @@ from scipy.integrate import odeint, ode
 from sys import argv
 
 import time
+import pickle
 #-----------------------------------------------------------------------------------
 # basis and index functions
 #-----------------------------------------------------------------------------------
@@ -898,7 +899,7 @@ def main(n_holes, g=0.5):
 
   # set up initial Hamiltonian
   H1B, H2B = pairing_hamiltonian(delta, g, user_data)
-  
+  pickle.dump((H1B, H2B), open('comparison.p','wb'))
   E, f, Gamma = normal_order(H1B, H2B, user_data) 
   #print(E)
 
@@ -953,12 +954,12 @@ def main(n_holes, g=0.5):
 # make executable
 #------------------------------------------------------------------------------
 if __name__ == "__main__": 
-  for n in range(2,14,2):
-    ti = time.time()
-    main(n)
-    tf = time.time()
-    print('Total time: {:2.5f}'.format(tf-ti))
-
+  # for n in range(2,14,2):
+  #   ti = time.time()
+  #   main(n)
+  #   tf = time.time()
+  #   print('Total time: {:2.5f}'.format(tf-ti))
+  main(4)
 import pytest
 
 def test02ph_run(benchmark):

@@ -1,7 +1,7 @@
 #import tensorflow as tf
 # tf.enable_v2_behavior()
 #import tensornetwork as tn
-#import numpy as np
+import numpy as np
 from oop_imsrg.hamiltonian import *
 from oop_imsrg.occupation_tensors import *
 #tn.set_default_backend("tensorflow") 
@@ -42,7 +42,13 @@ class WegnerGenerator(Generator):
         self._occC = occ_t.occC
         self._occD = occ_t.occD
 
-#        self._occRef1 = 
+        ref = h.reference
+        n = len(self._holes)+len(self._particles)
+        Ga = tn.Node(np.transpose(np.append(ref[np.newaxis,:], np.zeros((1,n)), axis=0).astype(float)))
+        Gb = tn.Node(np.append(ref[::-1][np.newaxis,:],np.zeros((1,n)), axis=0).astype(float))
+        
+        self._occRef1 = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])                                                                    # n_a(1-n_b)
+        self._occRef2 = tn.ncon([tn.Node(np.transpose(Gb.tensor)), tn.Node(np.transpose(Ga.tensor))], [(-1,1),(1,-2)])       # (1-n_a)n_b
 
     @property
     def f(self):
@@ -86,16 +92,26 @@ class WegnerGenerator(Generator):
         holes = self._holes
         particles = self._particles
 
+        occRef1 = self._occRef1
+        occRef2 = self._occRef2
+
+        occD = self._occD
+        occDt = tn.Node(np.transpose(occD.tensor,[2,3,0,1]))
+
         # - Decouple off-diagonal 1B and 2B pieces
  #       fod1 = tn.ncon([])
         fod = np.zeros(f.shape, dtype=np.float32)
-        fod[np.ix_(particles, holes)] += f[np.ix_(particles, holes)]
-        fod[np.ix_(holes, particles)] += f[np.ix_(holes, particles)]
+        fod += np.multiply(occRef2.tensor, f)
+        fod += np.multiply(occRef1.tensor, f)
+        # fod[np.ix_(particles, holes)] += f[np.ix_(particles, holes)]
+        # fod[np.ix_(holes, particles)] += f[np.ix_(holes, particles)]
         fd = f - fod
 
         God = np.zeros(G.shape, dtype=np.float32)
-        God[np.ix_(particles, particles, holes, holes)] += G[np.ix_(particles, particles, holes, holes)]
-        God[np.ix_(holes, holes, particles, particles)] += G[np.ix_(holes, holes, particles, particles)]
+        God += np.multiply(occDt.tensor, G)
+        God += np.multiply(occD.tensor, G)
+        # God[np.ix_(particles, particles, holes, holes)] += G[np.ix_(particles, particles, holes, holes)]
+        # God[np.ix_(holes, holes, particles, particles)] += G[np.ix_(holes, holes, particles, particles)]
         Gd = G - God
 
         return (fd, fod, Gd, God)
@@ -143,7 +159,7 @@ class WegnerGenerator(Generator):
         sum2_1b_1 = tn.ncon([fdPrime, God], [(1,2), (2,-1,1,-2)])
         sum2_1b_2 = tn.ncon([fodPrime, Gd], [(1,2), (2,-1,1,-2)])
         sum2_1b = sum2_1b_1 - sum2_1b_2
-
+        
         # sum2_1b_1 = tn.ncon([fd, God], [(0, 1), (1, -1, 0, -2)])#.numpy()
         # sum2_1b_2 = tn.ncon([fod, Gd], [(0, 1), (1, -1, 0, -2)])#.numpy()
         # sum2_1b_3 = sum2_1b_1 - sum2_1b_2
@@ -152,7 +168,7 @@ class WegnerGenerator(Generator):
         # third term
         #sum3_1b_1 = tn.ncon([Gd, occC, God], [(6,-1,4,5), (4,5,6,1,2,3), (1,2,3,-2)])#.numpy()
         #sum3_1b = sum3_1b_1 - np.transpose(sum3_1b_1)
-
+        
         sum3_1b_1 = np.multiply(occC.tensor, God)#np.multiply(tn.outer_product(tn.Node(occC), tn.Node(np.ones(8))).tensor, God)
         sum3_1b_2 = tn.ncon([Gd, God], [(3,-1,1,2),(1,2,3,-2)])
         sum3_1b = sum3_1b_2 - np.transpose(sum3_1b_2)
