@@ -5,6 +5,13 @@ The purpose of this code is to write the IM-SRG flow solution for the pairing mo
 
 We solve the IMSRG flow in two architectures; 1) pure TensorFlow and 2) TensorNetwork, a library that uses TensorFlow as a backend.
 
+#### HOW TO IMPORT PACKAGE:
+For practical use, include these lines at the top of your Python code:
+
+`sys.path.append('../im-srg_tensorflow/')
+`from main import main`
+
+
 #### FILES:
 * `testing_tensorflow_v2.ipynb`: main notebook for TensorFlow implementation
 * `IMSRG_tensornetwork.ipynb`: main notebook for TensorNetwork implementation
