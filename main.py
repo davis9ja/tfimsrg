@@ -189,7 +189,7 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1):
     solver.set_f_params(ha, ot, wg, fl)
     solver.set_initial_value(y0, 0.)
 
-    sfinal = 50
+    sfinal = 100
     ds = 0.1
     s_vals = []
     E_vals = []
@@ -216,9 +216,6 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1):
 
             if verbose: print("---- Energy converged at iter {:>06d} with energy {:1.8f}\n".format(iters,E_vals[-1]))
             convergence = 1
-            coeffs = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
-            #pickle.dump( coeffs, open( "mixed_state_test/pickled_coeffs/vac_coeffs_evolved.p", "wb" ) )
-            pickle.dump(coeffs, open('vac_coeffs_evolved.p', 'wb'))
             break
 
         if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) > 1:
@@ -238,6 +235,11 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1):
     time_str = "{:2.5f}".format(end-start)
 
     if verbose: print("IM-SRG(2) converged in {:2.5f} seconds".format(flowf-flowi))
+
+    coeffs = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
+    #pickle.dump( coeffs, open( "mixed_state_test/pickled_coeffs/vac_coeffs_evolved.p", "wb" ) )
+    pickle.dump(coeffs, open('vac_coeffs_evolved.p', 'wb'))
+
 
     del ha, ot, wg, fl, solver, y0, sfinal, ds
     
@@ -292,11 +294,14 @@ if __name__ == '__main__':
 
     # ----------------------------------------------------------------
 
-    refs = [[1,1,1,1,0,0,0,0],[1,1,0,0,1,1,0,0],[1,1,0,0,0,0,1,1],
-            [0,0,1,1,1,1,0,0],[0,0,1,1,0,0,1,1]]
+    # refs = [[1,1,1,1,0,0,0,0],[1,1,0,0,1,1,0,0],[1,1,0,0,0,0,1,1],
+    #         [0,0,1,1,1,1,0,0],[0,0,1,1,0,0,1,1]]
 
-    ref = 0.985*np.asarray(refs[0]) + (1.0-0.985)/4.0*(np.asarray(refs[1]) + np.asarray(refs[2]) + np.asarray(refs[3]) + np.asarray(refs[4]))
-    main(4,4, g=0.95, ref=[1,1,1,1,0,0,0,0])
+    # ref = 0.985*np.asarray(refs[0]) + (1.0-0.985)/4.0*(np.asarray(refs[1]) + np.asarray(refs[2]) + np.asarray(refs[3]) + np.asarray(refs[4]))
+    # main(4,4, g=5, ref=[1,1,1,1,0,0,0,0])
+
+    test_exact('plots_exact_2b/', main)
+
     # H1B_true, H2B_true = pickle.load(open('comparison.p','rb'))
     # H1B, H2B = pickle.load(open('vac_coeffs_unevolved.p', 'rb'))
     # print(H1B, H1B_true)
