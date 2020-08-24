@@ -184,11 +184,11 @@ def test_exact(plots_dir, main):
         # plt.title('Correlation energy with pb = {:2.4f}'.format(pb))
         # plt.savefig(plots_dir+'pb{:2.4f}.png'.format(pb))
         
-        if not os.path.exists('data_pickles/'):
-            os.mkdir('data_pickles/')
+        if not os.path.exists('data_pickles1/'):
+            os.mkdir('data_pickles1/')
             
         fulldata = [g_vals, E_exacts, E_corrs, E_pys]
-        with open('data_pickles/fulldata.pickle', 'wb') as f:
+        with open('data_pickles1/fulldata.pickle', 'wb') as f:
             pickle.dump(fulldata, f, pickle.HIGHEST_PROTOCOL)
         
         #plt.close()

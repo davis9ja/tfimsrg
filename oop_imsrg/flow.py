@@ -71,16 +71,16 @@ class Flow_IMSRG2(Flow):
          df, -- one-body tensor
          dG) -- two-body tensor"""
 
-        assert isinstance(gen, Generator), "Arg 0 must be WegnerGenerator object"
+        assert isinstance(gen, Generator), "Arg 0 must be Generator object"
 
         # f = self.f
         # G = self.G
         f = gen.f.astype(np.float32)
         G = gen.G.astype(np.float32)
 
-        partition = gen.calc_eta()
-        eta1B = partition[0]#.astype(np.float32)
-        eta2B = partition[1]#.astype(np.float32)
+        eta1B, eta2B = gen.calc_eta()
+        # eta1B = partition[0]#.astype(np.float32)
+        # eta2B = partition[1]#.astype(np.float32)
 
         # occA = occ_t.occA
         # occB = occ_t.occB
@@ -208,7 +208,7 @@ class Flow_IMSRG2(Flow):
         # sum3_2b_5 = sum3_2b_1 - sum3_2b_2 - sum3_2b_3 + sum3_2b_4
         # sum3_2b = tn.ncon([occA, sum3_2b_5], [(0, 1, -1, -2), (0, 1, -3, -4)])#.numpy()
 
-        dG = sum1_2b + 0.5*sum2_2b + sum3_2b
+        dG = sum1_2b + 0.5*sum2_2b - sum3_2b
 
         return (dE, df, dG)
 

@@ -280,7 +280,10 @@ def eta_white(f, Gamma, user_data):
       denom = f[a,a] - f[i,i] + Gamma[idx2B[(a,i)], idx2B[(a,i)]]
       val = f[a,i]/denom
       eta1B[a, i] =  val
-      eta1B[i, a] = -val 
+      eta1B[i, a] = -val
+      # if denom < 1:
+      #   print("one body {}{}, ".format(a,i), denom)
+      #print(denom)
 
   # two-body part of the generator
   eta2B = np.zeros_like(Gamma)
@@ -303,6 +306,10 @@ def eta_white(f, Gamma, user_data):
 
           eta2B[idx2B[(a,b)],idx2B[(i,j)]] = val
           eta2B[idx2B[(i,j)],idx2B[(a,b)]] = -val
+          #print(denom)
+          if denom < 1:
+             print("two body {}{}{}{}, ".format(a,b,i,j), denom)
+          #print(Gamma[idx2B[(a,b)], idx2B[(i,j)]], a,b,i,j)
 
   return eta1B, eta2B
 
@@ -322,6 +329,8 @@ def eta_white_mp(f, Gamma, user_data):
       val = f[a,i]/denom
       eta1B[a, i] =  val
       eta1B[i, a] = -val 
+      if denom < 1:
+        print("one body {}{}, ".format(a,i), denom)
 
   # two-body part of the generator
   eta2B = np.zeros_like(Gamma)
@@ -338,6 +347,10 @@ def eta_white_mp(f, Gamma, user_data):
 
           eta2B[idx2B[(a,b)],idx2B[(i,j)]] = val
           eta2B[idx2B[(i,j)],idx2B[(a,b)]] = -val
+
+          if denom < 1:
+            print("two body {}{}{}{}, ".format(a,b,i,j), denom)
+
 
   return eta1B, eta2B
 
@@ -830,8 +843,44 @@ def calc_mbpt3(f, Gamma, user_data):
 #------------------------------------------------------------------------------
 # Main program
 #------------------------------------------------------------------------------
+
+def dump_flow_data(count, s_val, E, f, Gamma, user_data):
+  bas1B = user_data["bas1B"]
+  idx2B = user_data["idx2B"]
+  holes = user_data['holes']
+
+  dim1B = len(bas1B)
+  Gamma_rank4 = np.zeros((dim1B, dim1B, dim1B, dim1B))
+  basis = bas1B
+
+  for p in basis:
+    for q in basis:
+      for r in basis:
+        for s in basis:
+          Gamma_rank4[p,q,r,s] = Gamma[idx2B[(p,q)], idx2B[(r,s)]]
+  
+  # Compute 2B vacuum coeffs
+  H2B = Gamma_rank4
+
+  # Compute 1B vacuum coeffs
+  H1B = f - np.trace(Gamma_rank4[np.ix_(basis,holes,basis,holes)], axis1=1,axis2=3) 
+
+  # Compute 0B vacuum 
+  Gamma_trace = 0
+  for i in holes:
+    for j in holes:
+      Gamma_trace += Gamma_rank4[i,j,i,j]
+
+  f_trace = 0
+  for i in holes:
+    f_trace += f[i,i]
+
+  H0B = E - f_trace + 0.5*Gamma_trace
+  print(s_val)
+  pickle.dump((s_val, H0B, H1B, H2B), open('vac_coeffs_reference_c{}.p'.format(count), 'wb'))
+  
 #@profile
-def main(n_holes, g=0.5):
+def main(n_holes, g=2):
   # grab delta and g from the command line
   # delta      = float(argv[1])
   # g          = float(argv[2])
@@ -847,7 +896,7 @@ def main(n_holes, g=0.5):
   # 1st state
   holes = np.arange(particles)
   particles = np.arange(particles,dim1B)
-
+  print(holes, particles)
   # 2nd state
   # holes     = [0,1,4,5]
   # particles = [2,3,6,7]
@@ -893,7 +942,7 @@ def main(n_holes, g=0.5):
     "dE":         0.0,                # and main routine
 
 
-    "calc_eta":   eta_wegner,          # specify the generator (function object)
+    "calc_eta":   eta_white,          # specify the generator (function object)
     "calc_rhs":   flow_imsrg2         # specify the right-hand side and truncation
   }
 
@@ -937,10 +986,12 @@ def main(n_holes, g=0.5):
 
     norm_fod     = calc_fod_norm(f, user_data)
     norm_Gammaod = calc_Gammaod_norm(Gamma, user_data)
-
+    s_val = solver.t
     if count % 10 == 0:
       print("%8.5f %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f"%(
         solver.t, E , DE2, DE3, E+DE2+DE3, user_data["dE"], user_data["eta_norm"], norm_fod, norm_Gammaod))
+      print(s_val)
+      dump_flow_data(count, s_val, E, f, Gamma, user_data)
     count += 1
 
     if abs(DE2/E) < 10e-8: break

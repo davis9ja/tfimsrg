@@ -45,6 +45,7 @@ def get_vacuum_coeffs(E, f, G, basis, holes):
     Gnode[0] ^ Gnode[2]
     Gnode[1] ^ Gnode[3]
     result = Gnode @ Gnode
+
     H0B = E - np.trace(f[np.ix_(holes,holes)]) + 0.5*result.tensor
 
     return (H0B, H1B, H2B)
@@ -141,7 +142,7 @@ def ravel(y, bas_len):
     return(ravel_E, ravel_f, ravel_G)
 
 # @profile
-def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1):
+def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_data_log=0, generator='wegner'):
     """Main method uses scipy.integrate.ode to solve the IMSRG(2) flow
     equations."""
 
@@ -156,7 +157,12 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1):
         ha = PairingHamiltonian2B(n_holes, n_particles, ref=ref, d=d, g=g, pb=pb)
 
     ot = OccupationTensors(ha.sp_basis, ha.reference)
-    wg = WegnerGenerator(ha, ot)
+
+    generator_dict = {'wegner':WegnerGenerator(ha, ot), 
+                      'white':WhiteGenerator(ha),
+                      'white_mp':WhiteGeneratorMP(ha)}
+
+    wg = generator_dict[generator] #WegnerGenerator(ha, ot)
     fl = Flow_IMSRG2(ha, ot) 
 
     initf = time.time() # finish instantiation timer
@@ -166,13 +172,14 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1):
 
     if verbose:
         print("""Pairing model IM-SRG(2) flow:
+        Generator      = {}
         d              = {:2.4f}
         g              = {:2.4f}
         pb             = {:2.4f}
         SP basis size  = {:2d}
         n_holes        = {:2d}
         n_particles    = {:2d}
-        ref            = {d}""".format(ha.d, ha.g, ha.pb, ha.n_sp_states,
+        ref            = {d}""".format(generator, ha.d, ha.g, ha.pb, ha.n_sp_states,
                                        len(ha.holes), len(ha.particles),
                                        d=ref) )
     if verbose:
@@ -185,12 +192,12 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1):
     pickle.dump( coeffs, open( "./vac_coeffs_unevolved.p", "wb" ) )
 
     solver = ode(derivative,jac=None)
-    solver.set_integrator('vode', method='bdf', order=5, nsteps=500)
+    solver.set_integrator('vode', method='bdf', order=5, nsteps=1000)
     solver.set_f_params(ha, ot, wg, fl)
     solver.set_initial_value(y0, 0.)
 
-    sfinal = 100
-    ds = 0.1
+    sfinal = 50
+    ds = 1
     s_vals = []
     E_vals = []
 
@@ -198,15 +205,22 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1):
     convergence = 0
     while solver.successful() and solver.t < sfinal:
 
+        #print('solver success,', solver.successful())
+
         ys = solver.integrate(sfinal, step=True)
         Es, fs, Gs = ravel(ys, ha.n_sp_states)
         s_vals.append(solver.t)
         E_vals.append(Es)
 
-        iters += 1
+
         # if iters == 176:
         #     break
         if iters %10 == 0 and verbose: print("iter: {:>6d} \t scale param: {:0.4f} \t E = {:0.8f}".format(iters, solver.t, Es))
+        
+        if flow_data_log:# and iters %10 == 0:
+            H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
+            fname = 'vac_coeffs_flow_c{}.p'.format(iters)
+            pickle.dump((solver.t, H0B, H1B, H2B), open(fname, 'wb'))
 
 #        if iters %20 == 0 and verbose:
 #            coeffs = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
@@ -218,9 +232,9 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1):
             convergence = 1
             break
 
-        if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) > 1:
-            if verbose: print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
-            break
+        # if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) > 1:
+        #     if verbose: print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
+        #     break
 
         if iters > 20000:
             if verbose: print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
@@ -229,7 +243,8 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1):
         if iters % 1000 == 0 and verbose:
             print('Iteration {:>06d}'.format(iters))
 
-        
+        iters += 1
+        #print(solver.successful())
     flowf = time.time()
     end = time.time()
     time_str = "{:2.5f}".format(end-start)
@@ -294,13 +309,14 @@ if __name__ == '__main__':
 
     # ----------------------------------------------------------------
 
-    # refs = [[1,1,1,1,0,0,0,0],[1,1,0,0,1,1,0,0],[1,1,0,0,0,0,1,1],
-    #         [0,0,1,1,1,1,0,0],[0,0,1,1,0,0,1,1]]
+    refs = [[1,1,1,1,0,0,0,0],[1,1,0,0,1,1,0,0],[1,1,0,0,0,0,1,1],
+            [0,0,1,1,1,1,0,0],[0,0,1,1,0,0,1,1]]
 
-    # ref = 0.985*np.asarray(refs[0]) + (1.0-0.985)/4.0*(np.asarray(refs[1]) + np.asarray(refs[2]) + np.asarray(refs[3]) + np.asarray(refs[4]))
+    ref = 0.5*np.asarray(refs[0]) + (1.0-0.5)/4.0*(np.asarray(refs[1]) + np.asarray(refs[2]) + np.asarray(refs[3]) + np.asarray(refs[4]))
     # main(4,4, g=5, ref=[1,1,1,1,0,0,0,0])
 
-    test_exact('plots_exact_2b/', main)
+    
+    main(4,4,g=2, ref=ref, flow_data_log=0, generator='white')
 
     # H1B_true, H2B_true = pickle.load(open('comparison.p','rb'))
     # H1B, H2B = pickle.load(open('vac_coeffs_unevolved.p', 'rb'))
