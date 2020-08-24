@@ -235,7 +235,7 @@ class WegnerGenerator(Generator):
         # sum3_2b_5 = sum3_2b_1 - sum3_2b_2 - sum3_2b_3 + sum3_2b_4
         # sum3_2b = tn.ncon([occA, sum3_2b_5], [(0, 1, -1, -2), (0, 1, -3, -4)])#.numpy()
 
-        eta2B = sum1_2b + 0.5*sum2_2b + sum3_2b
+        eta2B = sum1_2b + 0.5*sum2_2b - sum3_2b
 
         return (eta1B, eta2B)
 
@@ -514,3 +514,202 @@ class WegnerGenerator3B(WegnerGenerator):
         eta3B = sum1_3b + 0.5*sum4_3b + (-0.5)*sum5_3b + (-1.0)*sum6_3b + (1/6)*sum7_3b + 0.5*sum8_3b
 
         return (eta1B, eta2B, eta3B)
+
+
+class WhiteGenerator(Generator):
+    """Calculate White's generator for a normal ordered Hamiltonian.
+       This standard implemenation uses Epstein-Nesbet denominators."""
+
+
+    def __init__(self, h):
+
+        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
+        
+        self.f = h.f
+        self.G = h.G
+
+        self._holes = h.holes
+        self._particles = h.particles
+        self._sp_basis = h.sp_basis
+
+    @property
+    def f(self):
+        """Returns:
+
+        f -- one-body tensor elements (initialized by Hamiltonian object)"""
+        return self._f
+
+    @property
+    def G(self):
+        """Returns:
+
+        f -- two-body tensor elements (initialized by Hamiltonian object)"""
+        return self._G
+
+    @f.setter
+    def f(self, f):
+        """Sets the one-body tensor."""
+        self._f = f
+
+    @G.setter
+    def G(self, G):
+        """Sets the two-body tensor."""
+        self._G = G
+
+    def calc_eta(self):
+
+        bas1B = self._sp_basis
+        holes = self._holes
+        particles = self._particles
+
+        f = self.f
+        G = self.G
+        
+        eta1B = np.zeros_like(f)
+        eta2B = np.zeros_like(G)
+        
+        for a in particles:
+            for i in holes:
+                denom = f[a,a] - f[i,i] + G[a,i,a,i]
+                result = f[a,i] / denom
+
+                eta1B[a,i] = result
+                eta1B[i,a] = -result
+                
+                if denom < 1:
+                    print('one body {}{},'.format(a, i), denom)
+                # if a == 4 and i == 3:
+                #     print(G[a,i,a,i])
+
+        for a in particles:
+            for b in particles:
+                for i in holes:
+                    for j in holes:
+                        denom = (
+                            f[a,a] + f[b,b] - f[i,i] - f[j,j] 
+                            + G[a,b,a,b] + G[i,j,i,j] - G[a,i,a,i]
+                            - G[b,j,b,j] - G[a,j,a,j] - G[b,i,b,i]
+                        )
+                        result = G[a,b,i,j] / denom
+                        
+                        eta2B[a,b,i,j] = result
+                        eta2B[i,j,a,b] = -result
+
+                        # if denom < 1:
+                        #    print('two body {}{}{}{},'.format(a,b,i,j), denom)
+                        # if a == 5 and b == 4 and i == 3 and j ==2:
+                        #     print(denom)
+                        #print(eta2B[5,4,3,2])
+
+
+
+        # # Obtain denominator terms
+        # fpp = f[np.ix_(particles), np.ix_(particles)]
+        # fhh = f[np.ix_(holes), np.ix_(holes)]
+        # Gphph = G[np.ix_(particles), np.ix_(holes), np.ix_(particles), np.ix_(holes)]
+        # Gpppp = G[np.ix_(particles), np.ix_(particles), np.ix_(particles), np.ix_(particles)]
+        # Ghhhh = G[np.ix_(holes), np.ix_(holes), np.ix_(holes), np.ix_(holes)]
+
+        # # Compute one body denominators (Epstein-Nesbet)
+        # denom1B = np.ones_like(f)
+        # denom1B[np.ix_(particles), np.ix_(holes)] = fpp - fhh + Gphph
+        # #denom1B[np.ix_(holes), np.ix_(particles)] = -denom1B[np.ix_(particles), np.ix_(holes)]
+        
+        # # Compute two body denominators (Epstein-Nesbet)
+        # denom2B = np.ones_like(G)
+        # denom2B[np.ix_(particles), np.ix_(particles), np.ix_(holes), np.ix_(holes)] = fpp + fpp - fhh - fhh - Gpppp + Ghhhh - Gphph - Gphph - Gphph - Gphph
+        # #denom2B[np.ix_(holes), np.ix_(holes), np.ix_(particles), np.ix_(particles)] = -denom2B[np.ix_(particles), np.ix_(particles), np.ix_(holes), np.ix_(holes)]
+        
+        # # Compute generator
+        # eta1B = np.zeros_like(f)
+        # eta1B[np.ix_(particles), np.ix_(holes)] = np.divide(f[np.ix_(particles), np.ix_(holes)], denom1B[np.ix_(particles), np.ix_(holes)])
+        # eta1B[np.ix_(holes), np.ix_(particles)] = -eta1B[np.ix_(particles), np.ix_(holes)]
+        
+        # eta2B = np.zeros_like(G)
+        # eta2B[np.ix_(particles), np.ix_(particles), np.ix_(holes), np.ix_(holes)] = np.divide(G[np.ix_(particles), np.ix_(particles), np.ix_(holes), np.ix_(holes)], 
+        #                                                                                       denom2B[np.ix_(particles), np.ix_(particles), np.ix_(holes), np.ix_(holes)])
+        # eta2B[np.ix_(holes), np.ix_(holes), np.ix_(particles), np.ix_(particles)] = -eta2B[np.ix_(particles), np.ix_(particles), np.ix_(holes), np.ix_(holes)]
+
+        return (eta1B, eta2B)
+        
+class WhiteGeneratorMP(Generator):
+    """Calculate White's generator for a normal ordered Hamiltonian.
+       This "standard" implemenation uses Moller-Plesset denominators."""
+
+
+    def __init__(self, h):
+
+        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
+        
+        self.f = h.f
+        self.G = h.G
+
+        self._holes = h.holes
+        self._particles = h.particles
+        self._sp_basis = h.sp_basis
+
+    @property
+    def f(self):
+        """Returns:
+
+        f -- one-body tensor elements (initialized by Hamiltonian object)"""
+        return self._f
+
+    @property
+    def G(self):
+        """Returns:
+
+        f -- two-body tensor elements (initialized by Hamiltonian object)"""
+        return self._G
+
+    @f.setter
+    def f(self, f):
+        """Sets the one-body tensor."""
+        self._f = f
+
+    @G.setter
+    def G(self, G):
+        """Sets the two-body tensor."""
+        self._G = G
+
+    def calc_eta(self):
+
+        bas1B = self._sp_basis
+        holes = self._holes
+        particles = self._particles
+
+        f = self.f
+        G = self.G
+        
+        eta1B = np.zeros_like(f)
+        eta2B = np.zeros_like(G)
+        
+        for a in particles:
+            for i in holes:
+                denom = f[a,a] - f[i,i]
+                result = f[a,i] / denom
+
+                eta1B[a,i] = result
+                eta1B[i,a] = -result
+                
+                if denom < 1:
+                    print('one body {}{},'.format(a, i), denom)
+
+        for a in particles:
+            for b in particles:
+                for i in holes:
+                    for j in holes:
+                        denom = (
+                            f[a,a] + f[b,b] - f[i,i] - f[j,j] 
+                        )
+                        result = G[a,b,i,j] / denom
+                        
+                        eta2B[a,b,i,j] = result
+                        eta2B[i,j,a,b] = -result
+
+                        if denom < 1:
+                            print('two body {}{}{}{},'.format(a,b,i,j), denom)
+                        #print(eta2B[5,4,3,2])
+
+
+        return (eta1B, eta2B)
