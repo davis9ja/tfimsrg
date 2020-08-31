@@ -8,8 +8,11 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>flow</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:c%3A%5Cusers%5Cdavison%5Cresearch%5Cim-srg_tensorflow%5Coop_imsrg%5Cflow.py">c:\users\davison\research\im-srg_tensorflow\oop_imsrg\flow.py</a></font></td></tr></table>
-    <p></p>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/mnt/ufs18/home-115/daviso53/Research/im-srg_tensorflow/oop_imsrg/flow.py">/mnt/ufs18/home-115/daviso53/Research/im-srg_tensorflow/oop_imsrg/flow.py</a></font></td></tr></table>
+    <p><tt>#import&nbsp;tensorflow&nbsp;as&nbsp;tf<br>
+#&nbsp;tf.enable_v2_behavior()<br>
+#import&nbsp;tensornetwork&nbsp;as&nbsp;tn<br>
+#import&nbsp;numpy&nbsp;as&nbsp;np</tt></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#aa55cc">
@@ -17,15 +20,11 @@
 <font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
     
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="tensornetwork.backends.html">tensornetwork.backends</a><br>
-<a href="tensornetwork.config.html">tensornetwork.config</a><br>
-<a href="tensornetwork.contractors.html">tensornetwork.contractors</a><br>
-</td><td width="25%" valign=top><a href="tensornetwork.ncon_interface.html">tensornetwork.ncon_interface</a><br>
-<a href="tensornetwork.network.html">tensornetwork.network</a><br>
-<a href="tensornetwork.network_components.html">tensornetwork.network_components</a><br>
-</td><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
-<a href="tensornetwork.version.html">tensornetwork.version</a><br>
-<a href="tensornetwork.visualization.html">tensornetwork.visualization</a><br>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+<a href="numba.html">numba</a><br>
+</td><td width="25%" valign=top><a href="os.html">os</a><br>
+<a href="sys.html">sys</a><br>
+</td><td width="25%" valign=top><a href="tensornetwork.html">tensornetwork</a><br>
 </td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#ee77aa">
@@ -125,9 +124,9 @@ Data descriptors inherited from <a href="flow.html#Flow">Flow</a>:<br>
 <font color="#000000" face="helvetica, arial"><a name="Flow_IMSRG3">class <strong>Flow_IMSRG3</strong></a>(<a href="flow.html#Flow_IMSRG2">Flow_IMSRG2</a>)</font></td></tr>
     
 <tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
-<td colspan=2><tt><a href="#Flow_IMSRG3">Flow_IMSRG3</a>(gen)<br>
+<td colspan=2><tt><a href="#Flow_IMSRG3">Flow_IMSRG3</a>(h,&nbsp;occ_t)<br>
 &nbsp;<br>
-Calculates&nbsp;the&nbsp;flow&nbsp;equations&nbsp;for&nbsp;the&nbsp;IMSRG(2).<br>&nbsp;</tt></td></tr>
+Calculates&nbsp;the&nbsp;flow&nbsp;equations&nbsp;for&nbsp;the&nbsp;IMSRG(3).&nbsp;Inherits&nbsp;from&nbsp;<a href="#Flow_IMSRG2">Flow_IMSRG2</a>.<br>&nbsp;</tt></td></tr>
 <tr><td>&nbsp;</td>
 <td width="100%"><dl><dt>Method resolution order:</dt>
 <dd><a href="flow.html#Flow_IMSRG3">Flow_IMSRG3</a></dd>
@@ -137,16 +136,14 @@ Calculates&nbsp;the&nbsp;flow&nbsp;equations&nbsp;for&nbsp;the&nbsp;IMSRG(2).<br
 </dl>
 <hr>
 Methods defined here:<br>
-<dl><dt><a name="Flow_IMSRG3-__init__"><strong>__init__</strong></a>(self, gen)</dt><dd><tt>Class&nbsp;constructor.&nbsp;Instantiates&nbsp;<a href="#Flow_IMSRG2">Flow_IMSRG2</a>&nbsp;<a href="builtins.html#object">object</a>.<br>
+<dl><dt><a name="Flow_IMSRG3-__init__"><strong>__init__</strong></a>(self, h, occ_t)</dt><dd><tt>Class&nbsp;constructor.&nbsp;Instantiates&nbsp;<a href="#Flow_IMSRG3">Flow_IMSRG3</a>&nbsp;<a href="builtins.html#object">object</a>.<br>
 &nbsp;<br>
 Arguments:<br>
 &nbsp;<br>
 h&nbsp;--&nbsp;Hamiltonian&nbsp;<a href="builtins.html#object">object</a><br>
 occ_t&nbsp;--&nbsp;OccupationTensors&nbsp;<a href="builtins.html#object">object</a></tt></dd></dl>
 
-<hr>
-Methods inherited from <a href="flow.html#Flow_IMSRG2">Flow_IMSRG2</a>:<br>
-<dl><dt><a name="Flow_IMSRG3-flow"><strong>flow</strong></a>(self, gen)</dt><dd><tt>Iterates&nbsp;the&nbsp;IMSRG2&nbsp;flow&nbsp;equations&nbsp;once.<br>
+<dl><dt><a name="Flow_IMSRG3-flow"><strong>flow</strong></a>(self, gen)</dt><dd><tt>Iterates&nbsp;the&nbsp;IMSRG3&nbsp;flow&nbsp;equations&nbsp;once.&nbsp;Extends&nbsp;IMSRG2&nbsp;flow&nbsp;function.<br>
 &nbsp;<br>
 Arugments:<br>
 &nbsp;<br>
@@ -156,7 +153,8 @@ Returns:<br>
 &nbsp;<br>
 (dE,&nbsp;--&nbsp;zero-body&nbsp;tensor<br>
 &nbsp;df,&nbsp;--&nbsp;one-body&nbsp;tensor<br>
-&nbsp;dG)&nbsp;--&nbsp;two-body&nbsp;tensor</tt></dd></dl>
+&nbsp;dG,&nbsp;--&nbsp;two-body&nbsp;tensor<br>
+&nbsp;dW)&nbsp;--&nbsp;three-body&nbsp;tensor</tt></dd></dl>
 
 <hr>
 Data descriptors inherited from <a href="flow.html#Flow">Flow</a>:<br>
@@ -166,12 +164,5 @@ Data descriptors inherited from <a href="flow.html#Flow">Flow</a>:<br>
 <dl><dt><strong>__weakref__</strong></dt>
 <dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
 </dl>
-</td></tr></table></td></tr></table><p>
-<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
-<tr bgcolor="#55aa55">
-<td colspan=3 valign=bottom>&nbsp;<br>
-<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
-    
-<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><strong>absolute_import</strong> = _Feature((2, 5, 0, 'alpha', 1), (3, 0, 0, 'alpha', 0), 16384)</td></tr></table>
+</td></tr></table></td></tr></table>
 </body></html>

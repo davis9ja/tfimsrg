@@ -8,8 +8,10 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>generator</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:c%3A%5Cusers%5Cdavison%5Cresearch%5Cim-srg_tensorflow%5Coop_imsrg%5Cgenerator.py">c:\users\davison\research\im-srg_tensorflow\oop_imsrg\generator.py</a></font></td></tr></table>
-    <p></p>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/mnt/ufs18/home-115/daviso53/Research/im-srg_tensorflow/oop_imsrg/generator.py">/mnt/ufs18/home-115/daviso53/Research/im-srg_tensorflow/oop_imsrg/generator.py</a></font></td></tr></table>
+    <p><tt>#import&nbsp;tensorflow&nbsp;as&nbsp;tf<br>
+#&nbsp;tf.enable_v2_behavior()<br>
+#import&nbsp;tensornetwork&nbsp;as&nbsp;tn</tt></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#aa55cc">
@@ -17,15 +19,11 @@
 <font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
     
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="tensornetwork.backends.html">tensornetwork.backends</a><br>
-<a href="tensornetwork.config.html">tensornetwork.config</a><br>
-<a href="tensornetwork.contractors.html">tensornetwork.contractors</a><br>
-</td><td width="25%" valign=top><a href="tensornetwork.ncon_interface.html">tensornetwork.ncon_interface</a><br>
-<a href="tensornetwork.network.html">tensornetwork.network</a><br>
-<a href="tensornetwork.network_components.html">tensornetwork.network_components</a><br>
-</td><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
-<a href="tensornetwork.version.html">tensornetwork.version</a><br>
-<a href="tensornetwork.visualization.html">tensornetwork.visualization</a><br>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+<a href="numba.html">numba</a><br>
+</td><td width="25%" valign=top><a href="os.html">os</a><br>
+<a href="sys.html">sys</a><br>
+</td><td width="25%" valign=top><a href="tensornetwork.html">tensornetwork</a><br>
 </td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#ee77aa">
@@ -46,7 +44,9 @@
 <dt><font face="helvetica, arial"><a href="generator.html#WegnerGenerator3B">WegnerGenerator3B</a>
 </font></dt></dl>
 </dd>
-</dl>
+<dt><font face="helvetica, arial"><a href="generator.html#WhiteGenerator">WhiteGenerator</a>
+</font></dt><dt><font face="helvetica, arial"><a href="generator.html#WhiteGeneratorMP">WhiteGeneratorMP</a>
+</font></dt></dl>
 </dd>
 </dl>
 </dd>
@@ -168,9 +168,8 @@ occ_t&nbsp;--&nbsp;OccupationTensor&nbsp;<a href="builtins.html#object">object</
 
 <dl><dt><a name="WegnerGenerator3B-calc_eta"><strong>calc_eta</strong></a>(self)</dt><dd><tt>Inherits&nbsp;from&nbsp;<a href="#WegnerGenerator">WegnerGenerator</a>.<br>
 &nbsp;<br>
-Calculate&nbsp;the&nbsp;generator.&nbsp;The&nbsp;terms&nbsp;are&nbsp;defined&nbsp;in&nbsp;An<br>
-Advanced&nbsp;Course&nbsp;in&nbsp;Computation&nbsp;Nuclear&nbsp;Physics,&nbsp;Ch.10.<br>
-See&nbsp;also&nbsp;dx.doi.org/10.1016/j.physrep.2015.12.007<br>
+Calculate&nbsp;the&nbsp;generator.&nbsp;See&nbsp;dx.doi.org/10.1016/j.physrep.2015.12.007,<br>
+Appendix&nbsp;B,&nbsp;for&nbsp;three-body&nbsp;flow&nbsp;equations.<br>
 &nbsp;<br>
 Returns:<br>
 &nbsp;<br>
@@ -220,12 +219,91 @@ Data descriptors inherited from <a href="generator.html#Generator">Generator</a>
 <dl><dt><strong>__weakref__</strong></dt>
 <dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
 </dl>
-</td></tr></table></td></tr></table><p>
+</td></tr></table> <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
-<tr bgcolor="#55aa55">
+<tr bgcolor="#ffc8d8">
 <td colspan=3 valign=bottom>&nbsp;<br>
-<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+<font color="#000000" face="helvetica, arial"><a name="WhiteGenerator">class <strong>WhiteGenerator</strong></a>(<a href="generator.html#Generator">Generator</a>)</font></td></tr>
     
-<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><strong>absolute_import</strong> = _Feature((2, 5, 0, 'alpha', 1), (3, 0, 0, 'alpha', 0), 16384)</td></tr></table>
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#WhiteGenerator">WhiteGenerator</a>(h)<br>
+&nbsp;<br>
+Calculate&nbsp;White's&nbsp;generator&nbsp;for&nbsp;a&nbsp;normal&nbsp;ordered&nbsp;Hamiltonian.<br>
+This&nbsp;standard&nbsp;implemenation&nbsp;uses&nbsp;Epstein-Nesbet&nbsp;denominators.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="generator.html#WhiteGenerator">WhiteGenerator</a></dd>
+<dd><a href="generator.html#Generator">Generator</a></dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="WhiteGenerator-__init__"><strong>__init__</strong></a>(self, h)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="WhiteGenerator-calc_eta"><strong>calc_eta</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>G</strong></dt>
+<dd><tt>Returns:<br>
+&nbsp;<br>
+f&nbsp;--&nbsp;two-body&nbsp;tensor&nbsp;elements&nbsp;(initialized&nbsp;by&nbsp;Hamiltonian&nbsp;object)</tt></dd>
+</dl>
+<dl><dt><strong>f</strong></dt>
+<dd><tt>Returns:<br>
+&nbsp;<br>
+f&nbsp;--&nbsp;one-body&nbsp;tensor&nbsp;elements&nbsp;(initialized&nbsp;by&nbsp;Hamiltonian&nbsp;object)</tt></dd>
+</dl>
+<hr>
+Data descriptors inherited from <a href="generator.html#Generator">Generator</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="WhiteGeneratorMP">class <strong>WhiteGeneratorMP</strong></a>(<a href="generator.html#Generator">Generator</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#WhiteGeneratorMP">WhiteGeneratorMP</a>(h)<br>
+&nbsp;<br>
+Calculate&nbsp;White's&nbsp;generator&nbsp;for&nbsp;a&nbsp;normal&nbsp;ordered&nbsp;Hamiltonian.<br>
+This&nbsp;"standard"&nbsp;implemenation&nbsp;uses&nbsp;Moller-Plesset&nbsp;denominators.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="generator.html#WhiteGeneratorMP">WhiteGeneratorMP</a></dd>
+<dd><a href="generator.html#Generator">Generator</a></dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="WhiteGeneratorMP-__init__"><strong>__init__</strong></a>(self, h)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="WhiteGeneratorMP-calc_eta"><strong>calc_eta</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>G</strong></dt>
+<dd><tt>Returns:<br>
+&nbsp;<br>
+f&nbsp;--&nbsp;two-body&nbsp;tensor&nbsp;elements&nbsp;(initialized&nbsp;by&nbsp;Hamiltonian&nbsp;object)</tt></dd>
+</dl>
+<dl><dt><strong>f</strong></dt>
+<dd><tt>Returns:<br>
+&nbsp;<br>
+f&nbsp;--&nbsp;one-body&nbsp;tensor&nbsp;elements&nbsp;(initialized&nbsp;by&nbsp;Hamiltonian&nbsp;object)</tt></dd>
+</dl>
+<hr>
+Data descriptors inherited from <a href="generator.html#Generator">Generator</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table></td></tr></table>
 </body></html>

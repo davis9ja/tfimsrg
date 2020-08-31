@@ -8,8 +8,8 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>main</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:c%3A%5Cusers%5Cdavison%5Cresearch%5Cim-srg_tensorflow%5Cmain.py">c:\users\davison\research\im-srg_tensorflow\main.py</a></font></td></tr></table>
-    <p><tt>#&nbsp;Main&nbsp;program&nbsp;for&nbsp;IM-SRG.</tt></p>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/mnt/ufs18/home-115/daviso53/Research/im-srg_tensorflow/main.py">/mnt/ufs18/home-115/daviso53/Research/im-srg_tensorflow/main.py</a></font></td></tr></table>
+    <p><tt>#&nbsp;Main&nbsp;program&nbsp;for&nbsp;IM-SRG(2).</tt></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#aa55cc">
@@ -17,26 +17,20 @@
 <font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
     
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="tensornetwork.backends.html">tensornetwork.backends</a><br>
-<a href="oop_imsrg.ci_pairing.cipy_pairing_plus_ph.html">oop_imsrg.ci_pairing.cipy_pairing_plus_ph</a><br>
-<a href="tensornetwork.config.html">tensornetwork.config</a><br>
-<a href="tensornetwork.contractors.html">tensornetwork.contractors</a><br>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="oop_imsrg.ci_pairing.cipy_pairing_plus_ph.html">oop_imsrg.ci_pairing.cipy_pairing_plus_ph</a><br>
 <a href="glob.html">glob</a><br>
-</td><td width="25%" valign=top><a href="itertools.html">itertools</a><br>
-<a href="linecache.html">linecache</a><br>
-<a href="tensornetwork.ncon_interface.html">tensornetwork.ncon_interface</a><br>
-<a href="tensornetwork.network.html">tensornetwork.network</a><br>
-<a href="tensornetwork.network_components.html">tensornetwork.network_components</a><br>
-</td><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+<a href="itertools.html">itertools</a><br>
+<a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top><a href="numba.html">numba</a><br>
 <a href="os.html">os</a><br>
 <a href="pickle.html">pickle</a><br>
 <a href="matplotlib.pyplot.html">matplotlib.pyplot</a><br>
+</td><td width="25%" valign=top><a href="benchmarking_wd.imsrg_pairing.html">benchmarking_wd.imsrg_pairing</a><br>
 <a href="random.html">random</a><br>
-</td><td width="25%" valign=top><a href="sys.html">sys</a><br>
+<a href="sys.html">sys</a><br>
 <a href="time.html">time</a><br>
+</td><td width="25%" valign=top><a href="tensornetwork.html">tensornetwork</a><br>
 <a href="tracemalloc.html">tracemalloc</a><br>
-<a href="tensornetwork.version.html">tensornetwork.version</a><br>
-<a href="tensornetwork.visualization.html">tensornetwork.visualization</a><br>
 </td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#eeaa77">
@@ -60,19 +54,8 @@ flow&nbsp;--&nbsp;Flow&nbsp;object<br>
 Returns:<br>
 &nbsp;<br>
 dy&nbsp;--&nbsp;next&nbsp;step&nbsp;in&nbsp;flow</tt></dd></dl>
- <dl><dt><a name="-exact_diagonalization"><strong>exact_diagonalization</strong></a>(d, g)</dt><dd><tt>Result&nbsp;of&nbsp;exact&nbsp;diagonalization&nbsp;in&nbsp;spin=0&nbsp;block&nbsp;of<br>
-pairing&nbsp;Hamiltonian,&nbsp;given&nbsp;8&nbsp;single&nbsp;particle&nbsp;states&nbsp;(4&nbsp;hole&nbsp;states<br>
-and&nbsp;4&nbsp;particle&nbsp;states).<br>
-&nbsp;<br>
-Arguments:<br>
-&nbsp;<br>
-d&nbsp;--&nbsp;energy&nbsp;level&nbsp;spacing<br>
-g&nbsp;--&nbsp;pairing&nbsp;strength<br>
-&nbsp;<br>
-Returns:<br>
-&nbsp;<br>
-E&nbsp;--&nbsp;ground&nbsp;state&nbsp;energy</tt></dd></dl>
- <dl><dt><a name="-main"><strong>main</strong></a>(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0)</dt><dd><tt>Main&nbsp;method&nbsp;uses&nbsp;scipy.integrate.ode&nbsp;to&nbsp;solve&nbsp;the&nbsp;IMSRG&nbsp;flow<br>
+ <dl><dt><a name="-get_vacuum_coeffs"><strong>get_vacuum_coeffs</strong></a>(E, f, G, basis, holes)</dt></dl>
+ <dl><dt><a name="-main"><strong>main</strong></a>(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_data_log=0, generator='wegner')</dt><dd><tt>Main&nbsp;method&nbsp;uses&nbsp;scipy.integrate.ode&nbsp;to&nbsp;solve&nbsp;the&nbsp;IMSRG(2)&nbsp;flow<br>
 equations.</tt></dd></dl>
  <dl><dt><a name="-ravel"><strong>ravel</strong></a>(y, bas_len)</dt><dd><tt>Transforms&nbsp;1D&nbsp;array&nbsp;into&nbsp;E,&nbsp;f,&nbsp;and&nbsp;G.&nbsp;Facilitates<br>
 compatability&nbsp;with&nbsp;scipy.integrate.ode.<br>
@@ -85,9 +68,6 @@ bas_len&nbsp;--&nbsp;length&nbsp;of&nbsp;single&nbsp;particle&nbsp;basis<br>
 Returns:<br>
 &nbsp;<br>
 E,&nbsp;f,&nbsp;G&nbsp;--&nbsp;normal-ordered&nbsp;pieces&nbsp;of&nbsp;Hamiltonian</tt></dd></dl>
- <dl><dt><a name="-scan_params"><strong>scan_params</strong></a>()</dt><dd><tt>#&nbsp;@profile</tt></dd></dl>
- <dl><dt><a name="-test_exact"><strong>test_exact</strong></a>(plots_dir)</dt></dl>
- <dl><dt><a name="-test_refs"><strong>test_refs</strong></a>(plots_dir)</dt></dl>
  <dl><dt><a name="-unravel"><strong>unravel</strong></a>(E, f, G)</dt><dd><tt>Transforms&nbsp;E,&nbsp;f,&nbsp;and&nbsp;G&nbsp;into&nbsp;a&nbsp;1D&nbsp;array.&nbsp;Facilitates<br>
 compatability&nbsp;with&nbsp;scipy.integrate.ode.<br>
 &nbsp;<br>
@@ -98,12 +78,5 @@ E,&nbsp;f,&nbsp;G&nbsp;--&nbsp;normal-ordered&nbsp;pieces&nbsp;of&nbsp;Hamiltoni
 Returns:<br>
 &nbsp;<br>
 concatenation&nbsp;of&nbsp;tensors&nbsp;peeled&nbsp;into&nbsp;1D&nbsp;arrays</tt></dd></dl>
-</td></tr></table><p>
-<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
-<tr bgcolor="#55aa55">
-<td colspan=3 valign=bottom>&nbsp;<br>
-<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
-    
-<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><strong>absolute_import</strong> = _Feature((2, 5, 0, 'alpha', 1), (3, 0, 0, 'alpha', 0), 16384)</td></tr></table>
+</td></tr></table>
 </body></html>

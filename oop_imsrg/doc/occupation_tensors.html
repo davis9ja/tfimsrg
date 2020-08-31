@@ -8,7 +8,7 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>occupation_tensors</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:c%3A%5Cusers%5Cdavison%5Cresearch%5Cim-srg_tensorflow%5Coop_imsrg%5Coccupation_tensors.py">c:\users\davison\research\im-srg_tensorflow\oop_imsrg\occupation_tensors.py</a></font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/mnt/ufs18/home-115/daviso53/Research/im-srg_tensorflow/oop_imsrg/occupation_tensors.py">/mnt/ufs18/home-115/daviso53/Research/im-srg_tensorflow/oop_imsrg/occupation_tensors.py</a></font></td></tr></table>
     <p></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -18,7 +18,11 @@
     
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
-</td><td width="25%" valign=top></td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<a href="numba.html">numba</a><br>
+</td><td width="25%" valign=top><a href="os.html">os</a><br>
+<a href="sys.html">sys</a><br>
+</td><td width="25%" valign=top><a href="tensornetwork.html">tensornetwork</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#ee77aa">
 <td colspan=3 valign=bottom>&nbsp;<br>
@@ -70,20 +74,32 @@ Data descriptors defined here:<br>
 &nbsp;<br>
 occA&nbsp;--&nbsp;represents&nbsp;n_a&nbsp;-&nbsp;n_b.</tt></dd>
 </dl>
+<dl><dt><strong>occA4</strong></dt>
+<dd><tt>Built&nbsp;from&nbsp;flag&nbsp;=&nbsp;1;&nbsp;rank&nbsp;4&nbsp;tensor<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;<br>
+occA4&nbsp;--&nbsp;represents&nbsp;n_a&nbsp;-&nbsp;n_b.</tt></dd>
+</dl>
 <dl><dt><strong>occB</strong></dt>
 <dd><tt>Returns:<br>
 &nbsp;<br>
 occB&nbsp;--&nbsp;represents&nbsp;1&nbsp;-&nbsp;n_a&nbsp;-&nbsp;n_b.</tt></dd>
 </dl>
+<dl><dt><strong>occB4</strong></dt>
+<dd><tt>Returns:<br>
+&nbsp;<br>
+occB4&nbsp;--&nbsp;represents&nbsp;1&nbsp;-&nbsp;n_a&nbsp;-&nbsp;n_b.</tt></dd>
+</dl>
 <dl><dt><strong>occC</strong></dt>
 <dd><tt>Returns:<br>
 &nbsp;<br>
-occC&nbsp;--&nbsp;represents&nbsp;n_a*n_b&nbsp;+&nbsp;(1-n_a-n_b)*n_c</tt></dd>
+occC&nbsp;--&nbsp;represents&nbsp;n_a*n_b*(1-n_c)&nbsp;+&nbsp;(1-n_a)*(1-n_b)*n_c</tt></dd>
 </dl>
 <dl><dt><strong>occD</strong></dt>
 <dd><tt>Returns:<br>
 &nbsp;<br>
-occD&nbsp;--&nbsp;represents&nbsp;na*nb*(1-nc-nd)&nbsp;+&nbsp;na*nb*nc*nd</tt></dd>
+occD&nbsp;--&nbsp;represents&nbsp;&nbsp;n_a*n_b*(1-n_c)*(1-n_d)</tt></dd>
 </dl>
 <dl><dt><strong>occE</strong></dt>
 <dd><tt>Returns:<br>
@@ -116,5 +132,9 @@ occI&nbsp;--&nbsp;represents&nbsp;(1-n_a)*(1-n_b)*n_c*n_d&nbsp;-&nbsp;n_a*n_b*(1
 &nbsp;<br>
 occJ&nbsp;--&nbsp;represents&nbsp;n_a*n_b*n_c&nbsp;+&nbsp;(1-n_a)*(1-n_b)*(1-n_c)</tt></dd>
 </dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>DATA_TYPE</strong> = &lt;class 'float'&gt;<dd><tt>Convert&nbsp;a&nbsp;string&nbsp;or&nbsp;number&nbsp;to&nbsp;a&nbsp;floating&nbsp;point&nbsp;number,&nbsp;if&nbsp;possible.</tt></dl>
+
 </td></tr></table></td></tr></table>
 </body></html>

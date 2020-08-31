@@ -8,7 +8,7 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>hamiltonian</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:c%3A%5Cusers%5Cdavison%5Cresearch%5Cim-srg_tensorflow%5Coop_imsrg%5Chamiltonian.py">c:\users\davison\research\im-srg_tensorflow\oop_imsrg\hamiltonian.py</a></font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/mnt/ufs18/home-115/daviso53/Research/im-srg_tensorflow/oop_imsrg/hamiltonian.py">/mnt/ufs18/home-115/daviso53/Research/im-srg_tensorflow/oop_imsrg/hamiltonian.py</a></font></td></tr></table>
     <p></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -17,16 +17,9 @@
 <font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
     
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="tensornetwork.backends.html">tensornetwork.backends</a><br>
-<a href="tensornetwork.config.html">tensornetwork.config</a><br>
-<a href="tensornetwork.contractors.html">tensornetwork.contractors</a><br>
-</td><td width="25%" valign=top><a href="tensornetwork.ncon_interface.html">tensornetwork.ncon_interface</a><br>
-<a href="tensornetwork.network.html">tensornetwork.network</a><br>
-<a href="tensornetwork.network_components.html">tensornetwork.network_components</a><br>
-</td><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
-<a href="tensornetwork.version.html">tensornetwork.version</a><br>
-<a href="tensornetwork.visualization.html">tensornetwork.visualization</a><br>
-</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top><a href="tensornetwork.html">tensornetwork</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#ee77aa">
 <td colspan=3 valign=bottom>&nbsp;<br>
@@ -77,7 +70,7 @@ Data descriptors defined here:<br>
 <font color="#000000" face="helvetica, arial"><a name="PairingHamiltonian2B">class <strong>PairingHamiltonian2B</strong></a>(<a href="hamiltonian.html#Hamiltonian">Hamiltonian</a>)</font></td></tr>
     
 <tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
-<td colspan=2><tt><a href="#PairingHamiltonian2B">PairingHamiltonian2B</a>(n_hole_states,&nbsp;n_particle_states,&nbsp;ref=None,&nbsp;d=1.0,&nbsp;g=0.5,&nbsp;pb=0.0)<br>
+<td colspan=2><tt><a href="#PairingHamiltonian2B">PairingHamiltonian2B</a>(n_hole_states,&nbsp;n_particle_states,&nbsp;ref=[],&nbsp;d=1.0,&nbsp;g=0.5,&nbsp;pb=0.0)<br>
 &nbsp;<br>
 Generate&nbsp;the&nbsp;two-body&nbsp;pairing&nbsp;<a href="#Hamiltonian">Hamiltonian</a>.&nbsp;Inherits&nbsp;from&nbsp;<a href="#Hamiltonian">Hamiltonian</a>.<br>&nbsp;</tt></td></tr>
 <tr><td>&nbsp;</td>
@@ -88,7 +81,7 @@ Generate&nbsp;the&nbsp;two-body&nbsp;pairing&nbsp;<a href="#Hamiltonian">Hamilto
 </dl>
 <hr>
 Methods defined here:<br>
-<dl><dt><a name="PairingHamiltonian2B-__init__"><strong>__init__</strong></a>(self, n_hole_states, n_particle_states, ref=None, d=1.0, g=0.5, pb=0.0)</dt><dd><tt>Class&nbsp;constructor.&nbsp;Instantiate&nbsp;<a href="#PairingHamiltonian2B">PairingHamiltonian2B</a>&nbsp;<a href="builtins.html#object">object</a>.<br>
+<dl><dt><a name="PairingHamiltonian2B-__init__"><strong>__init__</strong></a>(self, n_hole_states, n_particle_states, ref=[], d=1.0, g=0.5, pb=0.0)</dt><dd><tt>Class&nbsp;constructor.&nbsp;Instantiate&nbsp;<a href="#PairingHamiltonian2B">PairingHamiltonian2B</a>&nbsp;<a href="builtins.html#object">object</a>.<br>
 &nbsp;<br>
 Arguments:<br>
 &nbsp;<br>
@@ -98,6 +91,7 @@ n_particle_states&nbsp;--&nbsp;number&nbsp;of&nbsp;particles&nbsp;states&nbsp;in
 Keyword&nbsp;arguments:<br>
 &nbsp;<br>
 ref&nbsp;--&nbsp;the&nbsp;reference&nbsp;state.&nbsp;must&nbsp;match&nbsp;dimensions&nbsp;imposed&nbsp;by&nbsp;arugments&nbsp;(default:&nbsp;[1,1,1,1,0,0,0,0])<br>
+p&nbsp;-<br>
 d&nbsp;--&nbsp;the&nbsp;energy&nbsp;level&nbsp;spacing&nbsp;(default:&nbsp;1.0)<br>
 g&nbsp;--&nbsp;the&nbsp;pairing&nbsp;strength&nbsp;(default:&nbsp;0.5)<br>
 pb&nbsp;--&nbsp;strength&nbsp;of&nbsp;the&nbsp;pair-breaking&nbsp;term&nbsp;(operates&nbsp;in&nbsp;double&nbsp;particle&nbsp;basis)&nbsp;(default:&nbsp;0.0)</tt></dd></dl>
@@ -209,12 +203,5 @@ Data descriptors inherited from <a href="hamiltonian.html#Hamiltonian">Hamiltoni
 <dl><dt><strong>__weakref__</strong></dt>
 <dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
 </dl>
-</td></tr></table></td></tr></table><p>
-<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
-<tr bgcolor="#55aa55">
-<td colspan=3 valign=bottom>&nbsp;<br>
-<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
-    
-<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><strong>absolute_import</strong> = _Feature((2, 5, 0, 'alpha', 1), (3, 0, 0, 'alpha', 0), 16384)</td></tr></table>
+</td></tr></table></td></tr></table>
 </body></html>
