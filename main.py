@@ -63,8 +63,8 @@ def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
     (additional parameters)
     hamiltonian -- Hamiltonian object
     occ_tensors -- OccupationTensors object
-    generator -- Generator object
-    flow -- Flow object
+    generator   -- Generator object
+    flow        -- Flow object
 
     Returns:
 
@@ -122,14 +122,15 @@ def ravel(y, bas_len):
     """Transforms 1D array into E, f, and G. Facilitates
     compatability with scipy.integrate.ode.
 
-    Arugments:
+    Arguments:
 
-    y -- 1D data array (output from unravel)
+    y       -- 1D data array (output from unravel)
     bas_len -- length of single particle basis
 
     Returns:
 
-    E, f, G -- normal-ordered pieces of Hamiltonian"""
+    E, f, G -- normal-ordered pieces of Hamiltonian
+    """
 
     # bas_len = len(np.append(holes,particles))
 
@@ -144,7 +145,35 @@ def ravel(y, bas_len):
 # @profile
 def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_data_log=0, generator='wegner'):
     """Main method uses scipy.integrate.ode to solve the IMSRG(2) flow
-    equations."""
+    equations.
+
+    Arguments:
+    
+    n_holes -- number of hole states in the SP basis (int)
+    n_particles -- number of particle states in the SP basis (int)
+    
+    Keyword arguments:
+    
+    ref           -- reference state for the IM-SRG flow (1D array)
+    d             -- energy spacing in Pairing model (default: 1.0)
+    g             -- pairing strength in Pairing model (default: 0.5)
+    pb            -- pair-breaking in Pairing-plus-ph model (default: 0.0)
+    verbose       -- toggles output of flow information
+    flow_data_log -- toggles output of flow data (pickled IM-SRG coefficients every 10 integrator steps)
+    generator     -- specify generator to produce IM-SRG flow
+
+    Returns:
+
+    convergence -- 0 if diverged, 1 if converged (little bit outdated)
+    iters       -- number of iterations before integrator stopped
+    d           -- energy spacing in pairing model
+    g           -- pairing strength in pairing model
+    pb          -- pair-breaking strength in Pairing-plus-ph model
+    num_sp      -- number of single particle states
+    s_vals      -- 1D array of flow parameter values
+    E_vals      -- 1D array of zero-body energy values
+    time_str    -- time taken for flow completion (string)
+    """
 
     start = time.time() # start full timer
 
@@ -160,7 +189,8 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
 
     generator_dict = {'wegner':WegnerGenerator(ha, ot), 
                       'white':WhiteGenerator(ha),
-                      'white_mp':WhiteGeneratorMP(ha)}
+                      'white_mp':WhiteGeneratorMP(ha),
+                      'brillouin':BrillouinGenerator(ha)}
 
     wg = generator_dict[generator] #WegnerGenerator(ha, ot)
     fl = Flow_IMSRG2(ha, ot) 
@@ -255,10 +285,11 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     #pickle.dump( coeffs, open( "mixed_state_test/pickled_coeffs/vac_coeffs_evolved.p", "wb" ) )
     pickle.dump(coeffs, open('vac_coeffs_evolved.p', 'wb'))
 
+    num_sp = n_holes+n_particles
 
     del ha, ot, wg, fl, solver, y0, sfinal, ds
     
-    return (convergence, iters, d, g, pb, n_holes+n_particles, s_vals, E_vals, time_str)
+    return (convergence, iters, d, g, pb, num_sp, s_vals, E_vals, time_str)
  
 
 if __name__ == '__main__':
@@ -316,7 +347,7 @@ if __name__ == '__main__':
     # main(4,4, g=5, ref=[1,1,1,1,0,0,0,0])
 
     
-    main(4,4,g=2, ref=ref, flow_data_log=0, generator='white')
+    main(4,4,g=0.5, flow_data_log=0, generator='brillouin')
 
     # H1B_true, H2B_true = pickle.load(open('comparison.p','rb'))
     # H1B, H2B = pickle.load(open('vac_coeffs_unevolved.p', 'rb'))
