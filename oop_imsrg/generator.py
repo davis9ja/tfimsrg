@@ -713,3 +713,75 @@ class WhiteGeneratorMP(Generator):
 
 
         return (eta1B, eta2B)
+
+class BrillouinGenerator(Generator):
+    """Calculate Brillouin generator for a normal ordered Hamiltonian."""
+
+
+    def __init__(self, h):
+
+        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
+        
+        self.f = h.f
+        self.G = h.G
+
+        self._holes = h.holes
+        self._particles = h.particles
+        self._sp_basis = h.sp_basis
+
+    @property
+    def f(self):
+        """Returns:
+
+        f -- one-body tensor elements (initialized by Hamiltonian object)"""
+        return self._f
+
+    @property
+    def G(self):
+        """Returns:
+
+        f -- two-body tensor elements (initialized by Hamiltonian object)"""
+        return self._G
+
+    @f.setter
+    def f(self, f):
+        """Sets the one-body tensor."""
+        self._f = f
+
+    @G.setter
+    def G(self, G):
+        """Sets the two-body tensor."""
+        self._G = G
+
+    def calc_eta(self):
+
+        bas1B = self._sp_basis
+        holes = self._holes
+        particles = self._particles
+
+        f = self.f
+        G = self.G
+        
+        eta1B = np.zeros_like(f)
+        eta2B = np.zeros_like(G)
+        
+
+        for a in particles:
+            for i in holes:
+                # (1-n_a)n_i - n_a(1-n_i) = n_i - n_a
+                eta1B[a, i] =  f[a,i]
+                eta1B[i, a] = -f[a,i]
+
+
+
+        for a in particles:
+            for b in particles:
+                for i in holes:
+                    for j in holes:
+                        val = G[a,b,i,j]
+
+                        eta2B[a,b,i,j] = val
+                        eta2B[i,j,a,b] = -val
+
+
+        return (eta1B, eta2B)
