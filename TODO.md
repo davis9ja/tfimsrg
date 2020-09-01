@@ -28,7 +28,12 @@
   * [ ] TT decompose IMSRG(3)-relevant occupation tensors (should speed things up)
   * [ ] compare energy divergence to IMSRG(2)
 
-# [ ] implement batch processing
+* [ ] implement batch processing
   * [ ] modulate the flow equations (need more control over memory allocation)
   * [ ] might move away from NCON framework in favor of TensorNetwork syntax
   * [ ] need function to isolate batches, run data through flow equations, and bring them back together
+
+* [ ] tensorize new generators for synnergy with TensorNetwork
+  * [ ] brioullin
+  * [ ] white and whiteMP
+  * [ ] imaginary time 
