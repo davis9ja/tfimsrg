@@ -12,9 +12,6 @@ import time
 import pickle
 
 import matplotlib.pyplot as plt
-#import tensorflow as tf
-#tf.enable_v2_behavior()
-#print("GPU available: ",tf.test.is_gpu_available())
 import tracemalloc
 import os, sys
 #from memory_profiler import profile
@@ -22,11 +19,8 @@ import itertools
 import random
 import tensornetwork as tn
 #tn.set_default_backend("tensorflow")
-#sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
-#sess.close()
 
 # user files
-# sys.path.append('C:\\Users\\davison\\Research\\exact_diagonalization\\')
 from oop_imsrg.hamiltonian import *
 from oop_imsrg.occupation_tensors import *
 from oop_imsrg.generator import *
@@ -190,7 +184,8 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     generator_dict = {'wegner':WegnerGenerator(ha, ot), 
                       'white':WhiteGenerator(ha),
                       'white_mp':WhiteGeneratorMP(ha),
-                      'brillouin':BrillouinGenerator(ha)}
+                      'brillouin':BrillouinGenerator(ha),
+                      'imtime':ImTimeGenerator(ha)}
 
     wg = generator_dict[generator] #WegnerGenerator(ha, ot)
     fl = Flow_IMSRG2(ha, ot) 
@@ -347,7 +342,7 @@ if __name__ == '__main__':
     # main(4,4, g=5, ref=[1,1,1,1,0,0,0,0])
 
     
-    main(4,4,g=0.5, flow_data_log=0, generator='brillouin')
+    main(4,4,g=0.5, flow_data_log=0, generator='imtime')
 
     # H1B_true, H2B_true = pickle.load(open('comparison.p','rb'))
     # H1B, H2B = pickle.load(open('vac_coeffs_unevolved.p', 'rb'))
