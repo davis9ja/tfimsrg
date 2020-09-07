@@ -152,9 +152,9 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     d             -- energy spacing in Pairing model (default: 1.0)
     g             -- pairing strength in Pairing model (default: 0.5)
     pb            -- pair-breaking in Pairing-plus-ph model (default: 0.0)
-    verbose       -- toggles output of flow information
-    flow_data_log -- toggles output of flow data (pickled IM-SRG coefficients every 10 integrator steps)
-    generator     -- specify generator to produce IM-SRG flow
+    verbose       -- toggles output of flow information (default: 1)
+    flow_data_log -- toggles output of flow data (pickled IM-SRG coefficients every 10 integrator steps) (default: 0)
+    generator     -- specify generator to produce IM-SRG flow (default: wegner)
 
     Returns:
 
@@ -242,7 +242,7 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
         #     break
         if iters %10 == 0 and verbose: print("iter: {:>6d} \t scale param: {:0.4f} \t E = {:0.8f}".format(iters, solver.t, Es))
         
-        if flow_data_log:# and iters %10 == 0:
+        if flow_data_log and iters %10 == 0:
             H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
             fname = 'vac_coeffs_flow_c{}.p'.format(iters)
             pickle.dump((solver.t, H0B, H1B, H2B), open(fname, 'wb'))
@@ -261,7 +261,7 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
         #     if verbose: print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
         #     break
 
-        if iters > 20000:
+        if iters > 10000:
             if verbose: print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
             break
 
@@ -342,7 +342,7 @@ if __name__ == '__main__':
     # main(4,4, g=5, ref=[1,1,1,1,0,0,0,0])
 
     
-    main(4,4,g=0.5, flow_data_log=0, generator='imtime')
+    main(4,4,g=2, flow_data_log=0, generator='imtime')
 
     # H1B_true, H2B_true = pickle.load(open('comparison.p','rb'))
     # H1B, H2B = pickle.load(open('vac_coeffs_unevolved.p', 'rb'))
