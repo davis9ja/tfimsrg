@@ -692,8 +692,8 @@ class WhiteGeneratorMP(Generator):
                 eta1B[a,i] = result
                 eta1B[i,a] = -result
                 
-                if denom < 1:
-                    print('one body {}{},'.format(a, i), denom)
+                # if denom < 1:
+                #     print('one body {}{},'.format(a, i), denom)
 
         for a in particles:
             for b in particles:
@@ -707,8 +707,8 @@ class WhiteGeneratorMP(Generator):
                         eta2B[a,b,i,j] = result
                         eta2B[i,j,a,b] = -result
 
-                        if denom < 1:
-                            print('two body {}{}{}{},'.format(a,b,i,j), denom)
+                        # if denom < 1:
+                        #     print('two body {}{}{}{},'.format(a,b,i,j), denom)
                         #print(eta2B[5,4,3,2])
 
 
