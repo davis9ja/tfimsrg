@@ -244,7 +244,7 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
         s_vals.append(solver.t)
         E_vals.append(Es)
 
-        print("iter,\t s, \t E, \t ||eta1B||, \t ||eta2B||"
+        print("iter,\t s, \t E, \t ||eta1B||, \t ||eta2B||")
 
         if iters %10 == 0 and verbose: 
             norm_eta1B = np.linalg.norm(np.ravel(wg.eta1B))
