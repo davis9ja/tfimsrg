@@ -38,10 +38,12 @@ def get_vacuum_coeffs(E, f, G, basis, holes):
     Gnode = tn.Node(G[np.ix_(holes,holes,holes,holes)])
     Gnode[0] ^ Gnode[2]
     Gnode[1] ^ Gnode[3]
-    result = Gnode @ Gnode
+    result_ij = Gnode @ Gnode
 
-    H0B = E - np.trace(f[np.ix_(holes,holes)]) + 0.5*result.tensor
 
+    H0B = E - np.trace(H1B[np.ix_(holes,holes)]) - 0.5*result_ij.tensor
+
+    #print(result_ij.tensor, result_ji.tensor)
     return (H0B, H1B, H2B)
 
 
@@ -137,7 +139,7 @@ def ravel(y, bas_len):
     return(ravel_E, ravel_f, ravel_G)
 
 # @profile
-def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_data_log=0, generator='wegner'):
+def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_data_log=0, generator='wegner', output_root='.'):
     """Main method uses scipy.integrate.ode to solve the IMSRG(2) flow
     equations.
 
@@ -155,6 +157,7 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     verbose       -- toggles output of flow information (default: 1)
     flow_data_log -- toggles output of flow data (pickled IM-SRG coefficients every 10 integrator steps) (default: 0)
     generator     -- specify generator to produce IM-SRG flow (default: wegner)
+    output_root   -- specify folder for output files
 
     Returns:
 
@@ -168,10 +171,13 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     E_vals      -- 1D array of zero-body energy values
     time_str    -- time taken for flow completion (string)
     """
-
+    
     start = time.time() # start full timer
 
     initi = time.time() # start instantiation timer
+
+    if not os.path.exists(output_root):
+        os.mkdir(output_root)
 
     if ref == []:
         ha = PairingHamiltonian2B(n_holes, n_particles, d=d, g=g, pb=pb)
@@ -213,8 +219,9 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
 
     # --- Solve the IM-SRG flow
     y0 = unravel(ha.E, ha.f, ha.G)
-    coeffs = get_vacuum_coeffs(ha.E, ha.f, ha.G, ha.sp_basis, ha.holes)
-    pickle.dump( coeffs, open( "./vac_coeffs_unevolved.p", "wb" ) )
+    H0B, H1B, H2B = get_vacuum_coeffs(ha.E, ha.f, ha.G, ha.sp_basis, ha.holes)
+    zero, eta1B_vac, eta2B_vac = get_vacuum_coeffs(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes)
+    pickle.dump( (H0B, H1B, H2B, eta1B_vac, eta2B_vac), open( output_root+"/vac_coeffs_unevolved.p", "wb" ) )
 
     solver = ode(derivative,jac=None)
     solver.set_integrator('vode', method='bdf', order=5, nsteps=1000)
@@ -222,7 +229,7 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     solver.set_initial_value(y0, 0.)
 
     sfinal = 50
-    ds = 1
+#    ds = 1
     s_vals = []
     E_vals = []
 
@@ -237,15 +244,22 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
         s_vals.append(solver.t)
         E_vals.append(Es)
 
+        print("iter,\t s, \t E, \t ||eta1B||, \t ||eta2B||"
 
-        # if iters == 176:
-        #     break
-        if iters %10 == 0 and verbose: print("iter: {:>6d} \t scale param: {:0.4f} \t E = {:0.8f}".format(iters, solver.t, Es))
+        if iters %10 == 0 and verbose: 
+            norm_eta1B = np.linalg.norm(np.ravel(wg.eta1B))
+            norm_eta2B = np.linalg.norm(np.ravel(wg.eta2B))
+            print("{:>6d}, \t {:0.4f}, \t {:0.8f}, \t {:0.8f}, \t {:0.8f}".format(iters, 
+                                                                                  solver.t, 
+                                                                                  Es,
+                                                                                  norm_eta1B,
+                                                                                  norm_eta2B))
         
         if flow_data_log and iters %10 == 0:
             H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
-            fname = 'vac_coeffs_flow_c{}.p'.format(iters)
-            pickle.dump((solver.t, H0B, H1B, H2B), open(fname, 'wb'))
+            zero, eta1B_vac, eta2B_vac = get_vacuum_coeffs(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes)
+            fname = output_root+'/vac_coeffs_flow_c{}.p'.format(iters)
+            pickle.dump((solver.t, H0B, H1B, H2B, eta1B_vac, eta2B_vac), open(fname, 'wb'))
 
 #        if iters %20 == 0 and verbose:
 #            coeffs = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
@@ -265,8 +279,8 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
             if verbose: print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
             break
 
-        if iters % 1000 == 0 and verbose:
-            print('Iteration {:>06d}'.format(iters))
+        # if iters % 1000 == 0 and verbose:
+        #     print('Iteration {:>06d}'.format(iters))
 
         iters += 1
         #print(solver.successful())
@@ -276,13 +290,14 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
 
     if verbose: print("IM-SRG(2) converged in {:2.5f} seconds".format(flowf-flowi))
 
-    coeffs = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
+    H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
+    zero, eta1B_vac, eta2B_vac = get_vacuum_coeffs(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes)
     #pickle.dump( coeffs, open( "mixed_state_test/pickled_coeffs/vac_coeffs_evolved.p", "wb" ) )
-    pickle.dump(coeffs, open('vac_coeffs_evolved.p', 'wb'))
+    pickle.dump((H0B, H1B, H2B, eta1B_vac, eta2B_vac), open(output_root+'/vac_coeffs_evolved.p', 'wb'))
 
     num_sp = n_holes+n_particles
 
-    del ha, ot, wg, fl, solver, y0, sfinal, ds
+    del ha, ot, wg, fl, solver, y0, sfinal
     
     return (convergence, iters, d, g, pb, num_sp, s_vals, E_vals, time_str)
  
@@ -342,7 +357,7 @@ if __name__ == '__main__':
     # main(4,4, g=5, ref=[1,1,1,1,0,0,0,0])
 
     
-    main(4,4,g=2, flow_data_log=0, generator='imtime')
+    main(4,4,g=1.0, pb=0.1, flow_data_log=0, generator='white')
 
     # H1B_true, H2B_true = pickle.load(open('comparison.p','rb'))
     # H1B, H2B = pickle.load(open('vac_coeffs_unevolved.p', 'rb'))
