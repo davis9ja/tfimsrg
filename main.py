@@ -236,8 +236,8 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     iters = 0
     convergence = 0
 
-
-    print("iter,      \t    s, \t         E, \t         ||eta1B||, \t         ||eta2B||")
+    if verbose:
+        print("iter,      \t    s, \t         E, \t         ||eta1B||, \t         ||eta2B||")
         
     while solver.successful() and solver.t < sfinal:
 
