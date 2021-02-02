@@ -6,10 +6,13 @@ from oop_imsrg.hamiltonian import *
 from oop_imsrg.occupation_tensors import *
 #tn.set_default_backend("tensorflow") 
 
+from numba import jit
+
 class Generator(object):
     """Parent class for organization purposes. Ideally, all Generator
     classes should inherit from this class. In this way, AssertionErrors
     can be handled in a general way."""
+    
     def calc_eta():
         print("Function that calculates the generator")
 
@@ -520,41 +523,60 @@ class WhiteGenerator(Generator):
     """Calculate White's generator for a normal ordered Hamiltonian.
        This standard implemenation uses Epstein-Nesbet denominators."""
 
-
+    
     def __init__(self, h):
 
         assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
         
-        self.f = h.f
-        self.G = h.G
-
+        self._my_f = h.f
+        self._my_G = h.G
+        
         self._holes = h.holes
         self._particles = h.particles
         self._sp_basis = h.sp_basis
+
+        self._eta1B = np.zeros_like(self.f)
+        self._eta2B = np.zeros_like(self.G)
+
+    @property
+    def eta1B(self):
+        """Returns:
+
+        eta1B -- one-body generator"""
+        return self._eta1B
+
+    @property
+    def eta2B(self):
+        """Returns:
+
+        eta2B -- one-body generator"""
+        return self._eta2B
+
 
     @property
     def f(self):
         """Returns:
 
         f -- one-body tensor elements (initialized by Hamiltonian object)"""
-        return self._f
+        return self._my_f
 
     @property
     def G(self):
         """Returns:
 
         f -- two-body tensor elements (initialized by Hamiltonian object)"""
-        return self._G
+        return self._my_G
 
     @f.setter
     def f(self, f):
         """Sets the one-body tensor."""
-        self._f = f
+        self._my_f = f
 
     @G.setter
     def G(self, G):
         """Sets the two-body tensor."""
-        self._G = G
+        self._my_G = G
+
 
     def calc_eta(self):
 
@@ -564,6 +586,23 @@ class WhiteGenerator(Generator):
 
         f = self.f
         G = self.G
+
+        eta1B, eta2B = self._wrapper_calc_eta(bas1B, holes, particles, f, G)
+        self._eta1B = eta1B
+        self._eta2B = eta2B
+
+        return (eta1B, eta2B)
+
+    @staticmethod
+    @jit(nopython=True)
+    def _wrapper_calc_eta(bas1B, holes, particles, f, G):
+
+        # bas1B = self._sp_basis
+        # holes = self._holes
+        # particles = self._particles
+
+        # f = self.f
+        # G = self.G
         
         eta1B = np.zeros_like(f)
         eta2B = np.zeros_like(G)
@@ -571,13 +610,18 @@ class WhiteGenerator(Generator):
         for a in particles:
             for i in holes:
                 denom = f[a,a] - f[i,i] + G[a,i,a,i]
-                result = f[a,i] / denom
+
+                if abs(denom)<1.0e-10:
+                    result = 0.25 * np.pi * np.sign(f[a,i]) * np.sign(denom)
+                else:
+                    result = f[a,i] / denom
+
 
                 eta1B[a,i] = result
                 eta1B[i,a] = -result
                 
-                if denom < 1:
-                    print('one body {}{},'.format(a, i), denom)
+                # if denom < 1:
+                #     print('one body {}{},'.format(a, i), denom)
                 # if a == 4 and i == 3:
                 #     print(G[a,i,a,i])
 
@@ -590,7 +634,13 @@ class WhiteGenerator(Generator):
                             + G[a,b,a,b] + G[i,j,i,j] - G[a,i,a,i]
                             - G[b,j,b,j] - G[a,j,a,j] - G[b,i,b,i]
                         )
-                        result = G[a,b,i,j] / denom
+
+                        if abs(denom)<1.0e-10:
+                            result = 0.25 * np.pi * np.sign(G[a,b,i,j]) * np.sign(denom)
+                        else:
+                            result = G[a,b,i,j] / denom
+
+
                         
                         eta2B[a,b,i,j] = result
                         eta2B[i,j,a,b] = -result
@@ -600,9 +650,8 @@ class WhiteGenerator(Generator):
                         # if a == 5 and b == 4 and i == 3 and j ==2:
                         #     print(denom)
                         #print(eta2B[5,4,3,2])
-
-
-
+                    
+                    
         # # Obtain denominator terms
         # fpp = f[np.ix_(particles), np.ix_(particles)]
         # fhh = f[np.ix_(holes), np.ix_(holes)]
@@ -800,6 +849,22 @@ class ImTimeGenerator(Generator):
         self._holes = h.holes
         self._particles = h.particles
         self._sp_basis = h.sp_basis
+        self._eta1B = np.zeros_like(self.f)
+        self._eta2B = np.zeros_like(self.G)
+
+    @property
+    def eta1B(self):
+        """Returns:
+
+        eta1B -- one-body generator"""
+        return self._eta1B
+
+    @property
+    def eta2B(self):
+        """Returns:
+
+        eta2B -- one-body generator"""
+        return self._eta2B
 
     @property
     def f(self):
