@@ -53,6 +53,24 @@ class WegnerGenerator(Generator):
         self._occRef1 = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])                                                                    # n_a(1-n_b)
         self._occRef2 = tn.ncon([tn.Node(np.transpose(Gb.tensor)), tn.Node(np.transpose(Ga.tensor))], [(-1,1),(1,-2)])       # (1-n_a)n_b
 
+        self._eta1B = np.zeros_like(self.f)
+        self._eta2B = np.zeros_like(self.G)
+
+    @property
+    def eta1B(self):
+        """Returns:
+
+        eta1B -- one-body generator"""
+        return self._eta1B
+
+    @property
+    def eta2B(self):
+        """Returns:
+
+        eta2B -- one-body generator"""
+        return self._eta2B
+
+
     @property
     def f(self):
         """Returns:
