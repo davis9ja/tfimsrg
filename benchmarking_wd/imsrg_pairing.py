@@ -4,10 +4,10 @@
 # imsrg_pairing.py
 #
 # author:   H. Hergert 
-# version:  1.5.0
-# date:     Dec 6, 2016
+# version:  1.6.0
+# date:     Oct 16, 2019
 # 
-# tested with Python v2.7
+# tested with Python v3.7
 # 
 # Solves the pairing model for four particles in a basis of four doubly 
 # degenerate states by means of an In-Medium Similarity Renormalization 
@@ -19,39 +19,36 @@ import numpy as np
 from numpy import array, dot, diag, reshape, transpose
 from scipy.linalg import eigvalsh
 from scipy.integrate import odeint, ode
+from math import pi
 
 from sys import argv
 
-import time
 import pickle
 #-----------------------------------------------------------------------------------
 # basis and index functions
 #-----------------------------------------------------------------------------------
 
-# standard two particle basis
-#@profile
 def construct_basis_2B(holes, particles):
   basis = []
   for i in holes:
     for j in holes:
-      basis.append((i, j)) # hole, hole
+      basis.append((i, j))
 
   for i in holes:
     for a in particles:
-      basis.append((i, a)) # hole, particle
+      basis.append((i, a))
 
   for a in particles:
     for i in holes:
-      basis.append((a, i)) # particle, hole
+      basis.append((a, i))
 
   for a in particles:
     for b in particles:
-      basis.append((a, b)) # particle, particle
+      basis.append((a, b))
 
   return basis
 
 
-#@profile
 def construct_basis_ph2B(holes, particles):
   basis = []
   for i in holes:
@@ -76,7 +73,6 @@ def construct_basis_ph2B(holes, particles):
 #
 # We use dictionaries for the reverse lookup of state indices
 #
-#@profile
 def construct_index_2B(bas2B):
   index = { }
   for i, state in enumerate(bas2B):
@@ -89,7 +85,6 @@ def construct_index_2B(bas2B):
 #-----------------------------------------------------------------------------------
 # transform matrices to particle-hole representation
 #-----------------------------------------------------------------------------------
-#@profile
 def ph_transform_2B(Gamma, bas2B, idx2B, basph2B, idxph2B):
   dim = len(basph2B)
   Gamma_ph = np.zeros((dim, dim))
@@ -100,7 +95,6 @@ def ph_transform_2B(Gamma, bas2B, idx2B, basph2B, idxph2B):
 
   return Gamma_ph
 
-#@profile
 def inverse_ph_transform_2B(Gamma_ph, bas2B, idx2B, basph2B, idxph2B):
   dim = len(bas2B)
   Gamma = np.zeros((dim, dim))
@@ -114,7 +108,6 @@ def inverse_ph_transform_2B(Gamma_ph, bas2B, idx2B, basph2B, idxph2B):
 #-----------------------------------------------------------------------------------
 # commutator of matrices
 #-----------------------------------------------------------------------------------
-#@profile
 def commutator(a,b):
   return dot(a,b) - dot(b,a)
 
@@ -149,7 +142,6 @@ def calc_Gammaod_norm(Gamma, user_data):
 #-----------------------------------------------------------------------------------
 # occupation number matrices
 #-----------------------------------------------------------------------------------
-#@profile
 def construct_occupation_1B(bas1B, holes, particles):
   dim = len(bas1B)
   occ = np.zeros(dim)
@@ -160,7 +152,6 @@ def construct_occupation_1B(bas1B, holes, particles):
   return occ
 
 # diagonal matrix: n_a - n_b
-#@profile
 def construct_occupationA_2B(bas2B, occ1B):
   dim = len(bas2B)
   occ = np.zeros((dim,dim))
@@ -172,7 +163,6 @@ def construct_occupationA_2B(bas2B, occ1B):
 
 
 # diagonal matrix: 1 - n_a - n_b
-#@profile
 def construct_occupationB_2B(bas2B, occ1B):
   dim = len(bas2B)
   occ = np.zeros((dim,dim))
@@ -183,7 +173,6 @@ def construct_occupationB_2B(bas2B, occ1B):
   return occ
 
 # diagonal matrix: n_a * n_b
-#@profile
 def construct_occupationC_2B(bas2B, occ1B):
   dim = len(bas2B)
   occ = np.zeros((dim,dim))
@@ -265,6 +254,50 @@ def eta_imtime(f, Gamma, user_data):
 
   return eta1B, eta2B
 
+def eta_uniform_tangent(f, Gamma, user_data):
+  dim1B     = user_data["dim1B"]
+  particles = user_data["particles"]
+  holes     = user_data["holes"]
+  idx2B     = user_data["idx2B"]
+
+  # one-body part of the generator
+  eta1B  = np.zeros_like(f)
+
+  for a in particles:
+    for i in holes:
+      d = f[a,a] - f[i,i] + Gamma[idx2B[(a,i)], idx2B[(a,i)]]
+      x = d/2
+      
+      val = d*f[a,i]/(x*x + f[a,i]*f[a,i])
+
+      eta1B[a, i] =  val
+      eta1B[i, a] = -val 
+
+  # two-body part of the generator
+  eta2B = np.zeros_like(Gamma)
+
+  for a in particles:
+    for b in particles:
+      for i in holes:
+        for j in holes:
+          d = ( 
+            f[a,a] + f[b,b] - f[i,i] - f[j,j] 
+            + Gamma[idx2B[(a,b)],idx2B[(a,b)]] 
+            + Gamma[idx2B[(i,j)],idx2B[(i,j)]] 
+            - Gamma[idx2B[(a,i)],idx2B[(a,i)]] 
+            - Gamma[idx2B[(a,j)],idx2B[(a,j)]] 
+            - Gamma[idx2B[(b,i)],idx2B[(b,i)]] 
+            - Gamma[idx2B[(b,j)],idx2B[(b,j)]] 
+          )
+          x = d/2
+          g = Gamma[idx2B[(a,b)], idx2B[(i,j)]]
+
+          val = d*g/(x*x + g*g)
+
+          eta2B[idx2B[(a,b)],idx2B[(i,j)]] = val
+          eta2B[idx2B[(i,j)],idx2B[(a,b)]] = -val
+
+  return eta1B, eta2B
 
 def eta_white(f, Gamma, user_data):
   dim1B     = user_data["dim1B"]
@@ -278,12 +311,16 @@ def eta_white(f, Gamma, user_data):
   for a in particles:
     for i in holes:
       denom = f[a,a] - f[i,i] + Gamma[idx2B[(a,i)], idx2B[(a,i)]]
-      val = f[a,i]/denom
+      # catch small or zero denominator - matrix element inspired by arctan version
+      if abs(denom)<1.0e-10:
+        val = 0.25 * pi * np.sign(f[a,i]) * np.sign(denom)
+      else:
+        val = f[a,i]/denom
+
+      # val = f[a,i]/denom
+
       eta1B[a, i] =  val
-      eta1B[i, a] = -val
-      # if denom < 1:
-      #   print("one body {}{}, ".format(a,i), denom)
-      #print(denom)
+      eta1B[i, a] = -val 
 
   # two-body part of the generator
   eta2B = np.zeros_like(Gamma)
@@ -301,15 +338,16 @@ def eta_white(f, Gamma, user_data):
             - Gamma[idx2B[(b,i)],idx2B[(b,i)]] 
             - Gamma[idx2B[(b,j)],idx2B[(b,j)]] 
           )
+          # catch small or zero denominator - matrix element inspired by arctan version
+          if abs(denom)<1.0e-10:
+            val = 0.25 * pi * np.sign(Gamma[idx2B[(a,b)], idx2B[(i,j)]]) * np.sign(denom)
+          else:
+            val = Gamma[idx2B[(a,b)], idx2B[(i,j)]] / denom
 
-          val = Gamma[idx2B[(a,b)], idx2B[(i,j)]] / denom
+          # val = Gamma[idx2B[(a,b)], idx2B[(i,j)]] / denom
 
           eta2B[idx2B[(a,b)],idx2B[(i,j)]] = val
           eta2B[idx2B[(i,j)],idx2B[(a,b)]] = -val
-          #print(denom)
-          if denom < 1:
-             print("two body {}{}{}{}, ".format(a,b,i,j), denom)
-          #print(Gamma[idx2B[(a,b)], idx2B[(i,j)]], a,b,i,j)
 
   return eta1B, eta2B
 
@@ -329,8 +367,6 @@ def eta_white_mp(f, Gamma, user_data):
       val = f[a,i]/denom
       eta1B[a, i] =  val
       eta1B[i, a] = -val 
-      if denom < 1:
-        print("one body {}{}, ".format(a,i), denom)
 
   # two-body part of the generator
   eta2B = np.zeros_like(Gamma)
@@ -348,10 +384,6 @@ def eta_white_mp(f, Gamma, user_data):
           eta2B[idx2B[(a,b)],idx2B[(i,j)]] = val
           eta2B[idx2B[(i,j)],idx2B[(a,b)]] = -val
 
-          if denom < 1:
-            print("two body {}{}{}{}, ".format(a,b,i,j), denom)
-
-
   return eta1B, eta2B
 
 def eta_white_atan(f, Gamma, user_data):
@@ -366,7 +398,12 @@ def eta_white_atan(f, Gamma, user_data):
   for a in particles:
     for i in holes:
       denom = f[a,a] - f[i,i] + Gamma[idx2B[(a,i)], idx2B[(a,i)]]
-      val = 0.5 * np.arctan(2 * f[a,i]/denom)
+      # catch zero or small denominator
+      if abs(denom)<1.0e-10:
+        val = 0.25 * pi * np.sign(f[a,i]) * np.sign(denom)
+      else:
+        val = 0.5 * np.arctan(2 * f[a,i]/denom)
+
       eta1B[a, i] =  val
       eta1B[i, a] = -val 
 
@@ -387,14 +424,18 @@ def eta_white_atan(f, Gamma, user_data):
             - Gamma[idx2B[(b,j)],idx2B[(b,j)]] 
           )
 
-          val = 0.5 * np.arctan(2 * Gamma[idx2B[(a,b)], idx2B[(i,j)]] / denom)
+          # catch zero or small denominator
+          if abs(denom)<1.0e-10:
+            val = 0.25 * pi * np.sign(Gamma[idx2B[(a,b)], idx2B[(i,j)]]) * np.sign(denom)
+          else:
+            val = 0.5 * np.arctan(2 * Gamma[idx2B[(a,b)], idx2B[(i,j)]] / denom)
 
           eta2B[idx2B[(a,b)],idx2B[(i,j)]] = val
           eta2B[idx2B[(i,j)],idx2B[(a,b)]] = -val
 
   return eta1B, eta2B
 
-#@profile
+
 def eta_wegner(f, Gamma, user_data):
 
   dim1B     = user_data["dim1B"]
@@ -431,7 +472,7 @@ def eta_wegner(f, Gamma, user_data):
 
 
   #############################        
-  # one-body flow equation  
+  # one-body part of the generator
   eta1B  = np.zeros_like(f)
 
   # 1B - 1B
@@ -455,8 +496,8 @@ def eta_wegner(f, Gamma, user_data):
   for p in range(dim1B):
     for q in range(dim1B):
       for i in holes:
-        eta1B[p,q] += (
-          0.5*GammaGamma[idx2B[(i,p)], idx2B[(i,q)]] 
+        eta1B[p,q] += 0.5*(
+          GammaGamma[idx2B[(i,p)], idx2B[(i,q)]] 
           - transpose(GammaGamma)[idx2B[(i,p)], idx2B[(i,q)]]
         )
 
@@ -464,9 +505,9 @@ def eta_wegner(f, Gamma, user_data):
   for p in range(dim1B):
     for q in range(dim1B):
       for r in range(dim1B):
-        eta1B[p,q] += (
-          0.5*GammaGamma[idx2B[(r,p)], idx2B[(r,q)]] 
-          + transpose(GammaGamma)[idx2B[(r,p)], idx2B[(r,q)]] 
+        eta1B[p,q] += 0.5*(
+          GammaGamma[idx2B[(r,p)], idx2B[(r,q)]] 
+          - transpose(GammaGamma)[idx2B[(r,p)], idx2B[(r,q)]] 
         )
 
 
@@ -531,7 +572,6 @@ def eta_wegner(f, Gamma, user_data):
 #-----------------------------------------------------------------------------------
 # derivatives 
 #-----------------------------------------------------------------------------------
-#@profile
 def flow_imsrg2(eta1B, eta2B, f, Gamma, user_data):
 
   dim1B     = user_data["dim1B"]
@@ -661,7 +701,6 @@ def flow_imsrg2(eta1B, eta2B, f, Gamma, user_data):
 #-----------------------------------------------------------------------------------
 # derivative wrapper
 #-----------------------------------------------------------------------------------
-#@profile
 def get_operator_from_y(y, dim1B, dim2B):
   
   # reshape the solution vector into 0B, 1B, 2B pieces
@@ -719,7 +758,6 @@ def derivative_wrapper(t, y, user_data):
 #-----------------------------------------------------------------------------------
 # pairing Hamiltonian
 #-----------------------------------------------------------------------------------
-#@profile
 def pairing_hamiltonian(delta, g, user_data):
   bas1B = user_data["bas1B"]
   bas2B = user_data["bas2B"]
@@ -746,10 +784,84 @@ def pairing_hamiltonian(delta, g, user_data):
   
   return H1B, H2B
 
+def generalized_pairing_hamiltonian(eps, g, user_data):
+  bas1B = user_data["bas1B"]
+  bas2B = user_data["bas2B"]
+  idx2B = user_data["idx2B"]
+
+  dim = len(bas1B)
+  H1B = np.zeros((dim,dim))
+
+  for i in bas1B:
+    H1B[i,i] = eps[i]
+
+  dim = len(bas2B)
+  H2B = np.zeros((dim, dim))
+
+  # spin up states have even indices, spin down the next odd index
+  for (i, j) in bas2B:
+    if (i % 2 == 0 and j == i+1):
+      for (k, l) in bas2B:
+        if (k % 2 == 0 and l == k+1):
+          H2B[idx2B[(i,j)],idx2B[(k,l)]] = -0.5*g
+          H2B[idx2B[(j,i)],idx2B[(k,l)]] = 0.5*g
+          H2B[idx2B[(i,j)],idx2B[(l,k)]] = 0.5*g
+          H2B[idx2B[(j,i)],idx2B[(l,k)]] = -0.5*g
+  
+  return H1B, H2B
+
+#-----------------------------------------------------------------------------------
+# pairing plus particle-hole Hamiltonian
+#-----------------------------------------------------------------------------------
+def pairing_plus_particlehole_hamiltonian(delta, g, fph, user_data):
+  bas1B = user_data["bas1B"]
+  bas2B = user_data["bas2B"]
+  idx2B = user_data["idx2B"]
+
+  dim = len(bas1B)
+  H1B = np.zeros((dim,dim))
+
+  for i in bas1B:
+    H1B[i,i] = delta*np.floor_divide(i, 2)
+
+  dim = len(bas2B)
+  H2B = np.zeros((dim, dim))
+
+  # pairing interaction 
+  # spin up states have even indices, spin down the next odd index
+  for (i, j) in bas2B:
+    if (i % 2 == 0 and j == i+1):
+      for (k, l) in bas2B:
+        if (k % 2 == 0 and l == k+1):
+          H2B[idx2B[(i,j)],idx2B[(k,l)]] += -0.5*g
+          H2B[idx2B[(j,i)],idx2B[(k,l)]] += 0.5*g
+          H2B[idx2B[(i,j)],idx2B[(l,k)]] += 0.5*g
+          H2B[idx2B[(j,i)],idx2B[(l,k)]] += -0.5*g
+
+  # particle-hole interaction - defined with +fph here 
+  # spin up states have even indices, spin down the next odd index
+  for (i, j) in bas2B:
+    if (i % 2 == 0 and j % 2 == 1 and j != i+1):
+      for (k, l) in bas2B:
+        if (k % 2 == 0 and l == k+1):
+
+          H2B[idx2B[(i,j)],idx2B[(k,l)]] += 0.5*fph
+          H2B[idx2B[(j,i)],idx2B[(k,l)]] += -0.5*fph
+          H2B[idx2B[(i,j)],idx2B[(l,k)]] += -0.5*fph
+          H2B[idx2B[(j,i)],idx2B[(l,k)]] += 0.5*fph
+
+          # Hermitian conjugate term
+          H2B[idx2B[(k,l)],idx2B[(i,j)]] += 0.5*fph
+          H2B[idx2B[(k,l)],idx2B[(j,i)]] += -0.5*fph
+          H2B[idx2B[(l,k)],idx2B[(i,j)]] += -0.5*fph
+          H2B[idx2B[(l,k)],idx2B[(j,i)]] += 0.5*fph
+  
+  return H1B, H2B
+
+
 #-----------------------------------------------------------------------------------
 # normal-ordered pairing Hamiltonian
 #-----------------------------------------------------------------------------------
-#@profile
 def normal_order(H1B, H2B, user_data):
   bas1B     = user_data["bas1B"]
   bas2B     = user_data["bas2B"]
@@ -871,32 +983,31 @@ def dump_flow_data(count, s_val, E, f, Gamma, user_data):
     for j in holes:
       Gamma_trace += Gamma_rank4[i,j,i,j]
 
-  f_trace = 0
+  z_trace = 0
   for i in holes:
-    f_trace += f[i,i]
+    z_trace += H1B[i,i]
 
-  H0B = E - f_trace + 0.5*Gamma_trace
-  print(s_val)
-  pickle.dump((s_val, H0B, H1B, H2B), open('vac_coeffs_reference_c{}.p'.format(count), 'wb'))
-  
-#@profile
-def main(n_holes, g=2):
-  # grab delta and g from the command line
-  # delta      = float(argv[1])
-  # g          = float(argv[2])
-  delta = 1
-  #g = g
-  
-  particles  = n_holes
+  H0B = E - z_trace - 0.5*Gamma_trace
+  #print(s_val)
+  pickle.dump((H0B, H1B, H2B), open('vac_coeffs_reference_c{}.p'.format(count), 'wb'))
+
+
+def main():
+  # grab delta, g, fph from the command line
+  delta      = float(argv[1])
+  g          = float(argv[2])
+  fph        = float(argv[3])
+
+  particles  = 4
 
   # setup shared data
-  dim1B     = n_holes*2
+  dim1B     = 8
 
   # this defines the reference state
   # 1st state
-  holes = np.arange(particles)
-  particles = np.arange(particles,dim1B)
-  print(holes, particles)
+  holes     = [0,1,2,3]
+  particles = [4,5,6,7]
+
   # 2nd state
   # holes     = [0,1,4,5]
   # particles = [2,3,6,7]
@@ -905,8 +1016,13 @@ def main(n_holes, g=2):
   # holes     = [0,1,6,7]
   # particles = [2,3,4,5]
 
+  # sensible choice for runs with pair-breaking interaction
+  # holes     = [0,1,2,4]
+  # particles = [3,5,6,7]
+
+
   # basis definitions
-  bas1B     = list(range(dim1B))
+  bas1B     = range(dim1B)
   bas2B     = construct_basis_2B(holes, particles)
   basph2B   = construct_basis_ph2B(holes, particles)
 
@@ -942,24 +1058,23 @@ def main(n_holes, g=2):
     "dE":         0.0,                # and main routine
 
 
-    "calc_eta":   eta_white,          # specify the generator (function object)
+    "calc_eta":   eta_white,     # specify the generator (function object)
     "calc_rhs":   flow_imsrg2         # specify the right-hand side and truncation
   }
 
   # set up initial Hamiltonian
-  H1B, H2B = pairing_hamiltonian(delta, g, user_data)
-  pickle.dump((H1B, H2B), open('comparison.p','wb'))
+  # H1B, H2B = pairing_hamiltonian(delta, g, user_data)
+  H1B, H2B = pairing_plus_particlehole_hamiltonian(delta, g, fph, user_data)
+
+
+  # eps = [0.,0.,1.9,1.9,2.,2.,3.,3.]
+  # H1B, H2B = generalized_pairing_hamiltonian(eps, g, user_data)
+
   E, f, Gamma = normal_order(H1B, H2B, user_data) 
-  #print(E)
 
   # reshape Hamiltonian into a linear array (initial ODE vector)
   y0   = np.append([E], np.append(reshape(f, -1), reshape(Gamma, -1)))
 
-  t = 1
-  dy = derivative_wrapper(t, y0, user_data)
-  dE, df, dG = get_operator_from_y(dy, dim1B, dim1B*dim1B)
-  #print(dE)
-  
   # integrate flow equations 
   solver = ode(derivative_wrapper,jac=None)
   solver.set_integrator('vode', method='bdf', order=5, nsteps=1000)
@@ -974,10 +1089,19 @@ def main(n_holes, g=2):
     "||eta||", "||fod||", "||Gammaod||"))
   # print "-----------------------------------------------------------------------------------------------------------------"
   print("-" * 148)
-  count = 0
+  
+  eta_norm0 = 1.0e10
+  failed = False
+
+  dump_flow_data(0, 0.0, E, f, Gamma, user_data)
+
   while solver.successful() and solver.t < sfinal:
     ys = solver.integrate(sfinal, step=True)
-    
+   
+    if user_data["eta_norm"] > 1.25*eta_norm0: 
+      failed=True
+      break
+   
     dim2B = dim1B*dim1B
     E, f, Gamma = get_operator_from_y(ys, dim1B, dim2B)
 
@@ -986,40 +1110,23 @@ def main(n_holes, g=2):
 
     norm_fod     = calc_fod_norm(f, user_data)
     norm_Gammaod = calc_Gammaod_norm(Gamma, user_data)
-    s_val = solver.t
-    if count % 10 == 0:
-      print("%8.5f %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f"%(
-        solver.t, E , DE2, DE3, E+DE2+DE3, user_data["dE"], user_data["eta_norm"], norm_fod, norm_Gammaod))
-      print(s_val)
-      dump_flow_data(count, s_val, E, f, Gamma, user_data)
-    count += 1
 
+    print("%8.5f %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f   %14.8f"%(
+      solver.t, E , DE2, DE3, E+DE2+DE3, user_data["dE"], user_data["eta_norm"], norm_fod, norm_Gammaod))
     if abs(DE2/E) < 10e-8: break
 
-  return E
+    eta_norm0 = user_data["eta_norm"]
 
-
-#    solver.integrate(solver.t + ds)
+  # write final result to compiled datafile
+  # datafile = open("./imsrg_state1_wa.final.dat", 'a')
+  # if failed == False:
+  #   print >> datafile, "%+2.1f   %+2.1f %f"%(delta,g,E)
+  # else:
+  #   print >> datafile, "%+2.1f   %+2.1f inf"%(delta,g)
+  # datafile.close()
 
 #------------------------------------------------------------------------------
 # make executable
 #------------------------------------------------------------------------------
 if __name__ == "__main__": 
-  # for n in range(2,14,2):
-  #   ti = time.time()
-  #   main(n)
-  #   tf = time.time()
-  #   print('Total time: {:2.5f}'.format(tf-ti))
-  main(4)
-import pytest
-
-def test02ph_run(benchmark):
-    benchmark(lambda: main(2))
-def test04ph_run(benchmark):
-    benchmark(lambda: main(4))
-def test06ph_run(benchmark):
-    benchmark(lambda: main(6))
-def test08ph_run(benchmark):
-    benchmark(lambda: main(8))
-def test10ph_run(benchmark):
-    benchmark(lambda: main(10))
+  main()
