@@ -10,6 +10,8 @@ from scipy.integrate import odeint, ode
 import numpy as np
 import time
 import pickle
+import pandas as pd
+import seaborn as sns
 
 import matplotlib.pyplot as plt
 import tracemalloc
@@ -20,7 +22,8 @@ import random
 import tensornetwork as tn
 #tn.set_default_backend("tensorflow")
 
-# user files
+# USER MODULES
+from oop_imsrg.spin_sq import *
 from oop_imsrg.hamiltonian import *
 from oop_imsrg.occupation_tensors import *
 from oop_imsrg.generator import *
@@ -29,6 +32,10 @@ from oop_imsrg.plot_data import *
 # from oop_imsrg.display_memory import *
 import oop_imsrg.ci_pairing.cipy_pairing_plus_ph as ci_matrix
 from oop_imsrg.tests2B import *
+
+sys.path.append('/mnt/home/daviso53/Research/')
+from pyci.density_matrix.density_matrix import density_1b, density_2b
+import pyci.imsrg_ci.pyci_p3h as pyci
 
 def get_vacuum_coeffs(E, f, G, basis, holes):
 
@@ -48,7 +55,7 @@ def get_vacuum_coeffs(E, f, G, basis, holes):
 
 
 # @profile
-def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
+def derivative(t, y, inputs):
     """Defines the derivative to pass into ode object.
 
     Arguments:
@@ -66,32 +73,27 @@ def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
 
     dy -- next step in flow"""
 
-    assert isinstance(hamiltonian, Hamiltonian), "Arg 2 must be Hamiltonian object"
+    hamiltonian, occ_tensors, generator, flow, tspinsq, generator_spin, flow_spin = inputs
+    #assert isinstance(hamiltonian, Hamiltonian), "Arg 2 must be Hamiltonian object"
     assert isinstance(occ_tensors, OccupationTensors), "Arg 3 must be OccupationTensors object"
     assert isinstance(generator, Generator), "Arg 4 must be Generator object"
     assert isinstance(flow, Flow), "Arg 5 must be a Flow object"
 
-    E, f, G = ravel(y, hamiltonian.n_sp_states)
+    half = int(len(y)/2)
 
-#    timefi = time.time()
+    # Hamiltonian flow
+    E, f, G = ravel(y[0:half], hamiltonian.n_sp_states)
     generator.f = f
-#    timeff = time.time()
-
-#    timegi = time.time()
     generator.G = G
-#    timegf = time.time()
-
-#    timefli = time.time()
     dE, df, dG = flow.flow(generator)
-#    timeflf = time.time()
 
-    # print("""
-    # f time:     {:2.4f} s
-    # G time:     {:2.4f} s
-    # Flow time:  {:2.4f} s
-    # """.format(timeff-timefi, timegf-timegi, timeflf-timefli))
+    # Spin-squared flow
+    E_spin, f_spin, G_spin = ravel(y[half::], tspinsq.n_sp_states)
+    generator_spin.f = f_spin
+    generator_spin.G = G_spin
+    dE_spin, df_spin, dG_spin = flow_spin.flow(generator)
 
-    dy = unravel(dE, df, dG)
+    dy = np.concatenate([unravel(dE, df, dG), unravel(dE_spin, df_spin, dG_spin)], axis=0)
 
     return dy
 
@@ -182,8 +184,10 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     if ref == []:
         ha = PairingHamiltonian2B(n_holes, n_particles, d=d, g=g, pb=pb)
         ref = ha.reference # this is just for printing
+        ss = TSpinSq(n_holes, n_particles)
     else:
         ha = PairingHamiltonian2B(n_holes, n_particles, ref=ref, d=d, g=g, pb=pb)
+        ss = TSpinSq(n_holes, n_particles)
 
     ot = OccupationTensors(ha.sp_basis, ha.reference)
 
@@ -195,6 +199,9 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
 
     wg = generator_dict[generator] #WegnerGenerator(ha, ot)
     fl = Flow_IMSRG2(ha, ot) 
+
+    wg_spin = generator_dict[generator]
+    fl_spin = Flow_IMSRG2(ss, ot)
 
     initf = time.time() # finish instantiation timer
 
@@ -218,20 +225,25 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     flowi = time.time()
 
     # --- Solve the IM-SRG flow
-    y0 = unravel(ha.E, ha.f, ha.G)
+    y0 = np.concatenate([unravel(ha.E, ha.f, ha.G), unravel(ss.E, ss.f, ss.G)], axis=0)
+
     H0B, H1B, H2B = get_vacuum_coeffs(ha.E, ha.f, ha.G, ha.sp_basis, ha.holes)
     zero, eta1B_vac, eta2B_vac = get_vacuum_coeffs(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes)
+
     pickle.dump( (H0B, H1B, H2B, eta1B_vac, eta2B_vac), open( output_root+"/vac_coeffs_unevolved.p", "wb" ) )
 
     solver = ode(derivative,jac=None)
     solver.set_integrator('vode', method='bdf', order=5, nsteps=1000)
-    solver.set_f_params(ha, ot, wg, fl)
+    solver.set_f_params([ha, ot, wg, fl, ss, wg_spin, fl_spin])
     solver.set_initial_value(y0, 0.)
 
     sfinal = 50
 #    ds = 1
     s_vals = []
     E_vals = []
+    
+    E_gs_lst = []
+    s_expect_lst = []
 
     iters = 0
     convergence = 0
@@ -244,9 +256,36 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
         #print('solver success,', solver.successful())
 
         ys = solver.integrate(sfinal, step=True)
-        Es, fs, Gs = ravel(ys, ha.n_sp_states)
+
+        half = int(len(ys)/2)
+        Es, fs, Gs = ravel(ys[0:half], ha.n_sp_states)
+        E_spins, f_spins, G_spins = ravel(ys[half::], ss.n_sp_states)
+
         s_vals.append(solver.t)
         E_vals.append(Es)
+        
+        # compute density matrices, get expectation values
+        H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
+        SS0B, SS1B, SS2B = get_vacuum_coeffs(E_spins, f_spins, G_spins, ss.sp_basis, ss.holes)
+        hme = pyci.matrix(n_holes, n_particles, H0B, H1B, H2B, H2B, imsrg=True)
+        w,v = np.linalg.eigh(hme)
+        v0 = v[:,0]
+
+        rho1b = density_1b(n_holes,n_particles, weights=v0)
+        rho2b = density_2b(n_holes,n_particles, weights=v0)
+
+        contract_1b = np.einsum('ij,ij', rho1b, SS1B)
+
+        rho_reshape_2b = np.reshape(rho2b, (ss.n_sp_states**2,ss.n_sp_states**2))
+        h2b_reshape_2b = np.reshape(SS2B, (ss.n_sp_states**2,ss.n_sp_states**2))
+        contract_2b = np.einsum('ij,ij', rho_reshape_2b, h2b_reshape_2b)
+
+        s_expect = SS0B + contract_1b + 0.25*contract_2b
+
+
+        E_gs_lst.append(w[0])
+        s_expect_lst.append(s_expect)
+        
 
         if iters %10 == 0 and verbose: 
             norm_eta1B = np.linalg.norm(np.ravel(wg.eta1B))
@@ -300,7 +339,10 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     num_sp = n_holes+n_particles
 
     del ha, ot, wg, fl, solver, y0, sfinal
-    
+
+    expect_flow_df = pd.DataFrame({'s':s_vals, 'E_gs':E_gs_lst, 's_expect':s_expect_lst})
+    pickle.dump(expect_flow_df, open('expect_flow.p', 'wb'))
+
     return (convergence, iters, d, g, pb, num_sp, s_vals, E_vals, time_str)
  
 
@@ -352,14 +394,21 @@ if __name__ == '__main__':
 
     # ----------------------------------------------------------------
 
-    refs = [[1,1,1,1,0,0,0,0],[1,1,0,0,1,1,0,0],[1,1,0,0,0,0,1,1],
-            [0,0,1,1,1,1,0,0],[0,0,1,1,0,0,1,1]]
+    main(4,4, generator='white')
+    data = pickle.load(open('expect_flow.p', 'rb'))
+    sns.lineplot(x='s', y='E_gs', data=data)
+    plt.show()
 
-    ref = 0.5*np.asarray(refs[0]) + (1.0-0.5)/4.0*(np.asarray(refs[1]) + np.asarray(refs[2]) + np.asarray(refs[3]) + np.asarray(refs[4]))
-    # main(4,4, g=5, ref=[1,1,1,1,0,0,0,0])
+    sns.lineplot(x='s', y='s_expect', data=data)
+    plt.show()
+    # refs = [[1,1,1,1,0,0,0,0],[1,1,0,0,1,1,0,0],[1,1,0,0,0,0,1,1],
+    #         [0,0,1,1,1,1,0,0],[0,0,1,1,0,0,1,1]]
+
+    # ref = 0.5*np.asarray(refs[0]) + (1.0-0.5)/4.0*(np.asarray(refs[1]) + np.asarray(refs[2]) + np.asarray(refs[3]) + np.asarray(refs[4]))
+    # # main(4,4, g=5, ref=[1,1,1,1,0,0,0,0])
 
     
-    main(4,4,g=1.0, pb=0.1, flow_data_log=0, generator='white')
+    # main(4,4,g=1.0, pb=0.1, flow_data_log=0, generator='white')
 
     # H1B_true, H2B_true = pickle.load(open('comparison.p','rb'))
     # H1B, H2B = pickle.load(open('vac_coeffs_unevolved.p', 'rb'))

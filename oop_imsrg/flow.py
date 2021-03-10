@@ -26,7 +26,7 @@ class Flow_IMSRG2(Flow):
         h -- Hamiltonian object
         occ_t -- OccupationTensors object"""
 
-        assert isinstance(h, Hamiltonian), "Arg 0 must be PairingHamiltonian object"
+        #assert isinstance(h, Hamiltonian), "Arg 0 must be PairingHamiltonian object"
         assert isinstance(occ_t, OccupationTensors), "Arg 1 must be OccupationTensors object"
 
         # self.f = h.f
