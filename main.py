@@ -394,25 +394,33 @@ if __name__ == '__main__':
 
     # ----------------------------------------------------------------
 
-    main(4,4, generator='white')
+    # main(4,4, generator='white')
+    # data = pickle.load(open('expect_flow.p', 'rb'))
+
+    # fig = plt.figure(figsize=(8,4))
+    # sns.lineplot(x='s', y=data['E_gs']/data['E_gs'][0], data=data)
+    # sns.lineplot(x='s', y=data['s_expect']/data['s_expect'][0], data=data)
+    # plt.legend(['E(s)/E(s=0)', 'SS(s)/SS(s=0)'])
+    # plt.savefig('flow_conservation.png')
+
+
+    ref = 0.7*np.array([1,1,1,1,0,0,0,0])+0.3*np.array([1,1,0,0,1,1,0,0])
+    main(4,4, g=2.0, ref=ref, generator='white')
     data = pickle.load(open('expect_flow.p', 'rb'))
 
     fig = plt.figure(figsize=(8,4))
     sns.lineplot(x='s', y=data['E_gs']/data['E_gs'][0], data=data)
     sns.lineplot(x='s', y=data['s_expect']/data['s_expect'][0], data=data)
     plt.legend(['E(s)/E(s=0)', 'SS(s)/SS(s=0)'])
-    plt.savefig('flow_conservation.png')
+    plt.savefig('flow_conservation_ensemble_best_g2.png')
 
-
-    ref = 0.8*np.array([1,1,1,1,0,0,0,0])+0.2*np.array([1,1,0,0,1,1,0,0])
-    main(4,4, ref=ref, generator='white')
-    data = pickle.load(open('expect_flow.p', 'rb'))
-
+    hme = pyci.matrix(4,4,0.0,1.0,2.0,0.0)
+    w,v = np.linalg.eigh(hme)
     fig = plt.figure(figsize=(8,4))
-    sns.lineplot(x='s', y=data['E_gs']/data['E_gs'][0], data=data)
-    sns.lineplot(x='s', y=data['s_expect']/data['s_expect'][0], data=data)
-    plt.legend(['E(s)/E(s=0)', 'SS(s)/SS(s=0)'])
-    plt.savefig('flow_conservation_ensemble.png')
+    sns.lineplot(x='s', y=data['E_gs'], data=data)
+    sns.lineplot(x='s', y=w[0], data=data)
+    plt.legend(['E_gs evolution', 'FCI gs'])
+    plt.savefig('E_gs_error_g2.png')
 
     # refs = [[1,1,1,1,0,0,0,0],[1,1,0,0,1,1,0,0],[1,1,0,0,0,0,1,1],
     #         [0,0,1,1,1,1,0,0],[0,0,1,1,0,0,1,1]]
