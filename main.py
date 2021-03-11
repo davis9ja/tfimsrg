@@ -358,8 +358,8 @@ if __name__ == '__main__':
     ref = 0.5*np.asarray(refs[0]) + (1.0-0.5)/4.0*(np.asarray(refs[1]) + np.asarray(refs[2]) + np.asarray(refs[3]) + np.asarray(refs[4]))
     # main(4,4, g=5, ref=[1,1,1,1,0,0,0,0])
 
-    
-    main(4,4,g=0.5, pb=0.0, generator='white')
+    ref = 0.8*np.array([1,1,1,1,0,0,0,0])+0.2*np.array([1,1,0,0,1,1,0,0])
+    main(4,4,g=2, ref=ref, pb=0.0, generator='white')
 
     # H1B_true, H2B_true = pickle.load(open('comparison.p','rb'))
     # H1B, H2B = pickle.load(open('vac_coeffs_unevolved.p', 'rb'))
