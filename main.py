@@ -200,7 +200,7 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     wg = generator_dict[generator] #WegnerGenerator(ha, ot)
     fl = Flow_IMSRG2(ha, ot) 
 
-    wg_spin = generator_dict[generator]
+    wg_spin = WhiteGenerator(ss)
     fl_spin = Flow_IMSRG2(ss, ot)
 
     initf = time.time() # finish instantiation timer
@@ -396,11 +396,24 @@ if __name__ == '__main__':
 
     main(4,4, generator='white')
     data = pickle.load(open('expect_flow.p', 'rb'))
-    sns.lineplot(x='s', y='E_gs', data=data)
-    plt.show()
 
-    sns.lineplot(x='s', y='s_expect', data=data)
-    plt.show()
+    fig = plt.figure(figsize=(8,4))
+    sns.lineplot(x='s', y=data['E_gs']/data['E_gs'][0], data=data)
+    sns.lineplot(x='s', y=data['s_expect']/data['s_expect'][0], data=data)
+    plt.legend(['E(s)/E(s=0)', 'SS(s)/SS(s=0)'])
+    plt.savefig('flow_conservation.png')
+
+
+    ref = 0.8*np.array([1,1,1,1,0,0,0,0])+0.2*np.array([1,1,0,0,1,1,0,0])
+    main(4,4, ref=ref, generator='white')
+    data = pickle.load(open('expect_flow.p', 'rb'))
+
+    fig = plt.figure(figsize=(8,4))
+    sns.lineplot(x='s', y=data['E_gs']/data['E_gs'][0], data=data)
+    sns.lineplot(x='s', y=data['s_expect']/data['s_expect'][0], data=data)
+    plt.legend(['E(s)/E(s=0)', 'SS(s)/SS(s=0)'])
+    plt.savefig('flow_conservation_ensemble.png')
+
     # refs = [[1,1,1,1,0,0,0,0],[1,1,0,0,1,1,0,0],[1,1,0,0,0,0,1,1],
     #         [0,0,1,1,1,1,0,0],[0,0,1,1,0,0,1,1]]
 

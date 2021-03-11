@@ -28,7 +28,7 @@ class WegnerGenerator(Generator):
         h -- Hamiltonian object (must be normal-ordered)
         occ_t -- OccupationTensor object"""
 
-        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
+#        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
         assert isinstance(occ_t, OccupationTensors), "Arg 1 must be OccupationTensors object"
 
         self.f = h.f
@@ -544,7 +544,7 @@ class WhiteGenerator(Generator):
     
     def __init__(self, h):
 
-        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
+#        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
         
         self._my_f = h.f
         self._my_G = h.G
