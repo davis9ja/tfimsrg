@@ -248,6 +248,9 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     iters = 0
     convergence = 0
 
+    fci_hme = pyci.matrix(n_holes, n_particles, 0.0, d, g, pb)
+    dens_weights,v = np.linalg.eigh(fci_hme)
+
     if verbose:
         print("iter,      \t    s, \t         E, \t         ||eta1B||, \t         ||eta2B||")
         
@@ -316,7 +319,7 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
         #     if verbose: print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
         #     break
 
-        if iters > 10000:
+        if iters > 300:
             if verbose: print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
             break
 
@@ -404,23 +407,23 @@ if __name__ == '__main__':
     # plt.savefig('flow_conservation.png')
 
 
-    ref = 0.7*np.array([1,1,1,1,0,0,0,0])+0.3*np.array([1,1,0,0,1,1,0,0])
-    main(4,4, g=2.0, ref=ref, generator='white')
+    ref = 1.0*np.array([1,1,1,1,0,0,0,0])+0.0*np.array([1,1,0,0,1,1,0,0])
+    main(4,4, g=0.5,ref=ref,  generator='white')
     data = pickle.load(open('expect_flow.p', 'rb'))
 
     fig = plt.figure(figsize=(8,4))
     sns.lineplot(x='s', y=data['E_gs']/data['E_gs'][0], data=data)
     sns.lineplot(x='s', y=data['s_expect']/data['s_expect'][0], data=data)
     plt.legend(['E(s)/E(s=0)', 'SS(s)/SS(s=0)'])
-    plt.savefig('flow_conservation_ensemble_best_g2.png')
+    plt.savefig('flow_conservation.png')
 
-    hme = pyci.matrix(4,4,0.0,1.0,2.0,0.0)
-    w,v = np.linalg.eigh(hme)
-    fig = plt.figure(figsize=(8,4))
-    sns.lineplot(x='s', y=data['E_gs'], data=data)
-    sns.lineplot(x='s', y=w[0], data=data)
-    plt.legend(['E_gs evolution', 'FCI gs'])
-    plt.savefig('E_gs_error_g2.png')
+    # hme = pyci.matrix(4,4,0.0,1.0,2.0,0.0)
+    # w,v = np.linalg.eigh(hme)
+    # fig = plt.figure(figsize=(8,4))
+    # sns.lineplot(x='s', y=data['E_gs'], data=data)
+    # sns.lineplot(x='s', y=w[0], data=data)
+    # plt.legend(['E_gs evolution', 'FCI gs'])
+    # plt.savefig('E_gs_error_g2.png')
 
     # refs = [[1,1,1,1,0,0,0,0],[1,1,0,0,1,1,0,0],[1,1,0,0,0,0,1,1],
     #         [0,0,1,1,1,1,0,0],[0,0,1,1,0,0,1,1]]

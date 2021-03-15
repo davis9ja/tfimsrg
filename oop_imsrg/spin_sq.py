@@ -92,7 +92,7 @@ class TSpinSq(object):
         """Returns:
 
         SS2B -- two-body (rank 4) tensor defined by construct()."""
-        return self._H2B
+        return self._SS2B
 
     @property
     def E(self):
@@ -180,9 +180,10 @@ class TSpinSq(object):
 
         # one body part of Hamiltonian is floor-division of basis index
         # matrix elements are (P-1) where P is energy level
+        SS1B = np.zeros(np.ones(2, dtype=np.int32)*self.n_sp_states,dtype=np.float32)
         for p in bas1B:
             for q in bas1B:
-                SS1B = self.s*(self.s+1)*self.delta1B(p,q)
+                SS1B[p,q] = self.s*(self.s+1)*self.delta1B(p,q)
 
         # two body part of Hamiltonian constructed from four indices
         # with non-zero elements defined by pairing term
