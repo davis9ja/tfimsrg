@@ -153,8 +153,8 @@ class TSpinSq(object):
         spin = self.s
         sisj_matrix = np.array([[spin**2,   0,    0,     0],
                                 [0,  -spin**2,  spin,     0],
-                                [0,    spin, spin**2,     0],
-                                [0,      0,    0, -spin**2]])
+                                [0,    spin, -spin**2,     0],
+                                [0,      0,    0, spin**2]])
 
         sym1 = sisj_matrix[int(ps==qs),int(rs==ss)]
         sym2 = sisj_matrix[int(qs==ps),int(ss==rs)]
