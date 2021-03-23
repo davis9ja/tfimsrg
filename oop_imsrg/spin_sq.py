@@ -152,8 +152,8 @@ class TSpinSq(object):
 
         spin = self.s
         sisj_matrix = np.array([[spin**2,   0,    0,     0],
-                                [0,  -(spin**2),  (0.5*spin**2),     0],
-                                [0,    (0.5*spin**2), -(spin**2),     0],
+                                [0,  -(spin**2),  spin,     0],
+                                [0,    spin, -(spin**2),     0],
                                 [0,      0,    0, spin**2]])
 
         bra_idx = (1-int(ps==qs))+int(qs>ps)
@@ -163,16 +163,16 @@ class TSpinSq(object):
         ket_idx_swap = (1-int(rs==ss))+int(rs>ss)
 
         sym1 = sisj_matrix[bra_idx, ket_idx]
-        sym2 = sisj_matrix[bra_idx_swap, ket_idx_swap]
+        #sym2 = sisj_matrix[bra_idx_swap, ket_idx_swap]
         asym1 = sisj_matrix[bra_idx, ket_idx_swap]
-        asym2 = sisj_matrix[bra_idx_swap, ket_idx]
+        #asym2 = sisj_matrix[bra_idx_swap, ket_idx]
 
         # sym1 = int(ps==qs)*int(rs==ss)*sisj_matrix[0,0]
         # sym2 = int(qs==ps)*int(ss==rs)*sisj_matrix[4,4]
         # asym1 = sisj_matrix[int(ps==qs),int(ss==rs)]
         # asym2 = sisj_matrix[int(qs==ps),int(rs==ss)]
         
-        me = 0.5*(int(pp==rp)*int(qp==sp)*(sym1+sym2) - int(pp==sp)*int(qp==rp)*(asym1+asym2))
+        me = (int(pp==rp)*int(qp==sp)*(sym1) - int(pp==sp)*int(qp==rp)*(asym1))
 
 
         return me
