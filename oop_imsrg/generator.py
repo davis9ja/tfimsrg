@@ -258,6 +258,10 @@ class WegnerGenerator(Generator):
 
         eta2B = sum1_2b + 0.5*sum2_2b - sum3_2b
 
+
+        self._eta1B = eta1B
+        self._eta2B = eta2B
+
         return (eta1B, eta2B)
 
 class WegnerGenerator3B(WegnerGenerator):

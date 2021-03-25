@@ -37,6 +37,7 @@ sys.path.append('/mnt/home/daviso53/Research/')
 from pyci.density_matrix.density_matrix import density_1b, density_2b
 import pyci.imsrg_ci.pyci_p3h as pyci
 
+
 def get_vacuum_coeffs(E, f, G, basis, holes):
 
     H2B = G
@@ -200,7 +201,7 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     wg = generator_dict[generator] #WegnerGenerator(ha, ot)
     fl = Flow_IMSRG2(ha, ot) 
 
-    wg_spin = WhiteGenerator(ss)
+    wg_spin = WegnerGenerator(ss, ot)
     fl_spin = Flow_IMSRG2(ss, ot)
 
     initf = time.time() # finish instantiation timer
@@ -252,7 +253,7 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     dens_weights,v = np.linalg.eigh(fci_hme)
 
     if verbose:
-        print("iter,      \t    s, \t         E, \t         ||eta1B||, \t         ||eta2B||")
+        print("iter, \t            s, \t           E, \t        SS0B, \t        SS1B, \t        SS2B, \t   ||eta1B||, \t   ||eta2B||, \t  commute1bd, \t  commute1bod, \t  commute2bd,\t  commute2bod")
         
     while solver.successful() and solver.t < sfinal:
 
@@ -293,11 +294,36 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
         if iters %10 == 0 and verbose: 
             norm_eta1B = np.linalg.norm(np.ravel(wg.eta1B))
             norm_eta2B = np.linalg.norm(np.ravel(wg.eta2B))
-            print("{:>6d}, \t {:0.4f}, \t {:0.8f}, \t {:0.8f}, \t {:0.8f}".format(iters, 
-                                                                                  solver.t, 
-                                                                                  Es,
-                                                                                  norm_eta1B,
-                                                                                  norm_eta2B))
+            num_sp = n_holes+n_particles
+            axes = (num_sp**2,num_sp**2)
+            # SS2B_r = np.reshape(SS2B, (num_sp**2,num_sp**2))
+            # H2B_r = np.reshape(H2B, (num_sp**2, num_sp**2))
+            # commute1b = np.linalg.norm(SS1B.dot(H1B) - H1B.dot(SS1B))
+            # commute2b = np.linalg.norm(SS2B_r.dot(H2B_r) - H2B_r.dot(SS2B_r))
+            hfd,hfod,hGd,hGod = wg.decouple_OD()
+            sfd,sfod,sGd,sGod = wg_spin.decouple_OD()
+            
+            hGd,hGod,sGd,sGod = np.reshape(hGd,axes),np.reshape(hGod,axes),np.reshape(sGd,axes),np.reshape(sGod,axes)
+            commute1bd = np.linalg.norm(hfd.dot(sfd) - sfd.dot(hfd))
+            commute1bod = np.linalg.norm(hfod.dot(sfod) - sfod.dot(hfod))
+            commute2bd = np.linalg.norm(hGd.dot(sGd) - sGd.dot(hGd))
+            commute2bod = np.linalg.norm(hGod.dot(sGod) - sGod.dot(hGod))
+            print("{:>6d}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}".format(iters, 
+                                                                                                                                                                      solver.t, 
+                                                                                                                                                                      Es,
+                                                                                                                                                                      SS0B,
+                                                                                                                                                                      contract_1b,
+                                                                                                                                                                      contract_2b,
+                                                                                                                                                                      norm_eta1B,
+                                                                                                                                                                      norm_eta2B,
+                                                                                                                                                                      # 0.0,
+                                                                                                                                                                      # 0.0,
+                                                                                                                                                                      # 0.0,
+                                                                                                                                                                      # 0.0))
+                                                                                                                                                                      commute1bd,
+                                                                                                                                                                      commute1bod,
+                                                                                                                                                                      commute2bd,
+                                                                                                                                                                      commute2bod))
         
         if flow_data_log and iters %10 == 0:
             H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
@@ -406,9 +432,15 @@ if __name__ == '__main__':
     # plt.legend(['E(s)/E(s=0)', 'SS(s)/SS(s=0)'])
     # plt.savefig('flow_conservation.png')
 
+    hme = pyci.matrix(4,4,0.0,1.0,0.5,0.0)
+    w,v = np.linalg.eigh(hme)
+    v0 = v[:,0]
 
-    ref = 1.0*np.array([1,1,1,1,0,0,0,0])+0.0*np.array([1,1,0,0,1,1,0,0])
-    main(4,4, g=0.5,ref=ref,  generator='white')
+    #ref = 0.9*np.array([1,1,1,1,0,0,0,0])+0.1*np.array([1,1,0,0,1,1,0,0])
+    basis = pyci.gen_basis(4,4)[:,1::]
+    ref = basis.T.dot(v0**2)
+    print()
+    main(4,4, g=0.5, pb=0.0, generator='wegner')
     data = pickle.load(open('expect_flow.p', 'rb'))
 
     fig = plt.figure(figsize=(8,4))
@@ -417,13 +449,13 @@ if __name__ == '__main__':
     plt.legend(['E(s)/E(s=0)', 'SS(s)/SS(s=0)'])
     plt.savefig('flow_conservation.png')
 
-    # hme = pyci.matrix(4,4,0.0,1.0,2.0,0.0)
-    # w,v = np.linalg.eigh(hme)
-    # fig = plt.figure(figsize=(8,4))
-    # sns.lineplot(x='s', y=data['E_gs'], data=data)
-    # sns.lineplot(x='s', y=w[0], data=data)
-    # plt.legend(['E_gs evolution', 'FCI gs'])
-    # plt.savefig('E_gs_error_g2.png')
+    hme = pyci.matrix(4,4,0.0,1.0,0.5,0.0)
+    w,v = np.linalg.eigh(hme)
+    fig = plt.figure(figsize=(8,4))
+    sns.lineplot(x='s', y=data['E_gs'], data=data)
+    sns.lineplot(x='s', y=w[0], data=data)
+    plt.legend(['E_gs evolution', 'FCI gs'])
+    plt.savefig('E_gs_error_g2.png')
 
     # refs = [[1,1,1,1,0,0,0,0],[1,1,0,0,1,1,0,0],[1,1,0,0,0,0,1,1],
     #         [0,0,1,1,1,1,0,0],[0,0,1,1,0,0,1,1]]
