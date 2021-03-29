@@ -172,7 +172,7 @@ class TSpinSq(object):
         # asym1 = sisj_matrix[int(ps==qs),int(ss==rs)]
         # asym2 = sisj_matrix[int(qs==ps),int(rs==ss)]
         
-        me = (int(pp==rp)*int(qp==sp)*(sym1) - int(pp==sp)*int(qp==rp)*(asym1))
+        me = 2*(int(pp==rp)*int(qp==sp)*(sym1) - int(pp==sp)*int(qp==rp)*(asym1))
 
 
         return me

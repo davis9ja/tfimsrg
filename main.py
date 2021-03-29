@@ -36,7 +36,7 @@ from oop_imsrg.tests2B import *
 sys.path.append('/mnt/home/daviso53/Research/')
 from pyci.density_matrix.density_matrix import density_1b, density_2b
 import pyci.imsrg_ci.pyci_p3h as pyci
-
+import reference_state_ensemble.reference_ensemble as re
 
 def get_vacuum_coeffs(E, f, G, basis, holes):
 
@@ -300,14 +300,14 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
             # H2B_r = np.reshape(H2B, (num_sp**2, num_sp**2))
             # commute1b = np.linalg.norm(SS1B.dot(H1B) - H1B.dot(SS1B))
             # commute2b = np.linalg.norm(SS2B_r.dot(H2B_r) - H2B_r.dot(SS2B_r))
-            hfd,hfod,hGd,hGod = wg.decouple_OD()
-            sfd,sfod,sGd,sGod = wg_spin.decouple_OD()
+            # hfd,hfod,hGd,hGod = wg.decouple_OD()
+            # sfd,sfod,sGd,sGod = wg_spin.decouple_OD()
             
-            hGd,hGod,sGd,sGod = np.reshape(hGd,axes),np.reshape(hGod,axes),np.reshape(sGd,axes),np.reshape(sGod,axes)
-            commute1bd = np.linalg.norm(hfd.dot(sfd) - sfd.dot(hfd))
-            commute1bod = np.linalg.norm(hfod.dot(sfod) - sfod.dot(hfod))
-            commute2bd = np.linalg.norm(hGd.dot(sGd) - sGd.dot(hGd))
-            commute2bod = np.linalg.norm(hGod.dot(sGod) - sGod.dot(hGod))
+            # hGd,hGod,sGd,sGod = np.reshape(hGd,axes),np.reshape(hGod,axes),np.reshape(sGd,axes),np.reshape(sGod,axes)
+            # commute1bd = np.linalg.norm(hfd.dot(sfd) - sfd.dot(hfd))
+            # commute1bod = np.linalg.norm(hfod.dot(sfod) - sfod.dot(hfod))
+            # commute2bd = np.linalg.norm(hGd.dot(sGd) - sGd.dot(hGd))
+            # commute2bod = np.linalg.norm(hGod.dot(sGod) - sGod.dot(hGod))
             print("{:>6d}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}".format(iters, 
                                                                                                                                                                       solver.t, 
                                                                                                                                                                       Es,
@@ -316,14 +316,14 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
                                                                                                                                                                       contract_2b,
                                                                                                                                                                       norm_eta1B,
                                                                                                                                                                       norm_eta2B,
-                                                                                                                                                                      # 0.0,
-                                                                                                                                                                      # 0.0,
-                                                                                                                                                                      # 0.0,
-                                                                                                                                                                      # 0.0))
-                                                                                                                                                                      commute1bd,
-                                                                                                                                                                      commute1bod,
-                                                                                                                                                                      commute2bd,
-                                                                                                                                                                      commute2bod))
+                                                                                                                                                                      0.0,
+                                                                                                                                                                      0.0,
+                                                                                                                                                                      0.0,
+                                                                                                                                                                      0.0))
+                                                                                                                                                                      # commute1bd,
+                                                                                                                                                                      # commute1bod,
+                                                                                                                                                                      # commute2bd,
+                                                                                                                                                                      # commute2bod))
         
         if flow_data_log and iters %10 == 0:
             H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
@@ -432,20 +432,27 @@ if __name__ == '__main__':
     # plt.legend(['E(s)/E(s=0)', 'SS(s)/SS(s=0)'])
     # plt.savefig('flow_conservation.png')
 
-    hme = pyci.matrix(4,4,0.0,1.0,0.5,0.0)
+    g = 2.0
+    pb = 0.01
+
+    ensemble = re.ReferenceEnsemble(8, g, pb, 'white', '', 'vac_coeffs')
+    opt_x = ensemble.optimize_reference(4)
+    ref1 = ensemble.refs.T.dot(opt_x)
+
+
+    hme = pyci.matrix(4,4,0.0,1.0,g,pb)
     w,v = np.linalg.eigh(hme)
     v0 = v[:,0]
 
-    #ref = 0.9*np.array([1,1,1,1,0,0,0,0])+0.1*np.array([1,1,0,0,1,1,0,0])
+    ref = 0.8*np.array([1,1,1,1,0,0,0,0])+0.2*np.array([1,1,0,0,1,1,0,0])
     basis = pyci.gen_basis(4,4)[:,1::]
-    ref = basis.T.dot(v0**2)
-    print()
-    main(4,4, g=0.5, pb=0.0, generator='wegner')
+    #ref = basis.T.dot(v0**2)
+    main(4,4, g=g, ref=ref1, pb=pb, generator='white')
     data = pickle.load(open('expect_flow.p', 'rb'))
 
     fig = plt.figure(figsize=(8,4))
-    sns.lineplot(x='s', y=data['E_gs']/data['E_gs'][0], data=data)
-    sns.lineplot(x='s', y=data['s_expect']/data['s_expect'][0], data=data)
+    sns.lineplot(x='s', y=data['E_gs']-data['E_gs'][0], data=data)
+    sns.lineplot(x='s', y=data['s_expect']-data['s_expect'][0], data=data)
     plt.legend(['E(s)/E(s=0)', 'SS(s)/SS(s=0)'])
     plt.savefig('flow_conservation.png')
 
