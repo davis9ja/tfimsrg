@@ -76,7 +76,7 @@ def derivative(t, y, inputs):
 
     dy -- next step in flow"""
 
-    hamiltonian, occ_tensors, generator, flow, tspinsq, generator_spin, flow_spin = inputs
+    hamiltonian, occ_tensors, generator, flow, tspinsq, flow_spin = inputs
     #assert isinstance(hamiltonian, Hamiltonian), "Arg 2 must be Hamiltonian object"
     assert isinstance(occ_tensors, OccupationTensors), "Arg 3 must be OccupationTensors object"
     assert isinstance(generator, Generator), "Arg 4 must be Generator object"
@@ -92,8 +92,8 @@ def derivative(t, y, inputs):
 
     # Spin-squared flow
     E_spin, f_spin, G_spin = ravel(y[half::], tspinsq.n_sp_states)
-    generator_spin.f = f_spin
-    generator_spin.G = G_spin
+    # generator_spin.f = f_spin
+    # generator_spin.G = G_spin
     dE_spin, df_spin, dG_spin = flow_spin.flow(generator)
 
     dy = np.concatenate([unravel(dE, df, dG), unravel(dE_spin, df_spin, dG_spin)], axis=0)
@@ -203,7 +203,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
     wg = generator_dict[generator] #WegnerGenerator(ha, ot)
     fl = Flow_IMSRG2(ha, ot) 
 
-    wg_spin = WegnerGenerator(ss, ot)
+    #wg_spin = WegnerGenerator(ss, ot)
     fl_spin = Flow_IMSRG2(ss, ot)
 
     initf = time.time() # finish instantiation timer
@@ -237,11 +237,11 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
 
     solver = ode(derivative,jac=None)
     solver.set_integrator('vode', method='bdf', order=5, nsteps=1000)
-    solver.set_f_params([ha, ot, wg, fl, ss, wg_spin, fl_spin])
+    solver.set_f_params([ha, ot, wg, fl, ss, fl_spin])
     solver.set_initial_value(y0, 0.)
 
     sfinal = 50
-#    ds = 1
+    ds = 0.01
     s_vals = []
     E_vals = []
     
@@ -282,7 +282,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
 
         #print('solver success,', solver.successful())
 
-        ys = solver.integrate(sfinal, step=True)
+        ys = solver.integrate(solver.t+ds, step=True)
 
         half = int(len(ys)/2)
         Es, fs, Gs = ravel(ys[0:half], ha.n_sp_states)
