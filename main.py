@@ -88,13 +88,13 @@ def derivative(t, y, inputs):
     E, f, G = ravel(y[0:half], hamiltonian.n_sp_states)
     generator.f = f
     generator.G = G
-    dE, df, dG = flow.flow(generator)
+    dE, df, dG = flow.flow(f, G, generator)
 
     # Spin-squared flow
     E_spin, f_spin, G_spin = ravel(y[half::], tspinsq.n_sp_states)
     # generator_spin.f = f_spin
     # generator_spin.G = G_spin
-    dE_spin, df_spin, dG_spin = flow_spin.flow(generator)
+    dE_spin, df_spin, dG_spin = flow_spin.flow(f_spin, G_spin, generator)
 
     dy = np.concatenate([unravel(dE, df, dG), unravel(dE_spin, df_spin, dG_spin)], axis=0)
 
@@ -277,7 +277,8 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
             else:
                 column_string += '{: >'+str(11)+'}'
         print(column_string.format(*print_columns))
-        
+
+    eig_idx = 0
     while solver.successful() and solver.t < sfinal:
 
         #print('solver success,', solver.successful())
@@ -296,7 +297,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
         SS0B, SS1B, SS2B = get_vacuum_coeffs(E_spins, f_spins, G_spins, ss.sp_basis, ss.holes)
         hme = pyci.matrix(n_holes, n_particles, H0B, H1B, H2B, H2B, imsrg=True)
         w,v = np.linalg.eigh(hme)
-        v0 = v[:,0]
+        v0 = v[:,eig_idx]
 
         rho1b = density_1b(n_holes,n_particles, weights=v0)
         rho2b = density_2b(n_holes,n_particles, weights=v0)
@@ -310,7 +311,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
         s_expect = SS0B + contract_1b + 0.25*contract_2b
 
 
-        E_gs_lst.append(w[0])
+        E_gs_lst.append(w[eig_idx])
         s_expect_lst.append(s_expect)
         
 
@@ -335,7 +336,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
             data_columns = [iters, 
                             solver.t, 
                             Es,
-                            w[0],
+                            w[eig_idx],
                             E_spins,
                             s_expect,
                             SS0B,
@@ -478,7 +479,7 @@ if __name__ == '__main__':
     # plt.savefig('flow_conservation.png')
 
     g = 0.5
-    pb = 0.1
+    pb = 0.0
 
 
     hme = pyci.matrix(4,4,0.0,1.0,g,pb)
@@ -491,10 +492,10 @@ if __name__ == '__main__':
     #ref = 0.2*basis[0,:]+ 0.8*basis[6, :]
     #ref = basis.T.dot(v0**2)
 
-    #ref = 0.8*basis[0,:] + 0.2*basis[1,:]
+    ref = 0.8*basis[0,:] + 0.2*basis[1,:]
 
     #ref = basis.T.dot(v0*v0)
-    ref = basis[0,:]
+    #ref = basis[0,:]
 
     #ref = pickle.load(open('reference_g2.00_pb0.01_4-4.p', 'rb'))
     
