@@ -55,6 +55,8 @@ def get_vacuum_coeffs(E, f, G, basis, holes):
     return (H0B, H1B, H2B)
 
 
+
+
 # @profile
 def derivative(t, y, inputs):
     """Defines the derivative to pass into ode object.
@@ -142,7 +144,7 @@ def ravel(y, bas_len):
     return(ravel_E, ravel_f, ravel_G)
 
 # @profile
-def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_data_log=0, generator='wegner', output_root='.'):
+def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_data_log=0, generator='wegner', output_root='.'):
     """Main method uses scipy.integrate.ode to solve the IMSRG(2) flow
     equations.
 
@@ -182,7 +184,7 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     if not os.path.exists(output_root):
         os.mkdir(output_root)
 
-    if ref == []:
+    if ref is None:
         ha = PairingHamiltonian2B(n_holes, n_particles, d=d, g=g, pb=pb)
         ref = ha.reference # this is just for printing
         ss = TSpinSq(n_holes, n_particles)
@@ -253,7 +255,28 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
     dens_weights,v = np.linalg.eigh(fci_hme)
 
     if verbose:
-        print("iter, \t            s, \t           E, \t        SS0B, \t        SS1B, \t        SS2B, \t   ||eta1B||, \t   ||eta2B||, \t  commute1bd, \t  commute1bod, \t  commute2bd,\t  commute2bod")
+        print_columns = ['iter', 
+                         's', 
+                         'E', 
+                         'CI_gs', 
+                         '0bN_SS',
+                         '<SS>', 
+                         '0b_SS', 
+                         '1bc_SS', 
+                         '2bc_SS', 
+                         '||eta1b||',
+                         '||eta2b||', 
+                         'commute1bd',
+                         'commute1bod',
+                         'commute2bd',
+                         'commute2bod']
+        column_string = '{: >6}, '
+        for i, string in enumerate(print_columns[1::]):
+            if i != len(print_columns)-2:
+                column_string += '{: >'+str(11)+'}, '
+            else:
+                column_string += '{: >'+str(11)+'}'
+        print(column_string.format(*print_columns))
         
     while solver.successful() and solver.t < sfinal:
 
@@ -308,22 +331,44 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
             # commute1bod = np.linalg.norm(hfod.dot(sfod) - sfod.dot(hfod))
             # commute2bd = np.linalg.norm(hGd.dot(sGd) - sGd.dot(hGd))
             # commute2bod = np.linalg.norm(hGod.dot(sGod) - sGod.dot(hGod))
-            print("{:>6d}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}, \t {: .8f}".format(iters, 
-                                                                                                                                                                      solver.t, 
-                                                                                                                                                                      Es,
-                                                                                                                                                                      SS0B,
-                                                                                                                                                                      contract_1b,
-                                                                                                                                                                      contract_2b,
-                                                                                                                                                                      norm_eta1B,
-                                                                                                                                                                      norm_eta2B,
-                                                                                                                                                                      0.0,
-                                                                                                                                                                      0.0,
-                                                                                                                                                                      0.0,
-                                                                                                                                                                      0.0))
-                                                                                                                                                                      # commute1bd,
-                                                                                                                                                                      # commute1bod,
-                                                                                                                                                                      # commute2bd,
-                                                                                                                                                                      # commute2bod))
+
+            data_columns = [iters, 
+                            solver.t, 
+                            Es,
+                            w[0],
+                            E_spins,
+                            s_expect,
+                            SS0B,
+                            contract_1b,
+                            contract_2b,
+                            norm_eta1B,
+                            norm_eta2B,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0]
+
+#            print(column_string.format(*data_columns))
+
+            print("{:>6d}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}".format(*data_columns)) 
+            #                                                                                                                                            solver.t, 
+            #                                                                                                                                            Es,
+            #                                                                                                                                            w[0],
+            #                                                                                                                                            E_spins,
+            #                                                                                                                                            s_expect,
+            #                                                                                                                                            SS0B,
+            #                                                                                                                                            contract_1b,
+            #                                                                                                                                            contract_2b,
+            #                                                                                                                                            norm_eta1B,
+            #                                                                                                                                            norm_eta2B,
+            #                                                                                                                                            0.0,
+            #                                                                                                                                            0.0,
+            #                                                                                                                                            0.0,
+            #                                                                                                                                            0.0))
+                                                                                                                                     # commute1bd,
+                                                                                                                                     # commute1bod,
+                                                                                                                                     # commute2bd,
+                                                                                                                                     # commute2bod))
         
         if flow_data_log and iters %10 == 0:
             H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
@@ -432,22 +477,29 @@ if __name__ == '__main__':
     # plt.legend(['E(s)/E(s=0)', 'SS(s)/SS(s=0)'])
     # plt.savefig('flow_conservation.png')
 
-    g = 2.0
-    pb = 0.01
-
-    ensemble = re.ReferenceEnsemble(8, g, pb, 'white', '', 'vac_coeffs')
-    opt_x = ensemble.optimize_reference(4)
-    ref1 = ensemble.refs.T.dot(opt_x)
+    g = 0.5
+    pb = 0.1
 
 
     hme = pyci.matrix(4,4,0.0,1.0,g,pb)
     w,v = np.linalg.eigh(hme)
     v0 = v[:,0]
 
-    ref = 0.8*np.array([1,1,1,1,0,0,0,0])+0.2*np.array([1,1,0,0,1,1,0,0])
+    #ref = 0.7*np.array([1,1,1,1,0,0,0,0])+0.3*np.array([1,1,0,0,1,1,0,0])
+
     basis = pyci.gen_basis(4,4)[:,1::]
+    #ref = 0.2*basis[0,:]+ 0.8*basis[6, :]
     #ref = basis.T.dot(v0**2)
-    main(4,4, g=g, ref=ref1, pb=pb, generator='white')
+
+    #ref = 0.8*basis[0,:] + 0.2*basis[1,:]
+
+    #ref = basis.T.dot(v0*v0)
+    ref = basis[0,:]
+
+    #ref = pickle.load(open('reference_g2.00_pb0.01_4-4.p', 'rb'))
+    
+    main(4,4, g=g, ref=ref, pb=pb, generator='white')
+    print('FCI ENERGY = {: .8f}'.format(w[0]))
     data = pickle.load(open('expect_flow.p', 'rb'))
 
     fig = plt.figure(figsize=(8,4))

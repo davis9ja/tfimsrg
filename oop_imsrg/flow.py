@@ -233,7 +233,7 @@ class Flow_IMSRG3(Flow_IMSRG2):
         self._particles = h.particles
 
         self._occA = occ_t.occA
-        self._occA2 = occ_t.occA2
+        self._occA4 = occ_t.occA4
         self._occB = occ_t.occB
         self._occC = occ_t.occC
         self._occD = occ_t.occD
