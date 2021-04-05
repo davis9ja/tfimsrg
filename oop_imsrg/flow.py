@@ -58,7 +58,7 @@ class Flow_IMSRG2(Flow):
     # def G(self, G):
     #     self._G = G
 
-    def flow(self, gen):
+    def flow(self, f, G, gen):
         """Iterates the IMSRG2 flow equations once.
 
         Arugments:
@@ -75,8 +75,8 @@ class Flow_IMSRG2(Flow):
 
         # f = self.f
         # G = self.G
-        f = gen.f.astype(np.float32)
-        G = gen.G.astype(np.float32)
+        # f = gen.f.astype(np.float32)
+        # G = gen.G.astype(np.float32)
 
         eta1B, eta2B = gen.calc_eta()
         # eta1B = partition[0]#.astype(np.float32)
