@@ -549,7 +549,7 @@ if __name__ == '__main__':
 
     #ref = pickle.load(open('reference_g2.00_pb0.01_4-4.p', 'rb'))
     
-    main(2,2, g=g, ref=ref, pb=pb, generator='white')
+    main(4,4, g=g, ref=ref, pb=pb, generator='white')
     print('FCI ENERGY = {: .8f}'.format(w[0]))
     data = pickle.load(open('expect_flow.p', 'rb'))
 
