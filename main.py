@@ -51,11 +51,21 @@ def get_vacuum_coeffs(E, f, G, basis, holes):
 
     H0B = E - np.trace(H1B[np.ix_(holes,holes)]) - 0.5*result_ij.tensor
 
-    #print(result_ij.tensor, result_ji.tensor)
     return (H0B, H1B, H2B)
 
+def decouple_od(vo1b, vo2b, particles, holes):
 
+    vo1bod = np.zeros_like(vo1b)
+    vo1bod[np.ix_(particles, holes)] += vo1b[np.ix_(particles, holes)]
+    vo1bod[np.ix_(holes, particles)] += vo1b[np.ix_(holes, particles)]
+    vo1bd = vo1b - vo1bod
 
+    vo2bod = np.zeros_like(vo2b)
+    vo2bod[np.ix_(particles, particles, holes, holes)] += vo2b[np.ix_(particles, particles, holes, holes)]
+    vo2bod[np.ix_(holes, holes, particles, particles)] += vo2b[np.ix_(holes, holes, particles, particles)]
+    vo2bd = vo2b - vo2bod
+
+    return (vo1bd, vo1bod, vo2bd, vo2bod)
 
 # @profile
 def derivative(t, y, inputs):
@@ -269,7 +279,9 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
                          'commute1bd',
                          'commute1bod',
                          'commute2bd',
-                         'commute2bod']
+                         'commute2bod',
+                         'commute',
+                         'commutePairedBlock']
         column_string = '{: >6}, '
         for i, string in enumerate(print_columns[1::]):
             if i != len(print_columns)-2:
@@ -316,6 +328,9 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
         
 
         if iters %10 == 0 and verbose: 
+            zero, eta1Bv, eta2Bv = get_vacuum_coeffs(0.0,wg.eta1B,wg.eta2B,ha.sp_basis,ha.holes)
+            ggme = pyci.matrix(n_holes, n_particles, zero, eta1Bv, eta2Bv, eta2Bv, imsrg=True)
+            ssme = pyci.matrix(n_holes, n_particles, SS0B, SS1B, SS2B, SS2B, imsrg=True)
             norm_eta1B = np.linalg.norm(np.ravel(wg.eta1B))
             norm_eta2B = np.linalg.norm(np.ravel(wg.eta2B))
             num_sp = n_holes+n_particles
@@ -324,15 +339,21 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
             # H2B_r = np.reshape(H2B, (num_sp**2, num_sp**2))
             # commute1b = np.linalg.norm(SS1B.dot(H1B) - H1B.dot(SS1B))
             # commute2b = np.linalg.norm(SS2B_r.dot(H2B_r) - H2B_r.dot(SS2B_r))
+
             # hfd,hfod,hGd,hGod = wg.decouple_OD()
             # sfd,sfod,sGd,sGod = wg_spin.decouple_OD()
-            
-            # hGd,hGod,sGd,sGod = np.reshape(hGd,axes),np.reshape(hGod,axes),np.reshape(sGd,axes),np.reshape(sGod,axes)
-            # commute1bd = np.linalg.norm(hfd.dot(sfd) - sfd.dot(hfd))
-            # commute1bod = np.linalg.norm(hfod.dot(sfod) - sfod.dot(hfod))
-            # commute2bd = np.linalg.norm(hGd.dot(sGd) - sGd.dot(hGd))
-            # commute2bod = np.linalg.norm(hGod.dot(sGod) - sGod.dot(hGod))
 
+            hfd,hfod,hGd,hGod = decouple_od(fs, Gs, ha.particles, ha.holes)
+            sfd,sfod,sGd,sGod = decouple_od(f_spins, G_spins, ha.particles, ha.holes)
+            
+            
+            hGd,hGod,sGd,sGod = np.reshape(hGd,axes),np.reshape(hGod,axes),np.reshape(sGd,axes),np.reshape(sGod,axes)
+            commute1bd = np.linalg.norm(hfd.dot(sfd) - sfd.dot(hfd))
+            commute1bod = np.linalg.norm(hfod.dot(sfod) - sfod.dot(hfod))
+            commute2bd = np.linalg.norm(hGd.dot(sGd) - sGd.dot(hGd))
+            commute2bod = np.linalg.norm(hGod.dot(sGod) - sGod.dot(hGod))
+            commute = np.linalg.norm(hme.dot(ssme) - ssme.dot(hme))
+            commutePairBlock = np.linalg.norm(hme[0:2,0:2].dot(ssme[0:2,0:2]) - ssme[0:2,0:2].dot(hme[0:2,0:2]))
             data_columns = [iters, 
                             solver.t, 
                             Es,
@@ -344,14 +365,39 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
                             contract_2b,
                             norm_eta1B,
                             norm_eta2B,
-                            0.0,
-                            0.0,
-                            0.0,
-                            0.0]
+                            commute1bd,
+                            commute1bod,
+                            commute2bd,
+                            commute2bod,
+                            commute,
+                            commutePairBlock]
+            column_string = '{:>6d}, '
+            for i, string in enumerate(print_columns[1::]):
+                if i != len(print_columns)-2:
+                    column_string += '{: .8f}, '
+                else:
+                    column_string += '{: .8f}'
 
 #            print(column_string.format(*data_columns))
 
-            print("{:>6d}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}".format(*data_columns)) 
+            print(column_string.format(*data_columns))
+            #print(v0*v0)
+            ws,vs = np.linalg.eigh(ssme)
+
+            with np.printoptions(linewidth=999,precision=4):
+                print(ssme)
+                print(ggme)
+                # for i in range(wg.eta1B.shape[0]):
+                #     print("{d}".format(d=wg.eta1B[i,:]))
+                # for i in range(wg.eta1B.shape[0]):
+                #     print("{d}".format(d=f_spins[i,:]))
+                # for i in range(ssme[0:6,0:6].shape[0]):
+                #     print("{d}".format(d=ssme[0:6,0:6][i,:]))
+
+                #print(np.reshape(wg.eta2B,axes))
+                #print(ssme[0:6,0:6])A
+
+                #"{:>6d}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}, {: .8f}".format(*data_columns)) 
             #                                                                                                                                            solver.t, 
             #                                                                                                                                            Es,
             #                                                                                                                                            w[0],
@@ -478,28 +524,32 @@ if __name__ == '__main__':
     # plt.legend(['E(s)/E(s=0)', 'SS(s)/SS(s=0)'])
     # plt.savefig('flow_conservation.png')
 
+    #0,3,14,15,28,35
+
     g = 0.5
     pb = 0.0
 
-
     hme = pyci.matrix(4,4,0.0,1.0,g,pb)
     w,v = np.linalg.eigh(hme)
-    v0 = v[:,0]
+    v0 = v[:,5]
 
     #ref = 0.7*np.array([1,1,1,1,0,0,0,0])+0.3*np.array([1,1,0,0,1,1,0,0])
 
-    basis = pyci.gen_basis(4,4)[:,1::]
+    basis = pyci.gen_basis(2,2)[:,1::]
     #ref = 0.2*basis[0,:]+ 0.8*basis[6, :]
     #ref = basis.T.dot(v0**2)
 
-    ref = 0.8*basis[0,:] + 0.2*basis[1,:]
+    #ref = 0.8*basis[0,:] + 0.2*basis[1,:]
 
     #ref = basis.T.dot(v0*v0)
-    #ref = basis[0,:]
+    ref = basis[0,:]
+
+    # ref_input = sys.argv[1]
+    # ref = [int(x) for x in list(ref_input)]
 
     #ref = pickle.load(open('reference_g2.00_pb0.01_4-4.p', 'rb'))
     
-    main(4,4, g=g, ref=ref, pb=pb, generator='white')
+    main(2,2, g=g, ref=ref, pb=pb, generator='white')
     print('FCI ENERGY = {: .8f}'.format(w[0]))
     data = pickle.load(open('expect_flow.p', 'rb'))
 
