@@ -267,7 +267,7 @@ def main(n_holes, n_particles, ref=[], d=1.0, g=0.5, pb=0.0, verbose=1, flow_dat
 #            coeffs = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
 #            pickle.dump( coeffs, open( "mixed_state_test/pickled_coeffs/vac_coeffs_s{}.p".format(iters), "wb" ) )
 
-        if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) < 10**-8 and E_vals[-1] != E_vals[0]:
+        if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) < 10**-8:
 
             if verbose: print("---- Energy converged at iter {:>06d} with energy {:1.8f}\n".format(iters,E_vals[-1]))
             convergence = 1
