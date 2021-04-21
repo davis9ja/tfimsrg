@@ -529,18 +529,18 @@ class OccupationTensors(object):
         # occF3 = occF1 + occF2
         # occF = np.einsum('ijklm,nopqr->ijklmnopqr',occF3,occF3)
         
-        occF = np.zeros((n,n,n,n,n,n,n,n,n,n),dtype=np.float32)
+        occF = np.zeros((n,n,n,n,n),dtype=np.float32)
 
         for a in bas1B:
             for b in bas1B:
                 for c in bas1B:
                     for d in bas1B:
                         for e in bas1B:
-                            occF[a,b,c,d,e,a,b,c,d,e] = ref[a]*ref[b]*\
+                            occF[a,b,c,d,e] = ref[a]*ref[b]*\
                                            (1-ref[c])*(1-ref[d])*(1-ref[e]) + \
                                            (1-ref[a])*(1-ref[b])*\
                                            ref[c]*ref[d]*ref[e]
-
+        occF = tn.outer_product(tn.Node(occF), tn.Node(np.ones(n)))
         return occF
 
     def __get_occG(self):
@@ -553,13 +553,15 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
-        occG = np.zeros((n,n,n,n,n,n),dtype=np.float32)
+        occG = np.zeros((n,n,n),dtype=np.float32)
 
         for a in bas1B:
             for b in bas1B:
                 for c in bas1B:
-                    occG[a,b,c,a,b,c] = ref[a]*(1-ref[b])*(1-ref[c]) + \
-                                        (1-ref[a])*ref[b]*ref[c]
+                    occG[a,b,c] = ref[a]*(1-ref[b])*(1-ref[c]) + \
+                                  (1-ref[a])*ref[b]*ref[c]
+
+        occG = tn.outer_product(tn.Node(occG), tn.Node(np.ones(n)))
 
         return occG
 
@@ -573,14 +575,16 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
-        occH = np.zeros((n,n,n,n,n,n,n,n),dtype=np.float32)
+        occH = np.zeros((n,n,n,n),dtype=np.float32)
 
         for a in bas1B:
             for b in bas1B:
                 for c in bas1B:
                     for d in bas1B:
-                        occH[a,b,c,d,a,b,c,d] = ref[a]*(1-ref[b])*(1-ref[c])*\
-                                    (1-ref[d]) - (1-ref[a])*ref[b]*ref[c]*ref[d]
+                        occH[a,b,c,d] = ref[a]*(1-ref[b])*(1-ref[c])*\
+                                        (1-ref[d]) - (1-ref[a])*ref[b]*ref[c]*ref[d]
+
+        occH = tn.outer_product(tn.Node(occH), tn.Node(np.ones((n,n))))
 
         return occH
 
@@ -595,14 +599,15 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
-        occI = np.zeros((n,n,n,n,n,n,n,n),dtype=np.float32)
+        occI = np.zeros((n,n,n,n),dtype=np.float32)
 
         for a in bas1B:
             for b in bas1B:
                 for c in bas1B:
                     for d in bas1B:
-                        occI[a,b,c,a,b,c] = (1-ref[a])*(1-ref[b])*ref[c]*ref[d]-\
-                                           ref[a]*ref[b]*(1-ref[c])*(1-ref[d])
+                        occI[a,b,c,d] = (1-ref[a])*(1-ref[b])*ref[c]*ref[d]-\
+                                        ref[a]*ref[b]*(1-ref[c])*(1-ref[d])
+        occI = tn.outer_product(tn.Node(occI), tn.Node(np.ones((n,n))))
 
         return occI
 
@@ -616,13 +621,14 @@ class OccupationTensors(object):
         ref = self._reference
         n = len(bas1B)
 
-        occJ = np.zeros((n,n,n,n,n,n),dtype=np.float32)
+        occJ = np.zeros((n,n,n),dtype=np.float32)
 
         for a in bas1B:
             for b in bas1B:
                 for c in bas1B:
-                    occJ[a,b,c,a,b,c] = ref[a]*ref[b]*ref[c] + \
-                                        (1-ref[a])*(1-ref[b])*(1-ref[c])
+                    occJ[a,b,c] = ref[a]*ref[b]*ref[c] + \
+                                  (1-ref[a])*(1-ref[b])*(1-ref[c])
+        occJ = tn.outer_product(tn.Node(occJ), tn.Node(np.ones((n,n,n))))
 
         return occJ
 

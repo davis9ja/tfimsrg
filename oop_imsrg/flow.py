@@ -272,6 +272,8 @@ class Flow_IMSRG3(Flow_IMSRG2):
         W = gen.W
 
         gen2b = WegnerGenerator(self._h, self._occ_t)
+        gen2b.f = f
+        gen2b.G = G
         
         partition = super().flow(f,G,gen2b)
         dE = partition[0]
@@ -299,26 +301,34 @@ class Flow_IMSRG3(Flow_IMSRG2):
         occJ = self._occJ
 
         # Calculate 0B flow equation
-        sum3_0b_1 = np.matmul(eta3B, occE)
+        sum3_0b_1 = np.multiply(eta3B, occE)
         sum3_0b = tn.ncon([sum3_0b_1, W], [(1,2,3,4,5,6), (4,5,6,1,2,3)])#.numpy()
         dE += (1/18)*sum3_0b
 
         # Calculate 1B flow equation
         # fourth term
-        sum4_1b_1 = np.matmul(np.transpose(occD.tensor,[2,3,0,1]), G)
-        sum4_1b_2 = np.matmul(np.transpose(occD.tensor,[2,3,0,1]), eta2B)
+        sum4_1b_1 = np.multiply(np.transpose(occD.tensor,[2,3,0,1]), G)
+        sum4_1b_2 = np.multiply(np.transpose(occD.tensor,[2,3,0,1]), eta2B)
         sum4_1b_3 = tn.ncon([eta3B,  sum4_1b_1], [(1,2,-1,3,4,-2),(3,4,1,2)])#.numpy()
-        sum4_1b_4 = tn.ncon([W, sum4_1b_2], [(1,2,-1,3,4,-2),(3,4,1,2)])#.numpy()
+        sum4_1b_4 = tn.ncon([W,      sum4_1b_2], [(1,2,-1,3,4,-2),(3,4,1,2)])#.numpy()
         sum4_1b = sum4_1b_3 - sum4_1b_4
 
         # fifth term
-        sum5_1b_1 = tn.ncon([eta3B, occF, W], [(6,7,-1,8,9,10),
-                                               (6,7,8,9,10,1,2,3,4,5),
-                                               (3,4,5,1,2,-2)])#.numpy()
-        sum5_1b_2 = tn.ncon([W, occF, eta3B], [(6,7,-1,8,9,10),
-                                               (6,7,8,9,10,1,2,3,4,5),
-                                               (3,4,5,1,2,-2)])#.numpy()
-        sum5_1b = sum5_1b_1 - sum5_1b_2
+        # sum5_1b_1 = tn.ncon([eta3B, occF, W], [(6,7,-1,8,9,10),
+        #                                        (6,7,8,9,10,1,2,3,4,5),
+        #                                        (3,4,5,1,2,-2)])#.numpy()
+        # sum5_1b_2 = tn.ncon([W, occF, eta3B], [(6,7,-1,8,9,10),
+        #                                        (6,7,8,9,10,1,2,3,4,5),
+        #                                        (3,4,5,1,2,-2)])#.numpy()
+        # sum5_1b = sum5_1b_1 - sum5_1b_2
+
+        
+        sum5_1b_1 = np.multiply(np.transpose(occF.tensor,[0,1,5,2,3,4]), eta3B)
+        sum5_1b_2 = np.multiply(np.transpose(occF.tensor,[0,1,5,2,3,4]), W)
+        sum5_1b_3 = tn.ncon([sum5_1b_1,     W],[(1,2,-1,3,4,5),(3,4,5,1,2,-2)])
+        sum5_1b_4 = tn.ncon([sum5_1b_2, eta3B],[(1,2,-1,3,4,5),(3,4,5,1,2,-2)])
+
+        sum5_1b = sum5_1b_3 - sum5_1b_4
         
         # sum5_1b_1 = tn.ncon([occF, eta3B.astype(np.float32)],
         #                  [(-1,-3,-4,-5,-6,0,1,2,3,4), (0,1,-2,2,3,4)])#.numpy()
@@ -334,23 +344,36 @@ class Flow_IMSRG3(Flow_IMSRG2):
 
         # Calculate 2B flow equation
         # fourth term
-        sum4_2b_1 = np.matmul(-1.0*np.transpose(occA.tensor), f)
-        sum4_2b_2 = np.matmul(-1.0*np.transpose(occA.tensor),  eta1B)
+        sum4_2b_1 = np.multiply(-1.0*np.transpose(occA.tensor), f)
+        sum4_2b_2 = np.multiply(-1.0*np.transpose(occA.tensor),  eta1B)
         sum4_2b_3 = tn.ncon([eta3B,  sum4_2b_1], [(1,-1,-2,2,-3,-4), (2,1)])#.numpy()
         sum4_2b_4 = tn.ncon([W, sum4_2b_2], [(1,-1,-2,2,-3,-4), (2,1)])#.numpy()
         sum4_2b = sum4_2b_3 - sum4_2b_4
 
         #fifth term
-        sum5_2b_1 = tn.ncon([eta3B, occG, G], [(4,-1,-2,5,6,-4),
-                                               (4,5,6,1,2,3),
-                                               (2,3,1,-3)])#.numpy()
-        sum5_2b_2 = tn.ncon([W, occG, eta2B], [(4,-1,-2,5,6,-4),
-                                               (4,5,6,1,2,3),
-                                               (2,3,1,-3)])#.numpy()
+        sum5_2b_1 = np.multiply(np.transpose(occG.tensor, [1,2,0,3]), G)
+        sum5_2b_2 = np.multiply(np.transpose(occG.tensor, [1,2,0,3]), eta2B)
 
-        sum5_2b = sum5_2b_2 - np.transpose(sum5_2b_2, [3,2,0,1]) - \
-                    np.transpose(sum5_2b_2, [0,1,3,2]) + \
-                    np.transpose(sum5_2b_2, [2,3,0,1])
+        sum5_2b_3 = tn.ncon([eta3B, sum5_2b_1],[(1,-1,-2,2,3,-4),(2,3,1,-3)])
+        sum5_2b_4 = tn.ncon([W,     sum5_2b_2],[(1,-1,-2,2,3,-4),(2,3,1,-3)])
+
+        sum5_2b_5 = sum5_2b_3 - sum5_2b_4
+
+        sum5_2b = sum5_2b_5 - np.transpose(sum5_2b_5, [3,2,0,1]) - \
+                    np.transpose(sum5_2b_5, [0,1,3,2]) + \
+                    np.transpose(sum5_2b_5, [2,3,0,1])
+
+
+        # sum5_2b_1 = tn.ncon([eta3B, occG, G], [(4,-1,-2,5,6,-4),
+        #                                        (4,5,6,1,2,3),
+        #                                        (2,3,1,-3)])#.numpy()
+        # sum5_2b_2 = tn.ncon([W, occG, eta2B], [(4,-1,-2,5,6,-4),
+        #                                        (4,5,6,1,2,3),
+        #                                        (2,3,1,-3)])#.numpy()
+
+        # sum5_2b = sum5_2b_2 - np.transpose(sum5_2b_2, [3,2,0,1]) - \
+        #             np.transpose(sum5_2b_2, [0,1,3,2]) + \
+        #             np.transpose(sum5_2b_2, [2,3,0,1])
         
         # sum5_2b_1 = tn.ncon([occG, G], [(-1,-2,-4,0,1,2), (1,2,0,-3)])#.numpy()
         # sum5_2b_2 = tn.ncon([occG,  eta2B], [(-1,-2,-4,0,1,2), (1,2,0,-3)])#.numpy()
@@ -362,13 +385,20 @@ class Flow_IMSRG3(Flow_IMSRG2):
         #             np.transpose(sum5_2b_5, [2,3,0,1])
 
         #sixth term
-        sum6_2b_1 = tn.ncon([eta3B, occH, W], [(5,-1,-2,6,7,8),
-                                               (5,6,7,8,1,2,3,4),
-                                               (2,3,4,1,-3,-4)])#.numpy()
-        sum6_2b_2 = tn.ncon([eta3B, occH, W], [(6,7,8,5,-3,-4),
-                                               (5,6,7,8,1,2,3,4),
-                                               (1,-1,-2,2,3,4)])#.numpy()
-        sum6_2b = sum6_2b_1 - sum6_2b_2
+        
+        sum5_2b_1 = np.multiply(np.transpose(occH.tensor,[0,4,5,1,2,3]), eta3B)
+        sum5_2b_2 = np.multiply(np.transpose(occH.tensor,[0,4,5,1,2,3]), W)
+        sum5_2b_3 = tn.ncon([sum5_2b_1,     W], [(1,-1,-2,2,3,4),(2,3,4,1,-3,-4)])
+        sum5_2b_4 = tn.ncon([eta3B, sum5_2b_2], [(1,-1,-2,2,3,4),(2,3,4,1,-3,-4)])
+        sum6_2b = sum5_2b_3 - sum5_2b_4
+        
+        # sum6_2b_1 = tn.ncon([eta3B, occH, W], [(5,-1,-2,6,7,8),
+        #                                        (5,6,7,8,1,2,3,4),
+        #                                        (2,3,4,1,-3,-4)])#.numpy()
+        # sum6_2b_2 = tn.ncon([eta3B, occH, W], [(6,7,8,5,-3,-4),
+        #                                        (5,6,7,8,1,2,3,4),
+        #                                        (1,-1,-2,2,3,4)])#.numpy()
+        # sum6_2b = sum6_2b_1 - sum6_2b_2
 
         # sum6_2b_1 = tn.ncon([occH, W], [(-1,-2,-3,-4,0,1,2,3),(1,2,3,0,-5,-6)])#.numpy()
         # sum6_2b_2 = tn.ncon([occH, W], [(-3,-4,-5,-6,0,1,2,3),(0,-1,-2,1,2,3)])#.numpy()
@@ -377,12 +407,18 @@ class Flow_IMSRG3(Flow_IMSRG2):
         # sum6_2b = sum6_2b_3 - sum6_2b_4
 
         #seventh term
-        sum7_2b_1 = tn.ncon([eta3B, occI, W], [(5,6,-1,7,8,-4),
-                                               (5,6,7,8,1,2,3,4),
-                                               (3,4,-2,1,2,-3)])#.numpy()
-        sum7_2b = sum7_2b_1 - np.transpose(sum7_2b_1,[1,0,2,3]) - \
-                              np.transpose(sum7_2b_1,[0,1,3,2]) + \
-                              np.transpose(sum7_2b_1,[1,0,3,2])
+        sum7_2b_1 = np.multiply(np.transpose(occI.tensor,[0,1,4,2,3,5]),eta3B)
+        sum7_2b_2 = tn.ncon([sum7_2b_1, W], [(1,2,-1,3,4,-4),(3,4,-2,1,2,-3)])
+        sum7_2b = sum7_2b_2 - np.transpose(sum7_2b_2,[1,0,2,3]) - \
+                              np.transpose(sum7_2b_2,[0,1,3,2]) + \
+                              np.transpose(sum7_2b_2,[1,0,3,2])        
+        
+        # sum7_2b_1 = tn.ncon([eta3B, occI, W], [(5,6,-1,7,8,-4),
+        #                                        (5,6,7,8,1,2,3,4),
+        #                                        (3,4,-2,1,2,-3)])#.numpy()
+        # sum7_2b = sum7_2b_1 - np.transpose(sum7_2b_1,[1,0,2,3]) - \
+        #                       np.transpose(sum7_2b_1,[0,1,3,2]) + \
+        #                       np.transpose(sum7_2b_1,[1,0,3,2])
         
         # sum7_2b_1 = tn.ncon([occI, W], [(-1,-2,-3,-4,0,1,2,3), (2,3,-5,0,1,-6)])#.numpy()
         # sum7_2b_2 = tn.ncon([eta3B, sum7_2b_1], [(0,1,-1,2,3,-4),(2,3,-2,0,1,-3)])#.numpy()
@@ -421,41 +457,87 @@ class Flow_IMSRG3(Flow_IMSRG2):
         sum1_3b = sum1_3b_4 + sum1_3b_8 + sum1_3b_13
 
         #fourth term
-        sum4_3b_1 = tn.ncon([eta2B, occB4, W], [(-1,-2,3,4),(3,4,1,2),(1,2,-3,-4,-5,-6)])#.numpy()
-        sum4_3b_2 = tn.ncon([G, occB4, eta3B], [(-1,-2,3,4),(3,4,1,2),(1,2,-3,-4,-5,-6)])#.numpy()
-        sum4_3b_3 = sum4_3b_1 - sum4_3b_2
-        sum4_3b = sum4_3b_3 - np.transpose(sum4_3b_3, [1,0,2,3,4,5]) - \
-                              np.transpose(sum4_3b_3, [2,1,0,3,4,5])
+        sum4_3b_1 = np.multiply(np.transpose(occB4.tensor,[2,3,0,1]), eta2B)
+        sum4_3b_2 = np.multiply(np.transpose(occB4.tensor,[2,3,0,1]), G)
+        sum4_3b_3 = tn.ncon([sum4_3b_1,     W], [(-1,-2,1,2),(1,2,-3,-4,-5,-6)])
+        sum4_3b_4 = tn.ncon([sum4_3b_2, eta3B], [(-1,-2,1,2),(1,2,-3,-4,-5,-6)])
+
+        sum4_3b_5 = sum4_3b_3 - sum4_3b_4
+        sum4_3b = sum4_3b_5 - np.transpose(sum4_3b_5, [1,0,2,3,4,5]) - \
+                              np.transpose(sum4_3b_5, [2,1,0,3,4,5])
+
+
+        # sum4_3b_1 = tn.ncon([eta2B, occB4, W], [(-1,-2,3,4),(3,4,1,2),(1,2,-3,-4,-5,-6)])#.numpy()
+        # sum4_3b_2 = tn.ncon([G, occB4, eta3B], [(-1,-2,3,4),(3,4,1,2),(1,2,-3,-4,-5,-6)])#.numpy()
+        # sum4_3b_3 = sum4_3b_1 - sum4_3b_2
+        # sum4_3b = sum4_3b_3 - np.transpose(sum4_3b_3, [1,0,2,3,4,5]) - \
+        #                       np.transpose(sum4_3b_3, [2,1,0,3,4,5])
 
         #fifth term
-        sum5_3b_1 = tn.ncon([eta2B, occB4, W], [(3,4,-4,-5),(3,4,1,2),(-1,-2,-3,1,2,-6)])#.numpy()
-        sum5_3b_2 = tn.ncon([G, occB4, eta3B], [(3,4,-4,-5),(3,4,1,2),(-1,-2,-3,1,2,-6)])#.numpy()
-        sum5_3b_3 = sum5_3b_1 - sum5_3b_2
-        sum5_3b = sum5_3b_3 - np.transpose(sum5_3b_3, [0,1,2,5,4,3]) - \
-                              np.transpose(sum5_3b_3, [0,1,2,3,5,4])
+        sum5_3b_1 = np.multiply(occB4.tensor, eta2B)
+        sum5_3b_2 = np.multiply(occB4.tensor, G)
+        sum5_3b_3 = tn.ncon([sum5_3b_1,     W], [(1,2,-4,-5),(-1,-2,-3,1,2,-6)])
+        sum5_3b_4 = tn.ncon([sum5_3b_2, eta3B], [(1,2,-4,-5),(-1,-2,-3,1,2,-6)])
+        sum5_3b_5 = sum5_3b_3 - sum5_3b_4
+        sum5_3b = sum5_3b_5 - np.transpose(sum5_3b_5, [0,1,2,5,4,3]) - \
+                              np.transpose(sum5_3b_5, [0,1,2,3,5,4])
+        
+
+        # sum5_3b_1 = tn.ncon([eta2B, occB4, W], [(3,4,-4,-5),(3,4,1,2),(-1,-2,-3,1,2,-6)])#.numpy()
+        # sum5_3b_2 = tn.ncon([G, occB4, eta3B], [(3,4,-4,-5),(3,4,1,2),(-1,-2,-3,1,2,-6)])#.numpy()
+        # sum5_3b_3 = sum5_3b_1 - sum5_3b_2
+        # sum5_3b = sum5_3b_3 - np.transpose(sum5_3b_3, [0,1,2,5,4,3]) - \
+        #                       np.transpose(sum5_3b_3, [0,1,2,3,5,4])
 
         #sixth term
-        sum6_3b_1 = tn.ncon([eta2B, occA4, W], [(4,-1,3,-4),(3,4,1,2),(1,-2,-3,2,-5,-6)])#.numpy()
-        sum6_3b_2 = tn.ncon([G, occA4, eta3B], [(4,-1,3,-4),(3,4,1,2),(1,-2,-3,2,-5,-6)])#.numpy()
-        sum6_3b_3 = sum6_3b_1 - sum6_3b_2
-        sum6_3b_4 = sum6_3b_3 - np.transpose(sum6_3b_3, [0,1,2,4,3,5]) - \
-                                np.transpose(sum6_3b_3, [0,1,2,5,4,3])
-        sum6_3b = sum6_3b_4 - np.transpose(sum6_3b_4, [1,0,2,3,4,5]) - \
-                              np.transpose(sum6_3b_4, [2,1,0,3,4,5])
+        sum6_3b_1 = np.multiply(np.transpose(occA4.tensor,[1,2,0,3]), eta2B)
+        sum6_3b_2 = np.multiply(np.transpose(occA4.tensor,[1,2,0,3]), G)
+        sum6_3b_3 = tn.ncon([sum6_3b_1,     W], [(2,-1,1,-4),(1,-2,-3,2,-5,-6)])
+        sum6_3b_4 = tn.ncon([sum6_3b_2, eta3B], [(2,-1,1,-4),(1,-2,-3,2,-5,-6)])
+        sum6_3b_5 = sum6_3b_3 - sum6_3b_4
+        sum6_3b_6 = sum6_3b_5 - np.transpose(sum6_3b_5, [0,1,2,4,3,5]) - \
+                                np.transpose(sum6_3b_5, [0,1,2,5,4,3])
+        sum6_3b = sum6_3b_6 - np.transpose(sum6_3b_6, [1,0,2,3,4,5]) - \
+                              np.transpose(sum6_3b_6, [2,1,0,3,4,5])
+
+        # sum6_3b_1 = tn.ncon([eta2B, occA4, W], [(4,-1,3,-4),(3,4,1,2),(1,-2,-3,2,-5,-6)])#.numpy()
+        # sum6_3b_2 = tn.ncon([G, occA4, eta3B], [(4,-1,3,-4),(3,4,1,2),(1,-2,-3,2,-5,-6)])#.numpy()
+        # sum6_3b_3 = sum6_3b_1 - sum6_3b_2
+        # sum6_3b_4 = sum6_3b_3 - np.transpose(sum6_3b_3, [0,1,2,4,3,5]) - \
+        #                         np.transpose(sum6_3b_3, [0,1,2,5,4,3])
+        # sum6_3b = sum6_3b_4 - np.transpose(sum6_3b_4, [1,0,2,3,4,5]) - \
+        #                       np.transpose(sum6_3b_4, [2,1,0,3,4,5])
 
         #seventh term
-        sum7_3b_1 = tn.ncon([eta3B, occJ, W], [(-1,-2,-3,4,5,6), (4,5,6,1,2,3), (1,2,3,-4,-5,-6)])#.numpy()
-        sum7_3b_2 = tn.ncon([W, occJ, eta3B], [(-1,-2,-3,4,5,6), (4,5,6,1,2,3), (1,2,3,-4,-5,-6)])#.numpy()
-        sum7_3b = sum7_3b_1 - sum7_3b_2
+        sum7_3b_1 = np.multiply(np.transpose(occJ.tensor,[3,4,5,0,1,2]), eta3B)
+        sum7_3b_2 = np.multiply(np.transpose(occJ.tensor,[3,4,5,0,1,2]), W)
+        sum7_3b_3 = tn.ncon([sum7_3b_1,     W], [(-1,-2,-3,1,2,3),(1,2,3,-4,-5,-6)])
+        sum7_3b_4 = tn.ncon([sum7_3b_2, eta3B], [(-1,-2,-3,1,2,3),(1,2,3,-4,-5,-6)])
+        sum7_3b = sum7_3b_3 - sum7_3b_4
+
+        # sum7_3b_1 = tn.ncon([eta3B, occJ, W], [(-1,-2,-3,4,5,6), (4,5,6,1,2,3), (1,2,3,-4,-5,-6)])#.numpy()
+        # sum7_3b_2 = tn.ncon([W, occJ, eta3B], [(-1,-2,-3,4,5,6), (4,5,6,1,2,3), (1,2,3,-4,-5,-6)])#.numpy()
+        # sum7_3b = sum7_3b_1 - sum7_3b_2
 
         #eighth term
-        sum8_3b_1 = tn.ncon([eta3B, occC6, W], [(4,5,-3,6,-5,-6), (4,5,6,1,2,3), (3,-1,-2,1,2,-4)])#.numpy()
-        sum8_3b_2 = tn.ncon([eta3B, occC6, W], [(6,-2,-3,4,5,-6), (4,5,6,1,2,3), (-1,1,2,-4,-5,3)])#.numpy()
-        sum8_3b_3 = sum8_3b_1 - sum8_3b_2
-        sum8_3b_4 = sum8_3b_3 - np.transpose(sum8_3b_3, [0,1,2,4,3,5]) - \
-                                np.transpose(sum8_3b_3, [0,1,2,5,4,3])
-        sum8_3b = sum8_3b_4 - np.transpose(sum8_3b_4, [2,1,0,3,4,5]) - \
-                              np.transpose(sum8_3b_4, [0,2,1,3,4,5])
+        sum8_3b_1 = np.multiply(np.transpose(occC6.tensor,[0,1,3,2,4,5]), eta3B)
+        sum8_3b_2 = np.multiply(np.transpose(occC6.tensor,[2,3,4,0,1,5]), eta3B)
+        sum8_3b_3 = tn.ncon([sum8_3b_1, W], [(1,2,-3,3,-5,-6),(3,-1,-2,1,2,-4)])
+        sum8_3b_4 = tn.ncon([sum8_3b_2, W], [(3,-2,-3,1,2,-6),(-1,1,2,-4,-5,3)])        
+        sum8_3b_5 = sum8_3b_3 - sum8_3b_4
+        sum8_3b_6 = sum8_3b_5 - np.transpose(sum8_3b_5, [0,1,2,4,3,5]) - \
+                                np.transpose(sum8_3b_5, [0,1,2,5,4,3])
+        sum8_3b = sum8_3b_6 - np.transpose(sum8_3b_6, [2,1,0,3,4,5]) - \
+                              np.transpose(sum8_3b_6, [0,2,1,3,4,5])
+
+        
+        # sum8_3b_1 = tn.ncon([eta3B, occC6, W], [(4,5,-3,6,-5,-6), (4,5,6,1,2,3), (3,-1,-2,1,2,-4)])#.numpy()
+        # sum8_3b_2 = tn.ncon([eta3B, occC6, W], [(6,-2,-3,4,5,-6), (4,5,6,1,2,3), (-1,1,2,-4,-5,3)])#.numpy()
+        # sum8_3b_3 = sum8_3b_1 - sum8_3b_2
+        # sum8_3b_4 = sum8_3b_3 - np.transpose(sum8_3b_3, [0,1,2,4,3,5]) - \
+        #                         np.transpose(sum8_3b_3, [0,1,2,5,4,3])
+        # sum8_3b = sum8_3b_4 - np.transpose(sum8_3b_4, [2,1,0,3,4,5]) - \
+        #                       np.transpose(sum8_3b_4, [0,2,1,3,4,5])
 
         dW = sum1_3b + 0.5*sum4_3b + (-0.5)*sum5_3b + (-1.0)*sum6_3b + (1/6)*sum7_3b + 0.5*sum8_3b
 

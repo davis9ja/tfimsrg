@@ -276,10 +276,8 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
                          '2bc_SS', 
                          '||eta1b||',
                          '||eta2b||', 
-                         'commute1bd',
-                         'commute1bod',
-                         'commute2bd',
-                         'commute2bod',
+                         'f_full_trace',
+                         'G_full_trace',
                          'commute',
                          'commutePairedBlock']
         column_string = '{: >6}, '
@@ -335,6 +333,15 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
             norm_eta2B = np.linalg.norm(np.ravel(wg.eta2B))
             num_sp = n_holes+n_particles
             axes = (num_sp**2,num_sp**2)
+
+            Gnode = tn.Node(G_spins[np.ix_(ha.holes,ha.holes,ha.holes,ha.holes)])
+            Gnode[0] ^ Gnode[2]
+            Gnode[1] ^ Gnode[3]
+            result_ij = Gnode @ Gnode
+            
+            #H1B = np.trace(Gs[np.ix_(ha.sp_basis,ha.holes,ha.sp_basis,ha.holes)], axis1=1,axis2=3)
+            f_full_trace = np.trace(SS1B[np.ix_(ha.holes,ha.holes)])
+
             # SS2B_r = np.reshape(SS2B, (num_sp**2,num_sp**2))
             # H2B_r = np.reshape(H2B, (num_sp**2, num_sp**2))
             # commute1b = np.linalg.norm(SS1B.dot(H1B) - H1B.dot(SS1B))
@@ -348,10 +355,6 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
             
             
             hGd,hGod,sGd,sGod = np.reshape(hGd,axes),np.reshape(hGod,axes),np.reshape(sGd,axes),np.reshape(sGod,axes)
-            commute1bd = np.linalg.norm(hfd.dot(sfd) - sfd.dot(hfd))
-            commute1bod = np.linalg.norm(hfod.dot(sfod) - sfod.dot(hfod))
-            commute2bd = np.linalg.norm(hGd.dot(sGd) - sGd.dot(hGd))
-            commute2bod = np.linalg.norm(hGod.dot(sGod) - sGod.dot(hGod))
             commute = np.linalg.norm(hme.dot(ssme) - ssme.dot(hme))
             commutePairBlock = np.linalg.norm(hme[0:2,0:2].dot(ssme[0:2,0:2]) - ssme[0:2,0:2].dot(hme[0:2,0:2]))
             data_columns = [iters, 
@@ -365,10 +368,8 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
                             contract_2b,
                             norm_eta1B,
                             norm_eta2B,
-                            commute1bd,
-                            commute1bod,
-                            commute2bd,
-                            commute2bod,
+                            f_full_trace,
+                            result_ij.tensor,
                             commute,
                             commutePairBlock]
             column_string = '{:>6d}, '
@@ -385,8 +386,14 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
             ws,vs = np.linalg.eigh(ssme)
 
             with np.printoptions(linewidth=999,precision=4):
-                print(ssme)
-                print(ggme)
+
+                print(np.reshape(wg.eta2B, axes))
+                
+                # print(np.reshape(G_spins[np.ix_(ha.holes,ha.holes,ha.holes,ha.holes)],(4,4)))
+                # print(SS1B[np.ix_(ha.holes,ha.holes)])
+                
+                # print(ssme)
+                # print(ggme)
                 # for i in range(wg.eta1B.shape[0]):
                 #     print("{d}".format(d=wg.eta1B[i,:]))
                 # for i in range(wg.eta1B.shape[0]):
@@ -542,14 +549,14 @@ if __name__ == '__main__':
     #ref = 0.8*basis[0,:] + 0.2*basis[1,:]
 
     #ref = basis.T.dot(v0*v0)
-    ref = basis[1,:]
+    ref = basis[0,:]
 
     # ref_input = sys.argv[1]
     # ref = [int(x) for x in list(ref_input)]
 
     #ref = pickle.load(open('reference_g2.00_pb0.01_4-4.p', 'rb'))
     
-    main(2,2, g=g, ref=ref, pb=pb, generator='white')
+    main(2,2, g=g, ref=ref, pb=pb, generator='wegner')
     print('FCI ENERGY = {: .8f}'.format(w[0]))
     data = pickle.load(open('expect_flow.p', 'rb'))
 

@@ -36,7 +36,7 @@ from oop_imsrg.tests2B import *
 sys.path.append('/mnt/home/daviso53/Research/')
 from pyci.density_matrix.density_matrix import density_1b, density_2b
 import pyci.imsrg_ci.pyci_p3h as pyci
-import reference_state_ensemble.reference_ensemble as re
+#import reference_state_ensemble.reference_ensemble as re
 
 def get_vacuum_coeffs(E, f, G, basis, holes):
 
@@ -509,7 +509,7 @@ if __name__ == '__main__':
     #0,3,14,15,28,35
 
     g = 0.5
-    pb = 0.0
+    pb = 0.1
 
     hme = pyci.matrix(4,4,0.0,1.0,g,pb)
     w,v = np.linalg.eigh(hme)
@@ -531,7 +531,7 @@ if __name__ == '__main__':
 
     #ref = pickle.load(open('reference_g2.00_pb0.01_4-4.p', 'rb'))
     
-    main(4,4, g=g, ref=ref, pb=pb, generator='white')
+    main(4,4, g=g, ref=ref, pb=pb, generator='wegner')
     print('FCI ENERGY = {: .8f}'.format(w[0]))
     data = pickle.load(open('expect_flow.p', 'rb'))
 
