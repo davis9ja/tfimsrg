@@ -28,7 +28,7 @@ class WegnerGenerator(Generator):
         h -- Hamiltonian object (must be normal-ordered)
         occ_t -- OccupationTensor object"""
 
-        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
+#        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
         assert isinstance(occ_t, OccupationTensors), "Arg 1 must be OccupationTensors object"
 
         self.f = h.f
@@ -258,6 +258,10 @@ class WegnerGenerator(Generator):
 
         eta2B = sum1_2b + 0.5*sum2_2b - sum3_2b
 
+
+        self._eta1B = eta1B
+        self._eta2B = eta2B
+
         return (eta1B, eta2B)
 
 class WegnerGenerator3B(WegnerGenerator):
@@ -283,9 +287,11 @@ class WegnerGenerator3B(WegnerGenerator):
         self._particles = h.particles
 
         self._occA = occ_t.occA
-        self._occA2 = occ_t.occA2
+        self._occA4 = occ_t.occA4
         self._occB = occ_t.occB
+        self._occB4 = occ_t.occB4
         self._occC = occ_t.occC
+        self._occC6 = occ_t.occC6
         self._occD = occ_t.occD
         self._occE = occ_t.occE
         self._occF = occ_t.occF
@@ -293,6 +299,40 @@ class WegnerGenerator3B(WegnerGenerator):
         self._occH = occ_t.occH
         self._occI = occ_t.occI
         self._occJ = occ_t.occJ
+
+        ref = h.reference
+        n = len(self._holes)+len(self._particles)
+        Ga = tn.Node(np.transpose(np.append(ref[np.newaxis,:], np.zeros((1,n)), axis=0).astype(float)))
+        Gb = tn.Node(np.append(ref[::-1][np.newaxis,:],np.zeros((1,n)), axis=0).astype(float))
+        
+        self._occRef1 = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])                                                                    # n_a(1-n_b)
+        self._occRef2 = tn.ncon([tn.Node(np.transpose(Gb.tensor)), tn.Node(np.transpose(Ga.tensor))], [(-1,1),(1,-2)])       # (1-n_a)n_b
+
+        self._eta1B = np.zeros_like(self.f)
+        self._eta2B = np.zeros_like(self.G)
+        self._eta3B = np.zeros_like(self.W)
+
+
+    @property
+    def eta1B(self):
+        """Returns:
+
+        eta1B -- one-body generator"""
+        return self._eta1B
+
+    @property
+    def eta2B(self):
+        """Returns:
+
+        eta2B -- one-body generator"""
+        return self._eta2B
+
+    @property
+    def eta3B(self):
+        """Returns:
+
+        eta3B -- one-body generator"""
+        return self._eta3B
 
     @property
     def W(self):
@@ -367,10 +407,12 @@ class WegnerGenerator3B(WegnerGenerator):
         holes = self._holes
         particles = self._particles
 
+        occA4 = self._occA4
         occA = self._occA
-        occA2 = self._occA2
-        occB = self._occB
+        #occA2 = self._occA2
+        occB4 = self._occB4
         occC = self._occC
+        occC6 = self._occC6
         occD = self._occD
         occF = self._occF
         occG = self._occG
@@ -381,20 +423,31 @@ class WegnerGenerator3B(WegnerGenerator):
 
         # Calculate 1B generator
         # fourth term
-        sum4_1b_1 = np.matmul(np.transpose(occD,[2,3,0,1]), God)
-        sum4_1b_2 = np.matmul(np.transpose(occD,[2,3,0,1]), Gd)
+
+        occD_transpose = np.transpose(occD.tensor, [2,3,0,1])
+        sum4_1b_1 = np.multiply(occD_transpose, God)
+        sum4_1b_2 = np.multiply(occD_transpose, Gd)
         sum4_1b_3 = tn.ncon([Wd,  sum4_1b_1], [(1,2,-1,3,4,-2),(3,4,1,2)])#.numpy()
         sum4_1b_4 = tn.ncon([Wod, sum4_1b_2], [(1,2,-1,3,4,-2),(3,4,1,2)])#.numpy()
         sum4_1b = sum4_1b_3 - sum4_1b_4
 
         # fifth term
-        sum5_1b_1 = tn.ncon([Wd, occF, Wod], [(6,7,-1,8,9,10),
-                                              (6,7,8,9,10,1,2,3,4,5),
-                                              (3,4,5,1,2,-2)])#.numpy()
-        sum5_1b_2 = tn.ncon([Wod, occF, Wd], [(6,7,-1,8,9,10),
-                                              (6,7,8,9,10,1,2,3,4,5),
-                                              (3,4,5,1,2,-2)])#.numpy()
-        sum5_1b = sum5_1b_1 - sum5_1b_2
+
+        sum5_1b_1 = np.multiply(np.transpose(occF.tensor,[0,1,5,2,3,4]), Wd)
+        sum5_1b_2 = np.multiply(np.transpose(occF.tensor,[0,1,5,2,3,4]), Wod)
+        sum5_1b_3 = tn.ncon([sum5_1b_1, Wod],[(1,2,-1,3,4,5),(3,4,5,1,2,-2)])
+        sum5_1b_4 = tn.ncon([sum5_1b_2, Wd],[(1,2,-1,3,4,5),(3,4,5,1,2,-2)])
+
+        sum5_1b = sum5_1b_3 - sum5_1b_4
+
+
+        # sum5_1b_1 = tn.ncon([Wd, occF, Wod], [(6,7,-1,8,9,10),
+        #                                       (6,7,8,9,10,1,2,3,4,5),
+        #                                       (3,4,5,1,2,-2)])#.numpy()
+        # sum5_1b_2 = tn.ncon([Wod, occF, Wd], [(6,7,-1,8,9,10),
+        #                                       (6,7,8,9,10,1,2,3,4,5),
+        #                                       (3,4,5,1,2,-2)])#.numpy()
+        # sum5_1b = sum5_1b_1 - sum5_1b_2
 
         # sum5_1b_1 = tn.ncon([occF, Wd.astype(np.float32)],
         #                  [(-1,-3,-4,-5,-6,0,1,2,3,4), (0,1,-2,2,3,4)])#.numpy()
@@ -410,22 +463,36 @@ class WegnerGenerator3B(WegnerGenerator):
 
         # Calculate 2B generator
         # fourth term
-        sum4_2b_1 = np.matmul(-1.0*np.transpose(occA2), fod)
-        sum4_2b_2 = np.matmul(-1.0*np.transpose(occA2),  fd)
+        sum4_2b_1 = np.matmul(-1.0*np.transpose(occA.tensor), fod)
+        sum4_2b_2 = np.matmul(-1.0*np.transpose(occA.tensor),  fd)
         sum4_2b_3 = tn.ncon([Wd,  sum4_2b_1], [(1,-1,-2,2,-3,-4), (2,1)])#.numpy()
         sum4_2b_4 = tn.ncon([Wod, sum4_2b_2], [(1,-1,-2,2,-3,-4), (2,1)])#.numpy()
         sum4_2b = sum4_2b_3 - sum4_2b_4
 
         #fifth term
-        sum5_2b_1 = tn.ncon([Wd, occG, God], [(4,-1,-2,5,6,-4),
-                                              (4,5,6,1,2,3),
-                                              (2,3,1,-3)])#.numpy()
-        sum5_2b_2 = tn.ncon([Wod, occG, Gd], [(4,-1,-2,5,6,-4),
-                                              (4,5,6,1,2,3),
-                                              (2,3,1,-3)])#.numpy()
-        sum5_2b = sum5_2b_2 - np.transpose(sum5_2b_2, [3,2,0,1]) - \
-                    np.transpose(sum5_2b_2, [0,1,3,2]) + \
-                    np.transpose(sum5_2b_2, [2,3,0,1])
+
+        sum5_2b_1 = np.multiply(np.transpose(occG.tensor, [1,2,0,3]), God)
+        sum5_2b_2 = np.multiply(np.transpose(occG.tensor, [1,2,0,3]), Gd)
+
+        sum5_2b_3 = tn.ncon([Wd, sum5_2b_1],[(1,-1,-2,2,3,-4),(2,3,1,-3)])
+        sum5_2b_4 = tn.ncon([Wod, sum5_2b_2],[(1,-1,-2,2,3,-4),(2,3,1,-3)])
+
+        sum5_2b_5 = sum5_2b_3 - sum5_2b_4
+
+        sum5_2b = sum5_2b_5 - np.transpose(sum5_2b_5, [3,2,0,1]) - \
+                    np.transpose(sum5_2b_5, [0,1,3,2]) + \
+                    np.transpose(sum5_2b_5, [2,3,0,1])
+
+
+        # sum5_2b_1 = tn.ncon([Wd, occG, God], [(4,-1,-2,5,6,-4),
+        #                                       (4,5,6,1,2,3),
+        #                                       (2,3,1,-3)])#.numpy()
+        # sum5_2b_2 = tn.ncon([Wod, occG, Gd], [(4,-1,-2,5,6,-4),
+        #                                       (4,5,6,1,2,3),
+        #                                       (2,3,1,-3)])#.numpy()
+        # sum5_2b = sum5_2b_2 - np.transpose(sum5_2b_2, [3,2,0,1]) - \
+        #             np.transpose(sum5_2b_2, [0,1,3,2]) + \
+        #             np.transpose(sum5_2b_2, [2,3,0,1])
 
         # sum5_2b_1 = tn.ncon([occG, God], [(-1,-2,-4,0,1,2), (1,2,0,-3)])#.numpy()
         # sum5_2b_2 = tn.ncon([occG,  Gd], [(-1,-2,-4,0,1,2), (1,2,0,-3)])#.numpy()
@@ -437,13 +504,20 @@ class WegnerGenerator3B(WegnerGenerator):
         #             np.transpose(sum5_2b_5, [2,3,0,1])
 
         #sixth term
-        sum6_2b_1 = tn.ncon([Wd, occH, Wod], [(5,-1,-2,6,7,8),
-                                              (5,6,7,8,1,2,3,4),
-                                              (2,3,4,1,-3,-4)])#.numpy()
-        sum6_2b_2 = tn.ncon([Wd, occH, Wod], [(6,7,8,5,-3,-4),
-                                              (5,6,7,8,1,2,3,4),
-                                              (1,-1,-2,2,3,4)])#.numpy()
-        sum6_2b = sum6_2b_1 - sum6_2b_2
+
+        sum5_2b_1 = np.multiply(np.transpose(occH.tensor,[0,4,5,1,2,3]), Wd)
+        sum5_2b_2 = np.multiply(np.transpose(occH.tensor,[0,4,5,1,2,3]), Wod)
+        sum5_2b_3 = tn.ncon([sum5_2b_1, Wod], [(1,-1,-2,2,3,4),(2,3,4,1,-3,-4)])
+        sum5_2b_4 = tn.ncon([Wd, sum5_2b_2], [(1,-1,-2,2,3,4),(2,3,4,1,-3,-4)])
+        sum6_2b = sum5_2b_3 - sum5_2b_4
+
+        # sum6_2b_1 = tn.ncon([Wd, occH, Wod], [(5,-1,-2,6,7,8),
+        #                                       (5,6,7,8,1,2,3,4),
+        #                                       (2,3,4,1,-3,-4)])#.numpy()
+        # sum6_2b_2 = tn.ncon([Wd, occH, Wod], [(6,7,8,5,-3,-4),
+        #                                       (5,6,7,8,1,2,3,4),
+        #                                       (1,-1,-2,2,3,4)])#.numpy()
+        # sum6_2b = sum6_2b_1 - sum6_2b_2
 
         # sum6_2b_1 = tn.ncon([occH, Wod], [(-1,-2,-3,-4,0,1,2,3),(1,2,3,0,-5,-6)])#.numpy()
         # sum6_2b_2 = tn.ncon([occH, Wod], [(-3,-4,-5,-6,0,1,2,3),(0,-1,-2,1,2,3)])#.numpy()
@@ -452,12 +526,19 @@ class WegnerGenerator3B(WegnerGenerator):
         # sum6_2b = sum6_2b_3 - sum6_2b_4
 
         #seventh term
-        sum7_2b_1 = tn.ncon([Wd, occI, Wod], [(5,6,-1,7,8,-4),
-                                              (5,6,7,8,1,2,3,4),
-                                              (3,4,-2,1,2,-3)])#.numpy()
-        sum7_2b = sum7_2b_1 - np.transpose(sum7_2b_1,[1,0,2,3]) - \
-                              np.transpose(sum7_2b_1,[0,1,3,2]) + \
-                              np.transpose(sum7_2b_1,[1,0,3,2])
+        sum7_2b_1 = np.multiply(np.transpose(occI.tensor,[0,1,4,2,3,5]),Wd)
+        sum7_2b_2 = tn.ncon([sum7_2b_1, Wod], [(1,2,-1,3,4,-4),(3,4,-2,1,2,-3)])
+        sum7_2b = sum7_2b_2 - np.transpose(sum7_2b_2,[1,0,2,3]) - \
+                              np.transpose(sum7_2b_2,[0,1,3,2]) + \
+                              np.transpose(sum7_2b_2,[1,0,3,2])        
+
+
+        # sum7_2b_1 = tn.ncon([Wd, occI, Wod], [(5,6,-1,7,8,-4),
+        #                                       (5,6,7,8,1,2,3,4),
+        #                                       (3,4,-2,1,2,-3)])#.numpy()
+        # sum7_2b = sum7_2b_1 - np.transpose(sum7_2b_1,[1,0,2,3]) - \
+        #                       np.transpose(sum7_2b_1,[0,1,3,2]) + \
+        #                       np.transpose(sum7_2b_1,[1,0,3,2])
 
         # sum7_2b_1 = tn.ncon([occI, Wod], [(-1,-2,-3,-4,0,1,2,3), (2,3,-5,0,1,-6)])#.numpy()
         # sum7_2b_2 = tn.ncon([Wd, sum7_2b_1], [(0,1,-1,2,3,-4),(2,3,-2,0,1,-3)])#.numpy()
@@ -496,43 +577,94 @@ class WegnerGenerator3B(WegnerGenerator):
         sum1_3b = sum1_3b_4 + sum1_3b_8 + sum1_3b_13
 
         #fourth term
-        sum4_3b_1 = tn.ncon([Gd, occB, Wod], [(-1,-2,3,4),(3,4,1,2),(1,2,-3,-4,-5,-6)])#.numpy()
-        sum4_3b_2 = tn.ncon([God, occB, Wd], [(-1,-2,3,4),(3,4,1,2),(1,2,-3,-4,-5,-6)])#.numpy()
-        sum4_3b_3 = sum4_3b_1 - sum4_3b_2
-        sum4_3b = sum4_3b_3 - np.transpose(sum4_3b_3, [1,0,2,3,4,5]) - \
-                              np.transpose(sum4_3b_3, [2,1,0,3,4,5])
+        sum4_3b_1 = np.multiply(np.transpose(occB4.tensor,[2,3,0,1]), Gd)
+        sum4_3b_2 = np.multiply(np.transpose(occB4.tensor,[2,3,0,1]), God)
+        sum4_3b_3 = tn.ncon([sum4_3b_1, Wod], [(-1,-2,1,2),(1,2,-3,-4,-5,-6)])
+        sum4_3b_4 = tn.ncon([sum4_3b_2, Wd], [(-1,-2,1,2),(1,2,-3,-4,-5,-6)])
+
+        sum4_3b_5 = sum4_3b_3 - sum4_3b_4
+        sum4_3b = sum4_3b_5 - np.transpose(sum4_3b_5, [1,0,2,3,4,5]) - \
+                              np.transpose(sum4_3b_5, [2,1,0,3,4,5])
+
+        # sum4_3b_1 = tn.ncon([Gd, occB4, Wod], [(-1,-2,3,4),(3,4,1,2),(1,2,-3,-4,-5,-6)])#.numpy()
+        # sum4_3b_2 = tn.ncon([God, occB4, Wd], [(-1,-2,3,4),(3,4,1,2),(1,2,-3,-4,-5,-6)])#.numpy()
+        # sum4_3b_3 = sum4_3b_1 - sum4_3b_2
+        # sum4_3b = sum4_3b_3 - np.transpose(sum4_3b_3, [1,0,2,3,4,5]) - \
+        #                       np.transpose(sum4_3b_3, [2,1,0,3,4,5])
 
         #fifth term
-        sum5_3b_1 = tn.ncon([Gd, occB, Wod], [(3,4,-4,-5),(3,4,1,2),(-1,-2,-3,1,2,-6)])#.numpy()
-        sum5_3b_2 = tn.ncon([God, occB, Wd], [(3,4,-4,-5),(3,4,1,2),(-1,-2,-3,1,2,-6)])#.numpy()
-        sum5_3b_3 = sum5_3b_1 - sum5_3b_2
-        sum5_3b = sum5_3b_3 - np.transpose(sum5_3b_3, [0,1,2,5,4,3]) - \
-                              np.transpose(sum5_3b_3, [0,1,2,3,5,4])
+        sum5_3b_1 = np.multiply(occB4.tensor, Gd)
+        sum5_3b_2 = np.multiply(occB4.tensor, God)
+        sum5_3b_3 = tn.ncon([sum5_3b_1, Wod], [(1,2,-4,-5),(-1,-2,-3,1,2,-6)])
+        sum5_3b_4 = tn.ncon([sum5_3b_2, Wd], [(1,2,-4,-5),(-1,-2,-3,1,2,-6)])
+        sum5_3b_5 = sum5_3b_3 - sum5_3b_4
+        sum5_3b = sum5_3b_5 - np.transpose(sum5_3b_5, [0,1,2,5,4,3]) - \
+                              np.transpose(sum5_3b_5, [0,1,2,3,5,4])
+
+
+        # sum5_3b_1 = tn.ncon([Gd, occB4, Wod], [(3,4,-4,-5),(3,4,1,2),(-1,-2,-3,1,2,-6)])#.numpy()
+        # sum5_3b_2 = tn.ncon([God, occB4, Wd], [(3,4,-4,-5),(3,4,1,2),(-1,-2,-3,1,2,-6)])#.numpy()
+        # sum5_3b_3 = sum5_3b_1 - sum5_3b_2
+        # sum5_3b = sum5_3b_3 - np.transpose(sum5_3b_3, [0,1,2,5,4,3]) - \
+        #                       np.transpose(sum5_3b_3, [0,1,2,3,5,4])
 
         #sixth term
-        sum6_3b_1 = tn.ncon([Gd, occA, Wod], [(4,-1,3,-4),(3,4,1,2),(1,-2,-3,2,-5,-6)])#.numpy()
-        sum6_3b_2 = tn.ncon([God, occA, Wd], [(4,-1,3,-4),(3,4,1,2),(1,-2,-3,2,-5,-6)])#.numpy()
-        sum6_3b_3 = sum6_3b_1 - sum6_3b_2
-        sum6_3b_4 = sum6_3b_3 - np.transpose(sum6_3b_3, [0,1,2,4,3,5]) - \
-                                np.transpose(sum6_3b_3, [0,1,2,5,4,3])
-        sum6_3b = sum6_3b_4 - np.transpose(sum6_3b_4, [1,0,2,3,4,5]) - \
-                              np.transpose(sum6_3b_4, [2,1,0,3,4,5])
+        sum6_3b_1 = np.multiply(np.transpose(occA4.tensor,[1,2,0,3]), Gd)
+        sum6_3b_2 = np.multiply(np.transpose(occA4.tensor,[1,2,0,3]), God)
+        sum6_3b_3 = tn.ncon([sum6_3b_1,Wod], [(2,-1,1,-4),(1,-2,-3,2,-5,-6)])
+        sum6_3b_4 = tn.ncon([sum6_3b_2, Wd], [(2,-1,1,-4),(1,-2,-3,2,-5,-6)])
+        sum6_3b_5 = sum6_3b_3 - sum6_3b_4
+        sum6_3b_6 = sum6_3b_5 - np.transpose(sum6_3b_5, [0,1,2,4,3,5]) - \
+                                np.transpose(sum6_3b_5, [0,1,2,5,4,3])
+        sum6_3b = sum6_3b_6 - np.transpose(sum6_3b_6, [1,0,2,3,4,5]) - \
+                              np.transpose(sum6_3b_6, [2,1,0,3,4,5])
+
+
+        # sum6_3b_1 = tn.ncon([Gd, occA4, Wod], [(4,-1,3,-4),(3,4,1,2),(1,-2,-3,2,-5,-6)])#.numpy()
+        # sum6_3b_2 = tn.ncon([God, occA4, Wd], [(4,-1,3,-4),(3,4,1,2),(1,-2,-3,2,-5,-6)])#.numpy()
+        # sum6_3b_3 = sum6_3b_1 - sum6_3b_2
+        # sum6_3b_4 = sum6_3b_3 - np.transpose(sum6_3b_3, [0,1,2,4,3,5]) - \
+        #                         np.transpose(sum6_3b_3, [0,1,2,5,4,3])
+        # sum6_3b = sum6_3b_4 - np.transpose(sum6_3b_4, [1,0,2,3,4,5]) - \
+        #                       np.transpose(sum6_3b_4, [2,1,0,3,4,5])
 
         #seventh term
-        sum7_3b_1 = tn.ncon([Wd, occJ, Wod], [(-1,-2,-3,4,5,6), (4,5,6,1,2,3), (1,2,3,-4,-5,-6)])#.numpy()
-        sum7_3b_2 = tn.ncon([Wod, occJ, Wd], [(-1,-2,-3,4,5,6), (4,5,6,1,2,3), (1,2,3,-4,-5,-6)])#.numpy()
-        sum7_3b = sum7_3b_1 - sum7_3b_2
+        sum7_3b_1 = np.multiply(np.transpose(occJ.tensor,[3,4,5,0,1,2]), Wd)
+        sum7_3b_2 = np.multiply(np.transpose(occJ.tensor,[3,4,5,0,1,2]), Wod)
+        sum7_3b_3 = tn.ncon([sum7_3b_1,Wod], [(-1,-2,-3,1,2,3),(1,2,3,-4,-5,-6)])
+        sum7_3b_4 = tn.ncon([sum7_3b_2, Wd], [(-1,-2,-3,1,2,3),(1,2,3,-4,-5,-6)])
+        sum7_3b = sum7_3b_3 - sum7_3b_4
+
+
+        # sum7_3b_1 = tn.ncon([Wd, occJ, Wod], [(-1,-2,-3,4,5,6), (4,5,6,1,2,3), (1,2,3,-4,-5,-6)])#.numpy()
+        # sum7_3b_2 = tn.ncon([Wod, occJ, Wd], [(-1,-2,-3,4,5,6), (4,5,6,1,2,3), (1,2,3,-4,-5,-6)])#.numpy()
+        # sum7_3b = sum7_3b_1 - sum7_3b_2
 
         #eighth term
-        sum8_3b_1 = tn.ncon([Wd, occC, Wod], [(4,5,-3,6,-5,-6), (4,5,6,1,2,3), (3,-1,-2,1,2,-4)])#.numpy()
-        sum8_3b_2 = tn.ncon([Wd, occC, Wod], [(6,-2,-3,4,5,-6), (4,5,6,1,2,3), (-1,1,2,-4,-5,3)])#.numpy()
-        sum8_3b_3 = sum8_3b_1 - sum8_3b_2
-        sum8_3b_4 = sum8_3b_3 - np.transpose(sum8_3b_3, [0,1,2,4,3,5]) - \
-                                np.transpose(sum8_3b_3, [0,1,2,5,4,3])
-        sum8_3b = sum8_3b_4 - np.transpose(sum8_3b_4, [2,1,0,3,4,5]) - \
-                              np.transpose(sum8_3b_4, [0,2,1,3,4,5])
+        sum8_3b_1 = np.multiply(np.transpose(occC6.tensor,[0,1,3,2,4,5]), Wd)
+        sum8_3b_2 = np.multiply(np.transpose(occC6.tensor,[2,3,4,0,1,5]), Wd)
+        sum8_3b_3 = tn.ncon([sum8_3b_1, Wod], [(1,2,-3,3,-5,-6),(3,-1,-2,1,2,-4)])
+        sum8_3b_4 = tn.ncon([sum8_3b_2, Wod], [(3,-2,-3,1,2,-6),(-1,1,2,-4,-5,3)])        
+        sum8_3b_5 = sum8_3b_3 - sum8_3b_4
+        sum8_3b_6 = sum8_3b_5 - np.transpose(sum8_3b_5, [0,1,2,4,3,5]) - \
+                                np.transpose(sum8_3b_5, [0,1,2,5,4,3])
+        sum8_3b = sum8_3b_6 - np.transpose(sum8_3b_6, [2,1,0,3,4,5]) - \
+                              np.transpose(sum8_3b_6, [0,2,1,3,4,5])
+
+
+        # sum8_3b_1 = tn.ncon([Wd, occC6, Wod], [(4,5,-3,6,-5,-6), (4,5,6,1,2,3), (3,-1,-2,1,2,-4)])#.numpy()
+        # sum8_3b_2 = tn.ncon([Wd, occC6, Wod], [(6,-2,-3,4,5,-6), (4,5,6,1,2,3), (-1,1,2,-4,-5,3)])#.numpy()
+        # sum8_3b_3 = sum8_3b_1 - sum8_3b_2
+        # sum8_3b_4 = sum8_3b_3 - np.transpose(sum8_3b_3, [0,1,2,4,3,5]) - \
+        #                         np.transpose(sum8_3b_3, [0,1,2,5,4,3])
+        # sum8_3b = sum8_3b_4 - np.transpose(sum8_3b_4, [2,1,0,3,4,5]) - \
+        #                       np.transpose(sum8_3b_4, [0,2,1,3,4,5])
 
         eta3B = sum1_3b + 0.5*sum4_3b + (-0.5)*sum5_3b + (-1.0)*sum6_3b + (1/6)*sum7_3b + 0.5*sum8_3b
+
+        self._eta1B = eta1B
+        self._eta2B = eta2B
+        self._eta3B = eta3B
 
         return (eta1B, eta2B, eta3B)
 
@@ -544,7 +676,7 @@ class WhiteGenerator(Generator):
     
     def __init__(self, h):
 
-        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
+#        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
         
         self._my_f = h.f
         self._my_G = h.G

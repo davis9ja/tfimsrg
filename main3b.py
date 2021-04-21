@@ -115,9 +115,9 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
 
     initi = time.time() # start instantiation timer
 
-    if ref == None:
+    if ref is None:
         ha = PairingHamiltonian2B(n_holes, n_particles, d=d, g=g, pb=pb)
-        ref = [1,1,1,1,0,0,0,0] # this is just for printing
+        ref = ha.reference # this is just for printing
     else:
         ha = PairingHamiltonian2B(n_holes, n_particles, ref=ref, d=d, g=g, pb=pb)
     print("Built Hamiltonian")
@@ -138,7 +138,7 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     snapshot = tracemalloc.take_snapshot()
     top_stats = snapshot.statistics('lineno')
     total = sum(stat.size for stat in top_stats)
-    print("Total allocated size: %.1f GB" % (total / 1024**3))
+    print("Total allocated size: %.1f MB" % (total / 1024**2))
 
 
     print("""Pairing model IM-SRG(3) flow:
@@ -163,15 +163,31 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     solver.set_initial_value(y0, 0.)
 
     sfinal = 50
-    ds = 0.1
+    ds = 0.01
     s_vals = []
     E_vals = []
 
     iters = 0
     convergence = 0
+
+    print_columns = ['iter', 
+                     's', 
+                     'E', 
+                     '||eta1b||',
+                     '||eta2b||',
+                     '||eta3b||']
+    column_string = '{: >6}, '
+    for i, string in enumerate(print_columns[1::]):
+        if i != len(print_columns)-2:
+            column_string += '{: >'+str(11)+'}, '
+        else:
+            column_string += '{: >'+str(11)+'}'
+    print(column_string.format(*print_columns))
+
+
     while solver.successful() and solver.t < sfinal:
 
-        ys = solver.integrate(sfinal, step=True)
+        ys = solver.integrate(solver.t+ds, step=True)
         Es, fs, Gs, Ws = ravel(ys, ha.n_sp_states)
         s_vals.append(solver.t)
         E_vals.append(Es)
@@ -179,9 +195,34 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
         iters += 1
         # if iters == 1:
         #     break
-        if iters %10 == 0: print("iter: {:>6d} \t scale param: {:0.4f} \t E = {:0.9f}".format(iters, solver.t, Es))
 
-        if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) < 10**-8 and E_vals[-1] != E_vals[0]:
+
+        if iters %10 == 0:
+#            print("iter: {:>6d} \t scale param: {:0.4f} \t E = {:0.9f}".format(iters, solver.t, Es))
+
+            norm_eta1B = np.linalg.norm(np.ravel(wg.eta1B))
+            norm_eta2B = np.linalg.norm(np.ravel(wg.eta2B))
+            norm_eta3B = np.linalg.norm(np.ravel(wg.eta3B))
+
+            data_columns = [iters, 
+                            solver.t, 
+                            Es,
+                            norm_eta1B,
+                            norm_eta2B,
+                            norm_eta3B]
+            column_string = '{:>6d}, '
+            for i, string in enumerate(print_columns[1::]):
+                if i != len(print_columns)-2:
+                    column_string += '{: .8f}, '
+                else:
+                    column_string += '{: .8f}'
+
+#            print(column_string.format(*data_columns))
+
+            print(column_string.format(*data_columns))
+
+
+        if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) < 10**-8:
             print("---- Energy converged at iter {:>06d} with energy {:1.8f}\n".format(iters,E_vals[-1]))
             convergence = 1
             break
@@ -259,7 +300,7 @@ def test_exact(plots_dir):
 
 if __name__ == '__main__':
     #test_exact("plots3b/")
-    main3b(4,4)
+    main3b(2,2,g=0.5,pb=0.1)
     #test = main3b(4,4)
     
     #tracemalloc.start()
