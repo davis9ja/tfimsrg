@@ -548,6 +548,7 @@ if __name__ == '__main__':
     sns.lineplot(x='s', y=w[0], data=data)
     plt.legend(['E_gs evolution', 'FCI gs'])
     plt.savefig('E_gs_error_g2.png')
+    
 
     # refs = [[1,1,1,1,0,0,0,0],[1,1,0,0,1,1,0,0],[1,1,0,0,0,0,1,1],
     #         [0,0,1,1,1,1,0,0],[0,0,1,1,0,0,1,1]]
