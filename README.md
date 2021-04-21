@@ -1,4 +1,4 @@
-# im-srg_tensorflow
+# TFIMSRG: Tensor-factor In Medium Similarity Renormalization Group
 
 #### PURPOSE:
 The purpose of this code is to write the IM-SRG flow solution for the pairing model into the TensorFlow architecture. The motivation for this project is that the IM-SRG flow equation terms can be written as operations on tensors built from N-body interactions in the nuclear Hamiltonian. The TensorFlow library offers optimized and intuitive tools for performing tensor operations. We want to know if these methods can be used to efficiently solve the flow equations; if so, we would like to apply those methods to solve for three-body interactions.
@@ -6,10 +6,14 @@ The purpose of this code is to write the IM-SRG flow solution for the pairing mo
 We solve the IMSRG flow in two architectures; 1) pure TensorFlow and 2) TensorNetwork, a library that uses TensorFlow as a backend.
 
 #### HOW TO IMPORT PACKAGE:
+First you MUST export the package directory to your Python path. On Unix systems, this process looks something like:
+
+export PYTHONPATH:$PYTHONPATH:/path/to/tfimsrg
+
 For practical use, include these lines at the top of your Python code:
 
-`sys.path.append('path/to/im-srg_tensorflow/')`
-`from main import main`
+from tfimsrg.main import main
+
 
 #### RUN AN IM-SRG(2) FLOW:
 The main() method implements the IM-SRG(2). To compute an IM-SRG(2) flow on the Pairing model with half-filling, with g=0.5, pb=0.0, 8 single particle states, standard reference state [1,1,1,1,0,0,0,0], and Wegner generator,
