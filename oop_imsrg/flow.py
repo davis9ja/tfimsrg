@@ -2,9 +2,9 @@
 # tf.enable_v2_behavior()
 #import tensornetwork as tn
 #import numpy as np
-from oop_imsrg.hamiltonian import *
-from oop_imsrg.occupation_tensors import *
-from oop_imsrg.generator import *
+from tfimsrg.oop_imsrg.hamiltonian import *
+from tfimsrg.oop_imsrg.occupation_tensors import *
+from tfimsrg.oop_imsrg.generator import *
 #tn.set_default_backend("tensorflow") 
 
 class Flow(object):
