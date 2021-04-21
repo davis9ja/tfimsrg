@@ -23,17 +23,17 @@ import tensornetwork as tn
 #tn.set_default_backend("tensorflow")
 
 # USER MODULES
-from oop_imsrg.spin_sq import *
-from oop_imsrg.hamiltonian import *
-from oop_imsrg.occupation_tensors import *
-from oop_imsrg.generator import *
-from oop_imsrg.flow import *
-from oop_imsrg.plot_data import *
+from tfimsrg.oop_imsrg.spin_sq import *
+from tfimsrg.oop_imsrg.hamiltonian import *
+from tfimsrg.oop_imsrg.occupation_tensors import *
+from tfimsrg.oop_imsrg.generator import *
+from tfimsrg.oop_imsrg.flow import *
+from tfimsrg.oop_imsrg.plot_data import *
 # from oop_imsrg.display_memory import *
-import oop_imsrg.ci_pairing.cipy_pairing_plus_ph as ci_matrix
-from oop_imsrg.tests2B import *
+import tfimsrg.oop_imsrg.ci_pairing.cipy_pairing_plus_ph as ci_matrix
+from tfimsrg.oop_imsrg.tests2B import *
 
-sys.path.append('/mnt/home/daviso53/Research/')
+#sys.path.append('/mnt/home/daviso53/Research/')
 from pyci.density_matrix.density_matrix import density_1b, density_2b
 import pyci.imsrg_ci.pyci_p3h as pyci
 #import reference_state_ensemble.reference_ensemble as re

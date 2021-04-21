@@ -19,13 +19,13 @@ import tensornetwork as tn
 
 # user files
 # sys.path.append('C:\\Users\\davison\\Research\\exact_diagonalization\\')
-from oop_imsrg.hamiltonian import *
-from oop_imsrg.occupation_tensors import *
-from oop_imsrg.generator import *
-from oop_imsrg.flow import *
-from oop_imsrg.plot_data import *
+from tfimsrg.oop_imsrg.hamiltonian import *
+from tfimsrg.oop_imsrg.occupation_tensors import *
+from tfimsrg.oop_imsrg.generator import *
+from tfimsrg.oop_imsrg.flow import *
+from tfimsrg.oop_imsrg.plot_data import *
 # from oop_imsrg.display_memory import *
-import oop_imsrg.ci_pairing.cipy_pairing_plus_ph as ci_matrix
+import tfimsrg.oop_imsrg.ci_pairing.cipy_pairing_plus_ph as ci_matrix
 
 def derivative(t, y, hamiltonian, occ_tensors, generator, flow):
     """Defines the derivative to pass into ode object.

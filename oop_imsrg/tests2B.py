@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import random
 import pickle
 
-import oop_imsrg.ci_pairing.cipy_pairing_plus_ph as ci_matrix
-import benchmarking_wd.imsrg_pairing as pypairing
+import tfimsrg.oop_imsrg.ci_pairing.cipy_pairing_plus_ph as ci_matrix
+import tfimsrg.benchmarking_wd.imsrg_pairing as pypairing
 
 def test_refs(plots_dir, main):
     """The purpose of this test is to compare the result of full 

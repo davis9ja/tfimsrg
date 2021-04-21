@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from oop_imsrg.hamiltonian import *
+from tfimsrg.oop_imsrg.hamiltonian import *
 import sys
 import numba
 
