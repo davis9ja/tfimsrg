@@ -41,8 +41,8 @@ class OccupationTensors(object):
         self._occI4 = self.__get_occI(flag=0)
         self._occJ = self.__get_occJ()
 
-        if not os.path.exists("occ_storage/"):
-            os.mkdir("occ_storage/")
+        # if not os.path.exists("occ_storage/"):
+        #     os.mkdir("occ_storage/")
 
     # @property
     # def occRef1(self):
