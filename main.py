@@ -224,7 +224,7 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
     elif generator == 'imtime':
         wg = ImTimeGenerator(ha)
     elif generator == 'brillouinMR':
-        wg = BrillouinGenerator(ha,ot)
+        wg = BrillouinGeneratorMR(ha,ot)
 
 
     if dens_weights is None:
