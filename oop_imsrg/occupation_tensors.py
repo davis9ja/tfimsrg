@@ -32,11 +32,13 @@ class OccupationTensors(object):
         self._occC = self.__get_occC()
         self._occC6 = self.__get_occC(flag=1)
         self._occD = self.__get_occD(flag=1)
+        self._occDv2 = self.__get_occDv2()
         self._occE = self.__get_occE()
         self._occF = self.__get_occF()
         self._occG = self.__get_occG()
         self._occH = self.__get_occH()
         self._occI = self.__get_occI()
+        self._occI4 = self.__get_occI(flag=0)
         self._occJ = self.__get_occJ()
 
         if not os.path.exists("occ_storage/"):
@@ -103,6 +105,14 @@ class OccupationTensors(object):
         return self._occD
 
     @property
+    def occDv2(self):
+        """Returns:
+
+        occD -- represents  n_a*n_b*(1-n_c)*(1-n_d) - (1-n_a)*(1-n_b)*n_c*n_d"""
+        return self._occDv2
+
+
+    @property
     def occE(self):
         """Returns:
 
@@ -137,6 +147,14 @@ class OccupationTensors(object):
 
         occI -- represents (1-n_a)*(1-n_b)*n_c*n_d - n_a*n_b*(1-n_c)*(1-n_d)"""
         return self._occI
+
+    @property
+    def occI4(self):
+        """Returns:
+
+        occI -- represents (1-n_a)*(1-n_b)*n_c*n_d - n_a*n_b*(1-n_c)*(1-n_d)"""
+        return self._occI4
+
 
     @property
     def occJ(self):
@@ -484,6 +502,32 @@ class OccupationTensors(object):
             occD = Gabcd
 
         return occD
+
+    def __get_occDv2(self, flag=0):
+        """Builds the occupation tensor occD.
+
+            Keyword arguments:
+
+            flag -- toggle rank 8 or rank 4 tensor behavior (default: 0)
+
+            Returns:
+
+            occD -- n_a*n_b*(1-n_c)*(1-n_d)"""
+
+        bas1B = self._sp_basis
+        ref = self._reference
+        n = len(bas1B)
+        occDv2 = np.zeros((n,n,n,n), dtype=np.float32)
+
+        for a in bas1B:
+            for b in bas1B:
+                for c in bas1B:
+                    for d in bas1B:
+                        occDv2[a,b,c,d] = (ref[a]*ref[b]*(1-ref[c])*(1-ref[d]) - \
+                                           (1-ref[a])*(1-ref[b])*ref[c]*ref[d])
+        
+        return tn.Node(occDv2)
+
                             
 # ---- ALL ABOVE REQUIRED FOR IMSRG(2) ---
 
@@ -588,7 +632,7 @@ class OccupationTensors(object):
 
         return occH
 
-    def __get_occI(self):
+    def __get_occI(self, flag=1):
         """Builds the occupation tensor occI. Treat as a rank 8 tensor.
 
             Returns:
@@ -607,8 +651,11 @@ class OccupationTensors(object):
                     for d in bas1B:
                         occI[a,b,c,d] = (1-ref[a])*(1-ref[b])*ref[c]*ref[d]-\
                                         ref[a]*ref[b]*(1-ref[c])*(1-ref[d])
-        occI = tn.outer_product(tn.Node(occI), tn.Node(np.ones((n,n))))
 
+        if flag:
+            occI = tn.outer_product(tn.Node(occI), tn.Node(np.ones((n,n))))
+        else:
+            occI = tn.Node(occI)
         return occI
 
     def __get_occJ(self):
