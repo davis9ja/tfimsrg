@@ -4,6 +4,10 @@ import numpy as np
 import tensornetwork as tn
 tn.set_default_backend("numpy") 
 
+from pyci.density_matrix.density_matrix import density_1b, density_2b
+import pyci.imsrg_ci.pyci_p3h as pyci
+
+
 class Hamiltonian(object):
     """Parent class for organization purposes. Ideally, all Hamiltonian
     classes should inherit from this class. In this way, AssertionErrors
@@ -18,7 +22,7 @@ class Hamiltonian(object):
 class PairingHamiltonian2B(Hamiltonian):
     """Generate the two-body pairing Hamiltonian. Inherits from Hamiltonian."""
 
-    def __init__(self, n_hole_states, n_particle_states, ref=[], d=1.0, g=0.5, pb=0.0):
+    def __init__(self, n_hole_states, n_particle_states, ref=None, d=1.0, g=0.5, pb=0.0, dens_weights=None):
         """Class constructor. Instantiate PairingHamiltonian2B object.
 
         Arguments:
@@ -36,19 +40,29 @@ class PairingHamiltonian2B(Hamiltonian):
         self._d = d
         self._g = g
         self._pb = pb
-        if ref == []:
+        if ref is None:
             self._reference = np.append(np.ones(n_hole_states,dtype=np.float32),
                                         np.zeros(n_particle_states,dtype=np.float32))
         else:
             self._reference = np.asarray(ref,dtype=np.float32)
 
-        self._holes = np.arange(n_hole_states, dtype=np.int32)
+        where_h = np.where(self._reference >= 0.5)
+        where_p = np.where(self._reference < 0.5)
+        self._holes, self._particles = where_h[0], where_p[0]
+        #print(self._holes, self._particles)
+        #self._holes = np.arange(n_hole_states, dtype=np.int32)
         self._n_sp_states = n_hole_states + n_particle_states
-        self._particles = np.arange(n_hole_states,self.n_sp_states, dtype=np.int32)
+        #self._particles = np.arange(n_hole_states,self.n_sp_states, dtype=np.int32)
         self._sp_basis = np.append(self.holes, self.particles)
 
         self._H1B, self._H2B = self.construct()
-        self._E, self._f, self._G = self.normal_order()
+
+        if dens_weights is None:
+            self._E, self._f, self._G = self.normal_order()
+        else:
+            self._E, self._f, self._G = self.normal_order_slow(dens_weights)
+
+        self._dens_weights = dens_weights
 
     @property
     def d(self):
@@ -288,5 +302,39 @@ class PairingHamiltonian2B(Hamiltonian):
         # - Calculate 2B piece
         G = H2B_t
 
+
+        return (E, f, G)
+
+    def normal_order_slow(self, dens_weights):
+
+        bas1B = self.sp_basis # get the single particle basis
+        H1B_t = self.H1B.astype(np.float32)   # get the 1B tensor
+        H2B_t = self.H2B.astype(np.float32)   # get the 2B tensor
+        holes = self.holes         # get hole states
+        particles = self.particles # get particle states
+        n_states = len(bas1B)
+        
+        d = self._d
+        g = self._g
+        pb = self._pb
+
+        # hme = pyci.matrix(len(holes), len(particles), 0.0, H1B_t, H2B_t, H2B_t, imsrg=True)
+        # w,v = np.linalg.eigh(hme)
+        # v0 = v[:, 0]
+
+        rho1b = density_1b(len(holes), len(particles), weights=dens_weights)
+        rho2b = density_2b(len(holes), len(particles), weights=dens_weights)
+        
+        contract_1b = np.einsum('ij,ij', rho1b, H1B_t)
+
+        rho_reshape_2b = np.reshape(rho2b, (n_states**2,n_states**2))
+        h2b_reshape_2b = np.reshape(H2B_t, (n_states**2,n_states**2))
+        contract_2b = np.einsum('ij,ij', rho_reshape_2b, h2b_reshape_2b)
+            
+        E = contract_1b + 0.25*contract_2b
+        
+        f = H1B_t + np.einsum('piqj,ij', H2B_t, rho1b)
+
+        G = H2B_t
 
         return (E, f, G)

@@ -293,6 +293,7 @@ class WegnerGenerator3B(WegnerGenerator):
         self._occC = occ_t.occC
         self._occC6 = occ_t.occC6
         self._occD = occ_t.occD
+        self._occDv2 = occ_t.occDv2
         self._occE = occ_t.occE
         self._occF = occ_t.occF
         self._occG = occ_t.occG
@@ -414,6 +415,7 @@ class WegnerGenerator3B(WegnerGenerator):
         occC = self._occC
         occC6 = self._occC6
         occD = self._occD
+        occDv2 = self._occDv2
         occF = self._occF
         occG = self._occG
         occH = self._occH
@@ -424,11 +426,11 @@ class WegnerGenerator3B(WegnerGenerator):
         # Calculate 1B generator
         # fourth term
 
-        occD_transpose = np.transpose(occD.tensor, [2,3,0,1])
-        sum4_1b_1 = np.multiply(occD_transpose, God)
-        sum4_1b_2 = np.multiply(occD_transpose, Gd)
-        sum4_1b_3 = tn.ncon([Wd,  sum4_1b_1], [(1,2,-1,3,4,-2),(3,4,1,2)])#.numpy()
-        sum4_1b_4 = tn.ncon([Wod, sum4_1b_2], [(1,2,-1,3,4,-2),(3,4,1,2)])#.numpy()
+        #occD_transpose = np.transpose(occDv2.tensor, [2,3,0,1])
+        sum4_1b_1 = np.multiply(occDv2.tensor, Gd)
+        sum4_1b_2 = np.multiply(occDv2.tensor, God)
+        sum4_1b_3 = tn.ncon([Wod,  sum4_1b_1], [(3,4,-1,1,2,-2),(1,2,3,4)])#.numpy()
+        sum4_1b_4 = tn.ncon([Wd,   sum4_1b_2], [(3,4,-1,1,2,-2),(1,2,3,4)])#.numpy()
         sum4_1b = sum4_1b_3 - sum4_1b_4
 
         # fifth term
@@ -479,7 +481,7 @@ class WegnerGenerator3B(WegnerGenerator):
 
         sum5_2b_5 = sum5_2b_3 - sum5_2b_4
 
-        sum5_2b = sum5_2b_5 - np.transpose(sum5_2b_5, [3,2,0,1]) - \
+        sum5_2b = sum5_2b_5 - np.transpose(sum5_2b_5, [2,3,1,0]) - \
                     np.transpose(sum5_2b_5, [0,1,3,2]) + \
                     np.transpose(sum5_2b_5, [2,3,0,1])
 
@@ -685,6 +687,8 @@ class WhiteGenerator(Generator):
         self._particles = h.particles
         self._sp_basis = h.sp_basis
 
+        self._reference = h.reference
+
         self._eta1B = np.zeros_like(self.f)
         self._eta2B = np.zeros_like(self.G)
 
@@ -733,19 +737,35 @@ class WhiteGenerator(Generator):
         bas1B = self._sp_basis
         holes = self._holes
         particles = self._particles
+        ref = self._reference
 
         f = self.f
         G = self.G
 
-        eta1B, eta2B = self._wrapper_calc_eta(bas1B, holes, particles, f, G)
+        eta1B, eta2B = self._wrapper_calc_eta_generalized_ph(bas1B, holes, particles, f, G, ref)
+        #eta1B, eta2B = self._wrapper_calc_eta(bas1B, holes, particles, f, G, ref)
+        #print(np.array_equal(eta1B1, eta1B), np.array_equal(eta2B1, eta2B))
+
         self._eta1B = eta1B
         self._eta2B = eta2B
+
+        # for i in bas1B:
+        #     for j in bas1B:
+        #         if eta1B[i,j] != eta1B1[i,j]:
+        #             print(i,j, eta1B[i,j], eta1B1[i,j])
+        #         for k in bas1B:
+        #             for l in bas1B:
+        #                 if eta2B[i,j,k,l] != eta2B1[i,j,k,l]:
+        #                     print(i,j,k,l, eta2B[i,j,k,l],eta2B1[i,j,k,l])
+
+        # assert np.array_equal(eta1B, -1*np.transpose(eta1B)), "1B not anti-sym"
+        # assert np.array_equal(eta2B, -1*np.transpose(eta2B, [0,1,3,2])), "2B not anti-sym"
 
         return (eta1B, eta2B)
 
     @staticmethod
     @jit(nopython=True)
-    def _wrapper_calc_eta(bas1B, holes, particles, f, G):
+    def _wrapper_calc_eta(bas1B, holes, particles, f, G, n):
 
         # bas1B = self._sp_basis
         # holes = self._holes
@@ -780,7 +800,7 @@ class WhiteGenerator(Generator):
                 for i in holes:
                     for j in holes:
                         denom = (
-                            f[a,a] + f[b,b] - f[i,i] - f[j,j] 
+                            f[a,a] + f[b,b] - f[i,i] - f[j,j]
                             + G[a,b,a,b] + G[i,j,i,j] - G[a,i,a,i]
                             - G[b,j,b,j] - G[a,j,a,j] - G[b,i,b,i]
                         )
@@ -802,35 +822,227 @@ class WhiteGenerator(Generator):
                         #print(eta2B[5,4,3,2])
                     
                     
-        # # Obtain denominator terms
-        # fpp = f[np.ix_(particles), np.ix_(particles)]
-        # fhh = f[np.ix_(holes), np.ix_(holes)]
-        # Gphph = G[np.ix_(particles), np.ix_(holes), np.ix_(particles), np.ix_(holes)]
-        # Gpppp = G[np.ix_(particles), np.ix_(particles), np.ix_(particles), np.ix_(particles)]
-        # Ghhhh = G[np.ix_(holes), np.ix_(holes), np.ix_(holes), np.ix_(holes)]
+        return (eta1B, eta2B)
 
-        # # Compute one body denominators (Epstein-Nesbet)
-        # denom1B = np.ones_like(f)
-        # denom1B[np.ix_(particles), np.ix_(holes)] = fpp - fhh + Gphph
-        # #denom1B[np.ix_(holes), np.ix_(particles)] = -denom1B[np.ix_(particles), np.ix_(holes)]
-        
-        # # Compute two body denominators (Epstein-Nesbet)
-        # denom2B = np.ones_like(G)
-        # denom2B[np.ix_(particles), np.ix_(particles), np.ix_(holes), np.ix_(holes)] = fpp + fpp - fhh - fhh - Gpppp + Ghhhh - Gphph - Gphph - Gphph - Gphph
-        # #denom2B[np.ix_(holes), np.ix_(holes), np.ix_(particles), np.ix_(particles)] = -denom2B[np.ix_(particles), np.ix_(particles), np.ix_(holes), np.ix_(holes)]
-        
-        # # Compute generator
-        # eta1B = np.zeros_like(f)
-        # eta1B[np.ix_(particles), np.ix_(holes)] = np.divide(f[np.ix_(particles), np.ix_(holes)], denom1B[np.ix_(particles), np.ix_(holes)])
-        # eta1B[np.ix_(holes), np.ix_(particles)] = -eta1B[np.ix_(particles), np.ix_(holes)]
-        
-        # eta2B = np.zeros_like(G)
-        # eta2B[np.ix_(particles), np.ix_(particles), np.ix_(holes), np.ix_(holes)] = np.divide(G[np.ix_(particles), np.ix_(particles), np.ix_(holes), np.ix_(holes)], 
-        #                                                                                       denom2B[np.ix_(particles), np.ix_(particles), np.ix_(holes), np.ix_(holes)])
-        # eta2B[np.ix_(holes), np.ix_(holes), np.ix_(particles), np.ix_(particles)] = -eta2B[np.ix_(particles), np.ix_(particles), np.ix_(holes), np.ix_(holes)]
 
+    @staticmethod
+    @jit(nopython=True)
+    def _wrapper_calc_eta_generalized_ph(bas1B, holes, particles, f, G, n):
+
+        # bas1B = self._sp_basis
+        # holes = self._holes
+        # particles = self._particles
+
+        # f = self.f
+        # G = self.G
+        
+        eta1B = np.zeros_like(f)
+        eta2B = np.zeros_like(G)
+        
+        for a in bas1B:
+            for i in bas1B:
+                nbar_a = 1-n[a]
+                n_i = n[i]
+                denom = f[a,a]*nbar_a**2 - f[i,i]*n_i**2 + G[a,i,a,i]*nbar_a**2*n_i**2
+
+                if abs(denom)<1.0e-10:
+                    result = 0.25 * np.pi * np.sign(f[a,i]*nbar_a*n_i) * np.sign(denom)
+                else:
+                    result = f[a,i]*nbar_a*n_i / denom
+
+
+                eta1B[a,i] = result
+                eta1B[i,a] = -result
+                
+                # if denom < 1:
+                #     print('one body {}{},'.format(a, i), denom)
+                # if a == 4 and i == 3:
+                #     print(G[a,i,a,i])
+
+        for a in bas1B:
+            for b in bas1B:
+                for i in bas1B:
+                    for j in bas1B:
+                        nbar_a = 1 - n[a]
+                        nbar_b = 1 - n[b]
+                        n_i = n[i]
+                        n_j = n[j]
+
+                        denom = (
+                            f[a,a]*nbar_a**2 + f[b,b]*nbar_b**2 - f[i,i]*n_i**2 - f[j,j]*n_j**2
+                            + G[a,b,a,b]*nbar_a**2*nbar_b**2 + G[i,j,i,j]*n_i**2*n_j**2 - G[a,i,a,i]*nbar_a**2*n_i**2
+                            - G[b,j,b,j]*nbar_b**2*n_j**2 - G[a,j,a,j]*nbar_a**2*n_j**2 - G[b,i,b,i]*nbar_b**2*n_i**2
+                        )
+
+                        if abs(denom)<1.0e-10:
+                            result = 0.25 * np.pi * np.sign(G[a,b,i,j]*nbar_a*nbar_b*n_i*n_j) * np.sign(denom)
+                        else:
+                            result = G[a,b,i,j]*nbar_a*nbar_b*n_i*n_j / denom
+
+
+                        
+                        eta2B[a,b,i,j] = result
+                        eta2B[i,j,a,b] = -result
+
+                        # if denom < 1:
+                        #    print('two body {}{}{}{},'.format(a,b,i,j), denom)
+                        # if a == 5 and b == 4 and i == 3 and j ==2:
+                        #     print(denom)
+                        #print(eta2B[5,4,3,2])
+                    
+                    
         return (eta1B, eta2B)
         
+class WhiteGeneratorMP3B(Generator):
+    """Calculate White's generator for a normal ordered Hamiltonian.
+       This "standard" implemenation uses Moller-Plesset denominators."""
+
+
+    def __init__(self, h):
+
+        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
+        
+        self.f = h.f
+        self.G = h.G
+        self.W = np.zeros(h.n_sp_states*np.ones(6,dtype=np.int32),dtype=np.float32)
+        print('here',np.zeros(h.n_sp_states*np.ones(6,dtype=np.int32),dtype=np.float32).shape)
+        self._holes = h.holes
+        self._particles = h.particles
+        self._sp_basis = h.sp_basis
+        self._eta1B = np.zeros_like(self.f)
+        self._eta2B = np.zeros_like(self.G)
+        self._eta3B = np.zeros_like(self.W)
+
+    @property
+    def eta1B(self):
+        """Returns:
+
+        eta1B -- one-body generator"""
+        return self._eta1B
+
+    @property
+    def eta2B(self):
+        """Returns:
+
+        eta2B -- one-body generator"""
+        return self._eta2B
+
+    @property
+    def eta3B(self):
+        """Returns:
+
+        eta2B -- three-body generator"""
+        return self._eta3B
+
+
+    @property
+    def f(self):
+        """Returns:
+
+        f -- one-body tensor elements (initialized by Hamiltonian object)"""
+        return self._f
+
+    @property
+    def G(self):
+        """Returns:
+
+        G -- two-body tensor elements (initialized by Hamiltonian object)"""
+        return self._G
+
+    @property
+    def W(self):
+        """Returns:
+
+        W -- three-body tensor elements (initialized by Hamiltonian object)"""
+        return self._W
+
+    @f.setter
+    def f(self, f):
+        """Sets the one-body tensor."""
+        self._f = f
+
+    @G.setter
+    def G(self, G):
+        """Sets the two-body tensor."""
+        self._G = G
+
+    @W.setter
+    def W(self, W):
+        """Sets the two-body tensor."""
+        self._W = W
+
+
+    def calc_eta(self):
+
+        bas1B = self._sp_basis
+        holes = self._holes
+        particles = self._particles
+
+        f = self.f
+        G = self.G
+        W = self.W
+        
+        eta1B, eta2B, eta3B = self._wrapper_calc_eta(bas1B, holes, particles, f, G, W)
+        self._eta1B = eta1B
+        self._eta2B = eta2B
+        self._eta3B = eta3B
+        
+        return (eta1B, eta2B, eta3B)
+
+    @staticmethod
+    @jit(nopython=True)
+    def _wrapper_calc_eta(bas1B, holes, particles, f, G, W):
+
+        # bas1B = self._sp_basis
+        # holes = self._holes
+        # particles = self._particles
+
+        # f = self.f
+        # G = self.G
+        
+        eta1B = np.zeros_like(f)
+        eta2B = np.zeros_like(G)
+        eta3B = np.zeros_like(W)
+
+        for a in particles:
+            for i in holes:
+                denom = f[a,a] - f[i,i]
+                result = f[a,i] / denom
+
+                eta1B[a,i] = result
+                eta1B[i,a] = -result
+                
+                # if denom < 1:
+                #     print('one body {}{},'.format(a, i), denom)
+
+        for a in particles:
+            for b in particles:
+                for i in holes:
+                    for j in holes:
+                        denom = (
+                            f[a,a] + f[b,b] - f[i,i] - f[j,j] 
+                        )
+                        result = G[a,b,i,j] / denom
+                        
+                        eta2B[a,b,i,j] = result
+                        eta2B[i,j,a,b] = -result
+
+        for a in particles:
+            for b in particles:
+                for c in holes:
+                    for i in holes:
+                        for j in holes:
+                            for k in holes:
+                                denom = (
+                                    f[a,a] + f[b,b] + f[c,c] - f[i,i] - f[j,j] - f[k,k]
+                                )
+                                result = W[a,b,c,i,j,k] / denom
+
+                                eta3B[a,b,c,i,j,k] = result
+                                eta3B[i,j,k,a,b,c] = -result
+
+        return (eta1B, eta2B, eta3B)
+
 class WhiteGeneratorMP(Generator):
     """Calculate White's generator for a normal ordered Hamiltonian.
        This "standard" implemenation uses Moller-Plesset denominators."""
@@ -843,9 +1055,27 @@ class WhiteGeneratorMP(Generator):
         self.f = h.f
         self.G = h.G
 
+
         self._holes = h.holes
         self._particles = h.particles
         self._sp_basis = h.sp_basis
+
+        self._eta1B = np.zeros_like(self.f)
+        self._eta2B = np.zeros_like(self.G)
+
+    @property
+    def eta1B(self):
+        """Returns:
+
+        eta1B -- one-body generator"""
+        return self._eta1B
+
+    @property
+    def eta2B(self):
+        """Returns:
+
+        eta2B -- one-body generator"""
+        return self._eta2B
 
     @property
     def f(self):
@@ -912,6 +1142,7 @@ class WhiteGeneratorMP(Generator):
 
 
         return (eta1B, eta2B)
+
 
 class BrillouinGenerator(Generator):
     """Calculate Brillouin generator for a normal ordered Hamiltonian."""
@@ -984,6 +1215,142 @@ class BrillouinGenerator(Generator):
 
 
         return (eta1B, eta2B)
+
+class BrillouinGeneratorMR(Generator):
+    """Calculate multi reference Brillouin generator for a normal ordered Hamiltonian."""
+
+
+    def __init__(self, h, occ):
+
+        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
+        
+        self.f = h.f
+        self.G = h.G
+
+        self._holes = h.holes
+        self._particles = h.particles
+        self._sp_basis = h.sp_basis
+
+        self._reference = h.reference
+
+        self._eta1B = np.zeros_like(self.f)
+        self._eta2B = np.zeros_like(self.G)
+        
+        self._occA = occ.occA.tensor
+        self._occA4 = occ.occA4.tensor
+        self._occB4 = occ.occB4.tensor
+        self._occI4 = occ.occI4.tensor
+
+        rho1b = density_1b(len(h.holes), len(h.particles), weights=h._dens_weights)
+        rho2b = density_2b(len(h.holes), len(h.particles), weights=h._dens_weights)
+
+        lambda2b = np.zeros_like(rho2b)
+        for i in h.sp_basis:
+            for j in h.sp_basis:
+                for k in h.sp_basis:
+                    for l in h.sp_basis:
+                        lambda2b[i,j,k,l] += rho2b[i,j,k,l] - rho1b[i,k]*rho1b[j,l] + rho1b[i,l]*rho1b[j,k]
+
+        self._lambda2b = lambda2b
+
+        self._eta1B = np.zeros_like(self.f)
+        self._eta2B = np.zeros_like(self.G)
+
+    @property
+    def eta1B(self):
+        """Returns:
+
+        eta1B -- one-body generator"""
+        return self._eta1B
+
+    @property
+    def eta2B(self):
+        """Returns:
+
+        eta2B -- one-body generator"""
+        return self._eta2B
+
+
+    @property
+    def f(self):
+        """Returns:
+
+        f -- one-body tensor elements (initialized by Hamiltonian object)"""
+        return self._f
+
+    @property
+    def G(self):
+        """Returns:
+
+        f -- two-body tensor elements (initialized by Hamiltonian object)"""
+        return self._G
+
+    @f.setter
+    def f(self, f):
+        """Sets the one-body tensor."""
+        self._f = f
+
+    @G.setter
+    def G(self, G):
+        """Sets the two-body tensor."""
+        self._G = G
+
+    def calc_eta(self):
+
+        bas1B = self._sp_basis
+        holes = self._holes
+        particles = self._particles
+        
+        f = self.f
+        G = self.G
+        lambda2b = self._lambda2b
+
+        occA = self._occA
+        occA4 = self._occA4
+        occB4 = self._occB4
+        occI4 = self._occI4
+        
+        # 1B generator
+        sum1_1b = np.multiply(occA, f)
+        sum1_1b = np.transpose(sum1_1b)
+        
+        sum2_1b_1 = tn.ncon([G, lambda2b], [(-2,1,2,3),(-1,1,2,3)])
+        sum2_1b_2 = tn.ncon([G, lambda2b], [(1,2,-1,3),(1,2,-2,3)])        
+        sum2_1b = sum2_1b_1 - sum2_1b_2
+        
+        eta1B = sum1_1b - 0.5*sum2_1b
+        
+        # 2B generator
+        sum1_2b = np.multiply(np.transpose(G,[2,3,0,1]), occI4)
+        
+        sum2_2b_1 = tn.ncon([f, lambda2b], [(1,-1),(1,-2,-3,-4)])
+        sum2_2b_2 = tn.ncon([f, lambda2b], [(-3,1),(-1,-2,1,-4)])
+        sum2_2b_3 = sum2_2b_1 - np.transpose(sum2_2b_1,[1,0,2,3])
+        sum2_2b_4 = sum2_2b_2 - np.transpose(sum2_2b_2,[0,1,3,2])
+        sum2_2b = sum2_2b_3 - sum2_2b_4
+
+        lambdaG = np.multiply(lambda2b,G)
+        sum3_2b_1 = np.multiply(np.transpose(lambdaG,[2,3,0,1]), occB4)
+        sum3_2b_2 = np.multiply(np.transpose(lambdaG,[2,3,0,1]), np.transpose(occB4,[2,3,0,1]))
+        sum3_2b = sum3_2b_1 - sum3_2b_2
+
+        occA_transpose = np.transpose(occA4, [2,0,1,3])
+        sum4_2b_1 = np.transpose(np.multiply(occA_transpose, G), [0,2,3,1])
+        sum4_2b_2 = tn.ncon([G, lambda2b], [(1,-3,2,-2), (1,-1,2,-4)])
+        sum4_2b = sum4_2b_2 - np.transpose(sum4_2b_2,[1,0,2,3]) - \
+                  - np.transpose(sum4_2b_2,[0,1,3,2]) + np.transpose(sum4_2b_2,[1,0,3,2])
+
+        # need to add 3B irreducible density matrix
+
+        eta2B = sum1_2b + sum2_2b + 0.5*sum3_2b + sum4_2b
+
+        # update the class members
+        self._eta1B = eta1B
+        self._eta2B = eta2B
+
+
+        return (eta1B, eta2B)
+
 
 class ImTimeGenerator(Generator):
     """Calculate Imaginary time generator for a normal ordered Hamiltonian."""
@@ -1082,3 +1449,4 @@ class ImTimeGenerator(Generator):
 
 
         return (eta1B, eta2B)
+

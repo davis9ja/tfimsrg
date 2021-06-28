@@ -126,6 +126,7 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
     print("Built occupation tensors")
 
     wg = WegnerGenerator3B(ha, ot)
+    #wg = WhiteGeneratorMP3B(ha)
     print("Built Wegner's generator")
 
     fl = Flow_IMSRG3(ha, ot)
@@ -156,14 +157,15 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
 
     # --- Solve the IM-SRG flow
     y0 = unravel(ha.E, ha.f, ha.G, wg.W)
-    
+    print(wg.W.shape, wg.eta3B.shape)
     solver = ode(derivative,jac=None)
     solver.set_integrator('vode', method='bdf', order=5, nsteps=500)
+    #solver.set_integrator('lsoda', max_order_s=10, nsteps=500)
     solver.set_f_params(ha, ot, wg, fl)
     solver.set_initial_value(y0, 0.)
 
     sfinal = 50
-    ds = 0.01
+    ds = 0.1
     s_vals = []
     E_vals = []
 
@@ -195,7 +197,25 @@ def main3b(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0):
         iters += 1
         # if iters == 1:
         #     break
+        
+        # if iters == 10:
 
+        #     for a in range(ha.n_sp_states):
+        #         for b in range(ha.n_sp_states):
+        #             for c in range(ha.n_sp_states):
+        #                 for d in range(ha.n_sp_states):
+        #                     me = Gs[a,b,c,d]
+        #                     if me != 0:
+        #                         print(a,b,c,d, me)
+        #     for a in range(ha.n_sp_states):
+        #         for b in range(ha.n_sp_states):
+        #             for c in range(ha.n_sp_states):
+        #                 for d in range(ha.n_sp_states):
+        #                     for e in range(ha.n_sp_states):
+        #                         for f in range(ha.n_sp_states):
+        #                             me = Ws[a,b,c,d,e,f]
+        #                             if me != 0:
+        #                                 print(a,b,c,d,e,f, me)
 
         if iters %10 == 0:
 #            print("iter: {:>6d} \t scale param: {:0.4f} \t E = {:0.9f}".format(iters, solver.t, Es))

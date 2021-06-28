@@ -23,17 +23,17 @@ import tensornetwork as tn
 #tn.set_default_backend("tensorflow")
 
 # USER MODULES
-from oop_imsrg.spin_sq import *
-from oop_imsrg.hamiltonian import *
-from oop_imsrg.occupation_tensors import *
-from oop_imsrg.generator import *
-from oop_imsrg.flow import *
-from oop_imsrg.plot_data import *
-# from oop_imsrg.display_memory import *
-import oop_imsrg.ci_pairing.cipy_pairing_plus_ph as ci_matrix
-from oop_imsrg.tests2B import *
+from tfimsrg.oop_imsrg.spin_sq import *
+from tfimsrg.oop_imsrg.hamiltonian import *
+from tfimsrg.oop_imsrg.occupation_tensors import *
+from tfimsrg.oop_imsrg.generator import *
+from tfimsrg.oop_imsrg.flow import *
+from tfimsrg.oop_imsrg.plot_data import *
+# from tfimsrg.oop_imsrg.display_memory import *
+import tfimsrg.oop_imsrg.ci_pairing.cipy_pairing_plus_ph as ci_matrix
+from tfimsrg.oop_imsrg.tests2B import *
 
-sys.path.append('/mnt/home/daviso53/Research/')
+#sys.path.append('/mnt/home/daviso53/Research/')
 from pyci.density_matrix.density_matrix import density_1b, density_2b
 import pyci.imsrg_ci.pyci_p3h as pyci
 import reference_state_ensemble.reference_ensemble as re
@@ -241,9 +241,12 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
     y0 = np.concatenate([unravel(ha.E, ha.f, ha.G), unravel(ss.E, ss.f, ss.G)], axis=0)
 
     H0B, H1B, H2B = get_vacuum_coeffs(ha.E, ha.f, ha.G, ha.sp_basis, ha.holes)
+    SS0B, SS1B, SS2B = get_vacuum_coeffs(ss.E, ss.f, ss.G, ss.sp_basis, ss.holes)
+        
     zero, eta1B_vac, eta2B_vac = get_vacuum_coeffs(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes)
 
     pickle.dump( (H0B, H1B, H2B, eta1B_vac, eta2B_vac), open( output_root+"/vac_coeffs_unevolved.p", "wb" ) )
+    pickle.dump( (SS0B, SS1B, SS2B), open( output_root+"/ss_vac_coeffs_unevolved.p", "wb" ) )
 
     solver = ode(derivative,jac=None)
     solver.set_integrator('vode', method='bdf', order=5, nsteps=1000)
@@ -276,8 +279,8 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
                          '2bc_SS', 
                          '||eta1b||',
                          '||eta2b||', 
-                         'f_full_trace',
-                         'G_full_trace',
+                         # 'f_full_trace',
+                         # 'G_full_trace',
                          'commute',
                          'commutePairedBlock']
         column_string = '{: >6}, '
@@ -325,7 +328,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
         s_expect_lst.append(s_expect)
         
 
-        if iters %10 == 0 and verbose: 
+        if iters % 2 == 0 and verbose: 
             zero, eta1Bv, eta2Bv = get_vacuum_coeffs(0.0,wg.eta1B,wg.eta2B,ha.sp_basis,ha.holes)
             ggme = pyci.matrix(n_holes, n_particles, zero, eta1Bv, eta2Bv, eta2Bv, imsrg=True)
             ssme = pyci.matrix(n_holes, n_particles, SS0B, SS1B, SS2B, SS2B, imsrg=True)
@@ -334,13 +337,13 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
             num_sp = n_holes+n_particles
             axes = (num_sp**2,num_sp**2)
 
-            Gnode = tn.Node(G_spins[np.ix_(ha.holes,ha.holes,ha.holes,ha.holes)])
-            Gnode[0] ^ Gnode[2]
-            Gnode[1] ^ Gnode[3]
-            result_ij = Gnode @ Gnode
+            # Gnode = tn.Node(G_spins[np.ix_(ha.holes,ha.holes,ha.holes,ha.holes)])
+            # Gnode[0] ^ Gnode[2]
+            # Gnode[1] ^ Gnode[3]
+            # result_ij = Gnode @ Gnode
             
-            #H1B = np.trace(Gs[np.ix_(ha.sp_basis,ha.holes,ha.sp_basis,ha.holes)], axis1=1,axis2=3)
-            f_full_trace = np.trace(SS1B[np.ix_(ha.holes,ha.holes)])
+            # #H1B = np.trace(Gs[np.ix_(ha.sp_basis,ha.holes,ha.sp_basis,ha.holes)], axis1=1,axis2=3)
+            # f_full_trace = np.trace(SS1B[np.ix_(ha.holes,ha.holes)])
 
             # SS2B_r = np.reshape(SS2B, (num_sp**2,num_sp**2))
             # H2B_r = np.reshape(H2B, (num_sp**2, num_sp**2))
@@ -355,8 +358,8 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
             
             
             hGd,hGod,sGd,sGod = np.reshape(hGd,axes),np.reshape(hGod,axes),np.reshape(sGd,axes),np.reshape(sGod,axes)
-            commute = np.linalg.norm(hme.dot(ssme) - ssme.dot(hme))
-            commutePairBlock = np.linalg.norm(hme[0:2,0:2].dot(ssme[0:2,0:2]) - ssme[0:2,0:2].dot(hme[0:2,0:2]))
+            commute = np.linalg.norm(ggme.dot(ssme) - ssme.dot(ggme))
+            commutePairBlock = np.linalg.norm(ggme[0:2,0:2].dot(ssme[0:2,0:2]) - ssme[0:2,0:2].dot(ggme[0:2,0:2]))
             data_columns = [iters, 
                             solver.t, 
                             Es,
@@ -368,8 +371,8 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
                             contract_2b,
                             norm_eta1B,
                             norm_eta2B,
-                            f_full_trace,
-                            result_ij.tensor,
+                            # f_full_trace,
+                            # result_ij.tensor,
                             commute,
                             commutePairBlock]
             column_string = '{:>6d}, '
@@ -385,9 +388,9 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
             #print(v0*v0)
             ws,vs = np.linalg.eigh(ssme)
 
-            with np.printoptions(linewidth=999,precision=4):
+            #with np.printoptions(linewidth=999,precision=4):
 
-                print(np.reshape(wg.eta2B, axes))
+            #     print(np.reshape(wg.eta2B, axes))
                 
                 # print(np.reshape(G_spins[np.ix_(ha.holes,ha.holes,ha.holes,ha.holes)],(4,4)))
                 # print(SS1B[np.ix_(ha.holes,ha.holes)])
@@ -424,7 +427,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
                                                                                                                                      # commute2bd,
                                                                                                                                      # commute2bod))
         
-        if flow_data_log and iters %10 == 0:
+        if flow_data_log and iters % 10 == 0:
             H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
             zero, eta1B_vac, eta2B_vac = get_vacuum_coeffs(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes)
             fname = output_root+'/vac_coeffs_flow_c{}.p'.format(iters)
@@ -463,13 +466,19 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
     zero, eta1B_vac, eta2B_vac = get_vacuum_coeffs(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes)
     #pickle.dump( coeffs, open( "mixed_state_test/pickled_coeffs/vac_coeffs_evolved.p", "wb" ) )
     pickle.dump((H0B, H1B, H2B, eta1B_vac, eta2B_vac), open(output_root+'/vac_coeffs_evolved.p', 'wb'))
+    pickle.dump((SS0B, SS1B, SS2B), open(output_root+'/ss_vac_coeffs_evolved.p', 'wb'))
 
     num_sp = n_holes+n_particles
 
     del ha, ot, wg, fl, solver, y0, sfinal
 
     expect_flow_df = pd.DataFrame({'s':s_vals, 'E_gs':E_gs_lst, 's_expect':s_expect_lst})
-    pickle.dump(expect_flow_df, open('expect_flow.p', 'wb'))
+    pickle.dump(expect_flow_df, 
+                open('expect_flow_{:d}{:d}_d{:.2f}_g{:.2f}_pb{:.2f}_ex1.p'.format(n_holes, 
+                                                                              n_particles,
+                                                                              d,g,pb), 
+                     'wb')
+    )
 
     return (convergence, iters, d, g, pb, num_sp, s_vals, E_vals, time_str)
  
@@ -534,36 +543,44 @@ if __name__ == '__main__':
     #0,3,14,15,28,35
 
     g = 0.5
-    pb = 0.0
+    pb = 0.1
+    nholes, nparticles = 4,4
 
-    hme = pyci.matrix(4,4,0.0,1.0,g,pb)
+    hme = pyci.matrix(nholes,nparticles,0.0,1.0,g,pb)
     w,v = np.linalg.eigh(hme)
     v0 = v[:,5]
 
     #ref = 0.7*np.array([1,1,1,1,0,0,0,0])+0.3*np.array([1,1,0,0,1,1,0,0])
 
-    basis = pyci.gen_basis(2,2)[:,1::]
+    basis = pyci.gen_basis(nholes,nparticles)[:,1::]
+    ref = basis[1,:]
+
     #ref = 0.2*basis[0,:]+ 0.8*basis[6, :]
     #ref = basis.T.dot(v0**2)
 
     #ref = 0.8*basis[0,:] + 0.2*basis[1,:]
 
     #ref = basis.T.dot(v0*v0)
-    ref = basis[0,:]
+
+    # ensemble = re.ReferenceEnsemble(6,nholes, nparticles, g, pb, 'white', '', '.')
+    # opt_x, lsq = ensemble.optimize_reference(4)
+    # ref = ensemble.refs.T.dot(opt_x)
+
+    #ref = basis[0,:]
 
     # ref_input = sys.argv[1]
     # ref = [int(x) for x in list(ref_input)]
 
     #ref = pickle.load(open('reference_g2.00_pb0.01_4-4.p', 'rb'))
     
-    main(2,2, g=g, ref=ref, pb=pb, generator='wegner')
+    main(nholes, nparticles, g=g, ref=ref, pb=pb, generator='white')
     print('FCI ENERGY = {: .8f}'.format(w[0]))
     data = pickle.load(open('expect_flow.p', 'rb'))
 
     fig = plt.figure(figsize=(8,4))
     sns.lineplot(x='s', y=data['E_gs']-data['E_gs'][0], data=data)
     sns.lineplot(x='s', y=data['s_expect']-data['s_expect'][0], data=data)
-    plt.legend(['E(s)/E(s=0)', 'SS(s)/SS(s=0)'])
+    plt.legend(['E(s)-E(s=0)', 'SS(s)-SS(s=0)'])
     plt.savefig('flow_conservation.png')
 
     hme = pyci.matrix(4,4,0.0,1.0,0.5,0.0)

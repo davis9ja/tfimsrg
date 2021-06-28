@@ -98,7 +98,7 @@ def derivative(t, y, inputs):
     E, f, G = ravel(y, hamiltonian.n_sp_states)
     generator.f = f
     generator.G = G
-    dE, df, dG = flow.flow(f, G, generator)
+    dE, df, dG = flow.flow(E, f, G, generator)
 
     # Spin-squared flow
     #E_spin, f_spin, G_spin = ravel(y[half::], tspinsq.n_sp_states)
@@ -155,7 +155,7 @@ def ravel(y, bas_len):
     return(ravel_E, ravel_f, ravel_G)
 
 # @profile
-def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_data_log=0, generator='wegner', output_root='.'):
+def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_data_log=0, generator='wegner', output_root='.'):
     """Main method uses scipy.integrate.ode to solve the IMSRG(2) flow
     equations.
 
@@ -200,19 +200,37 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
         ref = ha.reference # this is just for printing
 #        ss = TSpinSq(n_holes, n_particles)
     else:
-        ha = PairingHamiltonian2B(n_holes, n_particles, ref=ref, d=d, g=g, pb=pb)
+        ha = PairingHamiltonian2B(n_holes, n_particles, ref=ref, d=d, g=g, pb=pb, dens_weights=dens_weights)
 #        ss = TSpinSq(n_holes, n_particles)
 
     ot = OccupationTensors(ha.sp_basis, ha.reference)
 
-    generator_dict = {'wegner':WegnerGenerator(ha, ot), 
-                      'white':WhiteGenerator(ha),
-                      'white_mp':WhiteGeneratorMP(ha),
-                      'brillouin':BrillouinGenerator(ha),
-                      'imtime':ImTimeGenerator(ha)}
+    # generator_dict = {'wegner':WegnerGenerator(ha, ot), 
+    #                   'white':WhiteGenerator(ha),
+    #                   'white_mp':WhiteGeneratorMP(ha),
+    #                   'brillouin':BrillouinGenerator(ha),
+    #                   'imtime':ImTimeGenerator(ha),
+    #                   'brillouinMR':BrillouinGeneratorMR(ha, ot)}
 
-    wg = generator_dict[generator] #WegnerGenerator(ha, ot)
-    fl = Flow_IMSRG2(ha, ot) 
+    # ugly method for now until I figure out a better way 
+    if generator == 'wegner':
+        wg = WegnerGenerator(ha,ot)
+    elif generator == 'white':
+        wg = WhiteGenerator(ha)
+    elif generator == 'white_mp':
+        wg = WhiteGeneratorMP(ha)
+    elif generator == 'brillouin':
+        wg = BrillouinGenerator(ha)
+    elif generator == 'imtime':
+        wg = ImTimeGenerator(ha)
+    elif generator == 'brillouinMR':
+        wg = BrillouinGenerator(ha,ot)
+
+
+    if dens_weights is None:
+        fl = Flow_IMSRG2(ha, ot) 
+    else:
+        fl = Flow_MRIMSRG2(ha,ot)
 
     #wg_spin = WegnerGenerator(ss, ot)
 #    fl_spin = Flow_IMSRG2(ss, ot)
@@ -248,7 +266,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
     pickle.dump( (H0B, H1B, H2B, eta1B_vac, eta2B_vac), open( output_root+"/vac_coeffs_unevolved.p", "wb" ) )
 
     solver = ode(derivative,jac=None)
-    solver.set_integrator('vode', method='bdf', order=5, nsteps=1000)
+    solver.set_integrator('vode', method='bdf', order=7, nsteps=1000)
     solver.set_f_params([ha, ot, wg, fl])
     solver.set_initial_value(y0, 0.)
 
@@ -270,9 +288,10 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
         print_columns = ['iter', 
                          's', 
                          'E', 
-                         'CI_gs',  
+#                         'CI_gs',  
                          '||eta1b||',
-                         '||eta2b||']
+                         '||eta2b||'
+        ]
         column_string = '{: >6}, '
         for i, string in enumerate(print_columns[1::]):
             if i != len(print_columns)-2:
@@ -318,17 +337,46 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
         
 
         if iters %10 == 0 and verbose: 
-            zero, eta1Bv, eta2Bv = get_vacuum_coeffs(0.0,wg.eta1B,wg.eta2B,ha.sp_basis,ha.holes)
+            #zero, eta1Bv, eta2Bv = get_vacuum_coeffs(0.0,wg.eta1B,wg.eta2B,ha.sp_basis,ha.holes)
             # ggme = pyci.matrix(n_holes, n_particles, zero, eta1Bv, eta2Bv, eta2Bv, imsrg=True)
             # ssme = pyci.matrix(n_holes, n_particles, SS0B, SS1B, SS2B, SS2B, imsrg=True)
             norm_eta1B = np.linalg.norm(np.ravel(wg.eta1B))
             norm_eta2B = np.linalg.norm(np.ravel(wg.eta2B))
-            num_sp = n_holes+n_particles
-            axes = (num_sp**2,num_sp**2)
+            #num_sp = n_holes+n_particles
+            #axes = (num_sp**2,num_sp**2)
 
-            H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
-            hme = pyci.matrix(n_holes, n_particles, H0B, H1B, H2B, H2B, imsrg=True)
-            w,v = np.linalg.eigh(hme)
+            # ----------- DENSITY MATRICES -----------------------------------
+            # H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
+            # hme = pyci.matrix(n_holes, n_particles, H0B, H1B, H2B, H2B, imsrg=True)
+            # w,v = np.linalg.eigh(hme)
+            # v0 = v[:,eig_idx]
+
+            # rho1b = density_1b(n_holes,n_particles, weights=v0)
+            # rho2b = density_2b(n_holes,n_particles, weights=v0)
+            # rho2b_irr = np.zeros_like(rho2b)
+
+            # lambda_irr = np.zeros_like(rho2b)
+            # for i in ha.sp_basis:
+            #     for j in ha.sp_basis:
+            #         for k in ha.sp_basis:
+            #             for l in ha.sp_basis:
+            #                 lambda_irr[i,j,k,l] = rho2b[i,j,k,l] - rho1b[i,k]*rho1b[j,l] + rho1b[i,l]*rho1b[j,k]
+            #                 rho2b_irr[i,j,k,l] = rho2b[i,j,k,l] - lambda_irr[i,j,k,l]
+                            
+            # lambda_irr_norm = np.linalg.norm(np.reshape(lambda_irr,(ha.n_sp_states**2,ha.n_sp_states**2)))
+
+            # contract_1b = np.einsum('ij,ij', rho1b, H1B)
+
+            # rho_reshape_2b = np.reshape(rho2b, (ha.n_sp_states**2,ha.n_sp_states**2))
+            # h2b_reshape_2b = np.reshape(H2B, (ha.n_sp_states**2,ha.n_sp_states**2))
+            # contract_2b = np.einsum('ij,ij', rho_reshape_2b, h2b_reshape_2b)
+
+            # E_expect = H0B + contract_1b + 0.25*contract_2b
+            #----------------------------------------------------------------------
+
+            #H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
+            #hme = pyci.matrix(n_holes, n_particles, H0B, H1B, H2B, H2B, imsrg=True)
+            #w,v = np.linalg.eigh(hme)
 
 
             # SS2B_r = np.reshape(SS2B, (num_sp**2,num_sp**2))
@@ -353,7 +401,7 @@ def main(n_holes, n_particles, ref=None, d=1.0, g=0.5, pb=0.0, verbose=1, flow_d
             data_columns = [iters, 
                             solver.t, 
                             Es,
-                            w[eig_idx],
+#                            w[eig_idx],
                             norm_eta1B,
                             norm_eta2B]
             column_string = '{:>6d}, '
@@ -509,11 +557,11 @@ if __name__ == '__main__':
     #0,3,14,15,28,35
 
     g = 0.5
-    pb = 0.1
+    pb = 0.0
 
     hme = pyci.matrix(4,4,0.0,1.0,g,pb)
     w,v = np.linalg.eigh(hme)
-    v0 = v[:,5]
+    v0 = v[:,0]
 
     #ref = 0.7*np.array([1,1,1,1,0,0,0,0])+0.3*np.array([1,1,0,0,1,1,0,0])
 
@@ -523,15 +571,19 @@ if __name__ == '__main__':
 
     #ref = 0.8*basis[0,:] + 0.2*basis[1,:]
 
-    #ref = basis.T.dot(v0*v0)
-    ref = basis[0,:]
+    ref = basis.T.dot(v0*v0)
+    #ref = basis[0,:]
 
     # ref_input = sys.argv[1]
     # ref = [int(x) for x in list(ref_input)]
 
     #ref = pickle.load(open('reference_g2.00_pb0.01_4-4.p', 'rb'))
     
-    main(4,4, g=g, ref=ref, pb=pb, generator='wegner')
+    main(4,4, g=g, ref=ref, pb=pb, generator='brillouinMR', dens_weights=v0)#dens_weights=np.append([1.0], np.zeros(35)))
+    H0B, H1B, H2B, eta1b_vac, eta2b_vac = pickle.load(open('vac_coeffs_evolved.p', 'rb'))
+    imsrg_hme = pyci.matrix(4,4, H0B, H1B, H2B, H2B, imsrg=True)
+    imsrg_w,imsrg_v = np.linalg.eigh(imsrg_hme)
+    print('IMSRG ENERGY = {: .8f}'.format(imsrg_w[0]))
     print('FCI ENERGY = {: .8f}'.format(w[0]))
     data = pickle.load(open('expect_flow.p', 'rb'))
 
