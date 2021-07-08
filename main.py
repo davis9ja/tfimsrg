@@ -557,7 +557,7 @@ if __name__ == '__main__':
     #0,3,14,15,28,35
 
     g = 0.5
-    pb = 0.0
+    pb = 0.1
 
     hme = pyci.matrix(4,4,0.0,1.0,g,pb)
     w,v = np.linalg.eigh(hme)
@@ -571,15 +571,15 @@ if __name__ == '__main__':
 
     #ref = 0.8*basis[0,:] + 0.2*basis[1,:]
 
-    ref = basis.T.dot(v0*v0)
-    #ref = basis[0,:]
+    #ref = basis.T.dot(v0*v0)
+    ref = basis[0,:]
 
     # ref_input = sys.argv[1]
     # ref = [int(x) for x in list(ref_input)]
 
     #ref = pickle.load(open('reference_g2.00_pb0.01_4-4.p', 'rb'))
     
-    main(4,4, g=g, ref=ref, pb=pb, generator='brillouinMR', dens_weights=v0)#dens_weights=np.append([1.0], np.zeros(35)))
+    main(4,4, g=g, ref=ref, pb=pb, generator='white', dens_weights=np.append([1.0], np.zeros(35)))
     H0B, H1B, H2B, eta1b_vac, eta2b_vac = pickle.load(open('vac_coeffs_evolved.p', 'rb'))
     imsrg_hme = pyci.matrix(4,4, H0B, H1B, H2B, H2B, imsrg=True)
     imsrg_w,imsrg_v = np.linalg.eigh(imsrg_hme)

@@ -1,10 +1,11 @@
 import numpy as np
+import time
 #import tensorflow as tf
 # tf.enable_v2_behavior()
 import tensornetwork as tn
 tn.set_default_backend("numpy") 
 
-from pyci.density_matrix.density_matrix import density_1b, density_2b
+from pyci.density_matrix.density_matrix import density_1b, density_2b, density_3b
 import pyci.imsrg_ci.pyci_p3h as pyci
 
 
@@ -37,6 +38,7 @@ class PairingHamiltonian2B(Hamiltonian):
         g -- the pairing strength (default: 0.5)
         pb -- strength of the pair-breaking term (operates in double particle basis) (default: 0.0)"""
 
+        print('Start Hamiltonian')
         self._d = d
         self._g = g
         self._pb = pb
@@ -57,10 +59,16 @@ class PairingHamiltonian2B(Hamiltonian):
 
         self._H1B, self._H2B = self.construct()
 
+        self._rho1b = None
+        self._rho2b = None
+        self._rho3b = None
+
         if dens_weights is None:
             self._E, self._f, self._G = self.normal_order()
         else:
-            self._E, self._f, self._G = self.normal_order_slow(dens_weights)
+            self._rho1b, self._rho2b, self._rho3b = self.make_densities(dens_weights)
+
+            self._E, self._f, self._G = self.normal_order_slow(self._rho1b,self._rho2b)
 
         self._dens_weights = dens_weights
 
@@ -155,6 +163,29 @@ class PairingHamiltonian2B(Hamiltonian):
         G -- two-body (rank 4) tensor defined by normal_order()."""
         return self._G
 
+    def make_densities(self, dens_weights):
+
+        holes = self.holes
+        particles = self.particles
+
+        ti = time.time()
+        rho1b = density_1b(len(holes), len(particles), weights=dens_weights)
+        tf = time.time()
+        print('generated 1b density in {: .4f} seconds'.format(tf-ti))
+
+        ti = time.time()
+        rho2b = density_2b(len(holes), len(particles), weights=dens_weights)
+        tf = time.time()
+        print('generated 2b density in {: .4f} seconds'.format(tf-ti))
+
+        ti = time.time()
+        rho3b = density_3b(len(holes), len(particles), weights=dens_weights)
+        tf = time.time()
+        print('generated 3b density in {: .4f} seconds'.format(tf-ti))
+        
+
+        return (rho1b, rho2b, rho3b)
+        
 
     def delta2B(self, p,q,r,s):
         """Determines if a two-body tensor elements should be zero,
@@ -305,7 +336,7 @@ class PairingHamiltonian2B(Hamiltonian):
 
         return (E, f, G)
 
-    def normal_order_slow(self, dens_weights):
+    def normal_order_slow(self, rho1b, rho2b):
 
         bas1B = self.sp_basis # get the single particle basis
         H1B_t = self.H1B.astype(np.float32)   # get the 1B tensor
@@ -322,9 +353,7 @@ class PairingHamiltonian2B(Hamiltonian):
         # w,v = np.linalg.eigh(hme)
         # v0 = v[:, 0]
 
-        rho1b = density_1b(len(holes), len(particles), weights=dens_weights)
-        rho2b = density_2b(len(holes), len(particles), weights=dens_weights)
-        
+
         contract_1b = np.einsum('ij,ij', rho1b, H1B_t)
 
         rho_reshape_2b = np.reshape(rho2b, (n_states**2,n_states**2))

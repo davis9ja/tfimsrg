@@ -1222,6 +1222,7 @@ class BrillouinGeneratorMR(Generator):
 
     def __init__(self, h, occ):
 
+        print('Start BrilluoinMR generator')
         assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
         
         self.f = h.f
@@ -1241,8 +1242,17 @@ class BrillouinGeneratorMR(Generator):
         self._occB4 = occ.occB4.tensor
         self._occI4 = occ.occI4.tensor
 
-        rho1b = density_1b(len(h.holes), len(h.particles), weights=h._dens_weights)
-        rho2b = density_2b(len(h.holes), len(h.particles), weights=h._dens_weights)
+        rho1b = h._rho1b
+        rho2b = h._rho2b
+        rho3b = h._rho3b
+
+        # rho1b = density_1b(len(h.holes), len(h.particles), weights=h._dens_weights)
+        # rho2b = density_2b(len(h.holes), len(h.particles), weights=h._dens_weights)
+        
+        # ti = time.time()
+        # rho3b = density_3b(len(holes), len(particles), weights=h._dens_weights)
+        # tf = time.time()
+        # print('generated 3b density in {: .4f} seconds'.format(tf-ti))
 
         lambda2b = np.zeros_like(rho2b)
         for i in h.sp_basis:
@@ -1250,9 +1260,24 @@ class BrillouinGeneratorMR(Generator):
                 for k in h.sp_basis:
                     for l in h.sp_basis:
                         lambda2b[i,j,k,l] += rho2b[i,j,k,l] - rho1b[i,k]*rho1b[j,l] + rho1b[i,l]*rho1b[j,k]
-
+        
+        lambda3b = np.zeros_like(rho3b)
+        for i in h.sp_basis:
+            for j in h.sp_basis:
+                for k in h.sp_basis:
+                    for l in h.sp_basis:
+                        for m in h.sp_basis:
+                            for n in h.sp_basis:
+                                lambda3b[i,j,k,l,m,n] += rho3b[i,j,k,l,m,n] - rho1b[i,l]*lambda2b[j,k,m,n] -\
+                                                         rho1b[j,m]*lambda2b[i,k,l,n] - rho1b[k,n]*lambda2b[i,j,l,m] +\
+                                                         rho1b[i,m]*lambda2b[j,k,l,n] + rho1b[i,n]*lambda2b[j,k,m,l] +\
+                                                         rho1b[j,l]*lambda2b[i,k,m,n] + rho1b[j,n]*lambda2b[i,k,l,m] +\
+                                                         rho1b[k,l]*lambda2b[i,j,n,m] + rho1b[k,m]*lambda2b[i,j,l,n] -\
+                                                         rho1b[i,l]*rho1b[j,m]*rho1b[k,n] - rho1b[i,m]*rho1b[j,n]*rho1b[k,l] -\
+                                                         rho1b[i,n]*rho1b[j,l]*rho1b[k,m] + rho1b[i,l]*rho1b[j,n]*rho1b[k,m] +\
+                                                         rho1b[j,m]*rho1b[i,n]*rho1b[k,l] + rho1b[i,m]*rho1b[j,l]*rho1b[k,n]
         self._lambda2b = lambda2b
-
+        self._lambda3b = lambda3b
         self._eta1B = np.zeros_like(self.f)
         self._eta2B = np.zeros_like(self.G)
 
@@ -1304,6 +1329,7 @@ class BrillouinGeneratorMR(Generator):
         f = self.f
         G = self.G
         lambda2b = self._lambda2b
+        lambda3b = self._lambda3b
 
         occA = self._occA
         occA4 = self._occA4
@@ -1329,7 +1355,7 @@ class BrillouinGeneratorMR(Generator):
         sum2_2b_4 = sum2_2b_2 - np.transpose(sum2_2b_2,[0,1,3,2])
         sum2_2b = sum2_2b_3 - sum2_2b_4
 
-        lambdaG = np.multiply(lambda2b,G)
+        lambdaG = np.matmul(lambda2b,G)
         sum3_2b_1 = np.multiply(np.transpose(lambdaG,[2,3,0,1]), occB4)
         sum3_2b_2 = np.multiply(np.transpose(lambdaG,[2,3,0,1]), np.transpose(occB4,[2,3,0,1]))
         sum3_2b = sum3_2b_1 - sum3_2b_2
@@ -1340,9 +1366,13 @@ class BrillouinGeneratorMR(Generator):
         sum4_2b = sum4_2b_2 - np.transpose(sum4_2b_2,[1,0,2,3]) - \
                   - np.transpose(sum4_2b_2,[0,1,3,2]) + np.transpose(sum4_2b_2,[1,0,3,2])
 
-        # need to add 3B irreducible density matrix
+        sum5_2b_1 = tn.ncon([G, lambda3b], [(-3,1,2,3),(1,-1,-2,2,3,-4)])
+        sum5_2b_2 = tn.ncon([G, lambda3b], [(1,2,-1,3),(1,2,-2,3,-3,-4)])
+        sum5_2b_3 = np.transpose(sum5_2b_1, [0,1,3,2])
+        sum5_2b_4 = np.transpose(sum5_2b_2, [1,0,2,3])
+        sum5_2b = sum5_2b_1 - sum5_2b_3 - sum5_2b_2 + sum5_2b_4
 
-        eta2B = sum1_2b + sum2_2b + 0.5*sum3_2b + sum4_2b
+        eta2B = sum1_2b + sum2_2b + 0.5*sum3_2b + sum4_2b + 0.5*sum5_2b
 
         # update the class members
         self._eta1B = eta1B
