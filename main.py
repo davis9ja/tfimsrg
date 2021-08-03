@@ -38,7 +38,7 @@ from pyci.density_matrix.density_matrix import density_1b, density_2b
 import pyci.imsrg_ci.pyci_p3h as pyci
 #import reference_state_ensemble.reference_ensemble as re
 
-def get_vacuum_coeffs(E, f, G, basis, holes):
+def get_vacuum_coeffs(E, f, G, basis, holes, rho1b, rho2b):
 
     H2B = G
     H1B = f - np.trace(G[np.ix_(basis,holes,basis,holes)], axis1=1,axis2=3) 
@@ -50,6 +50,22 @@ def get_vacuum_coeffs(E, f, G, basis, holes):
 
 
     H0B = E - np.trace(H1B[np.ix_(holes,holes)]) - 0.5*result_ij.tensor
+
+    return (H0B, H1B, H2B)
+
+def get_vacuum_coeffs_dm(E, f, G, basis, holes, rho1b, rho2b):
+
+    n_states = len(basis)
+
+    H2B = G
+    H1B = f - np.einsum('piqj,ij', H2B, rho1b)
+    
+    contract_1b = np.einsum('ij,ij', rho1b, H1B)
+    rho_reshape_2b = np.reshape(rho2b, (n_states**2,n_states**2))
+    h2b_reshape_2b = np.reshape(H2B, (n_states**2,n_states**2))
+    contract_2b = np.einsum('ij,ij', rho_reshape_2b, h2b_reshape_2b)
+
+    H0B = E - contract_1b - 0.25*contract_2b
 
     return (H0B, H1B, H2B)
 
@@ -196,7 +212,7 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
         os.mkdir(output_root)
 
     if ref is None:
-        ha = PairingHamiltonian2B(n_holes, n_particles, d=d, g=g, pb=pb)
+        ha = PairingHamiltonian2B(n_holes, n_particles, d=d, g=g, pb=pb, dens_weights=dens_weights)
         ref = ha.reference # this is just for printing
 #        ss = TSpinSq(n_holes, n_particles)
     else:
@@ -225,15 +241,22 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
         wg = ImTimeGenerator(ha)
     elif generator == 'brillouinMR':
         wg = BrillouinGeneratorMR(ha,ot)
-
+    elif generator == 'white_atan':
+        wg = WhiteGeneratorAtan(ha)
 
     if dens_weights is None:
         fl = Flow_IMSRG2(ha, ot) 
     else:
         fl = Flow_MRIMSRG2(ha,ot)
-
+        print('yes')
     #wg_spin = WegnerGenerator(ss, ot)
-#    fl_spin = Flow_IMSRG2(ss, ot)
+    #fl_spin = Flow_IMSRG2(ss, ot)
+
+    if dens_weights is None:
+        gvc = get_vacuum_coeffs
+    else:
+        gvc = get_vacuum_coeffs_dm
+        print("Using DM normal order scheme")
 
     initf = time.time() # finish instantiation timer
 
@@ -260,13 +283,13 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
     #y0 = np.concatenate([unravel(ha.E, ha.f, ha.G), unravel(ss.E, ss.f, ss.G)], axis=0)
     y0 = unravel(ha.E, ha.f, ha.G)
 
-    H0B, H1B, H2B = get_vacuum_coeffs(ha.E, ha.f, ha.G, ha.sp_basis, ha.holes)
-    zero, eta1B_vac, eta2B_vac = get_vacuum_coeffs(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes)
+    H0B, H1B, H2B = gvc(ha.E, ha.f, ha.G, ha.sp_basis, ha.holes, ha._rho1b, ha._rho2b)
+    zero, eta1B_vac, eta2B_vac = gvc(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes, ha._rho1b, ha._rho2b)
 
-    pickle.dump( (H0B, H1B, H2B, eta1B_vac, eta2B_vac), open( output_root+"/vac_coeffs_unevolved.p", "wb" ) )
+    pickle.dump( (0.0, ha.H1B, ha.H2B, eta1B_vac, eta2B_vac), open( output_root+"/vac_coeffs_unevolved.p", "wb" ) )
 
     solver = ode(derivative,jac=None)
-    solver.set_integrator('vode', method='bdf', order=7, nsteps=1000)
+    solver.set_integrator('vode', method='bdf', order=5, nsteps=1000)
     solver.set_f_params([ha, ot, wg, fl])
     solver.set_initial_value(y0, 0.)
 
@@ -314,8 +337,8 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
         E_vals.append(Es)
         
         # compute density matrices, get expectation values
-#        H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
-#        SS0B, SS1B, SS2B = get_vacuum_coeffs(E_spins, f_spins, G_spins, ss.sp_basis, ss.holes)
+#        H0B, H1B, H2B = gvc(Es, fs, Gs, ha.sp_basis, ha.holes)
+#        SS0B, SS1B, SS2B = gvc(E_spins, f_spins, G_spins, ss.sp_basis, ss.holes)
 #        hme = pyci.matrix(n_holes, n_particles, H0B, H1B, H2B, H2B, imsrg=True)
 #        w,v = np.linalg.eigh(hme)
 #        v0 = v[:,eig_idx]
@@ -337,7 +360,7 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
         
 
         if iters %10 == 0 and verbose: 
-            #zero, eta1Bv, eta2Bv = get_vacuum_coeffs(0.0,wg.eta1B,wg.eta2B,ha.sp_basis,ha.holes)
+            #zero, eta1Bv, eta2Bv = gvc(0.0,wg.eta1B,wg.eta2B,ha.sp_basis,ha.holes)
             # ggme = pyci.matrix(n_holes, n_particles, zero, eta1Bv, eta2Bv, eta2Bv, imsrg=True)
             # ssme = pyci.matrix(n_holes, n_particles, SS0B, SS1B, SS2B, SS2B, imsrg=True)
             norm_eta1B = np.linalg.norm(np.ravel(wg.eta1B))
@@ -346,7 +369,7 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
             #axes = (num_sp**2,num_sp**2)
 
             # ----------- DENSITY MATRICES -----------------------------------
-            # H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
+            # H0B, H1B, H2B = gvc(Es, fs, Gs, ha.sp_basis, ha.holes)
             # hme = pyci.matrix(n_holes, n_particles, H0B, H1B, H2B, H2B, imsrg=True)
             # w,v = np.linalg.eigh(hme)
             # v0 = v[:,eig_idx]
@@ -374,7 +397,7 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
             # E_expect = H0B + contract_1b + 0.25*contract_2b
             #----------------------------------------------------------------------
 
-            #H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
+            #H0B, H1B, H2B = gvc(Es, fs, Gs, ha.sp_basis, ha.holes)
             #hme = pyci.matrix(n_holes, n_particles, H0B, H1B, H2B, H2B, imsrg=True)
             #w,v = np.linalg.eigh(hme)
 
@@ -451,13 +474,13 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
                                                                                                                                      # commute2bod))
         
         if flow_data_log and iters %10 == 0:
-            H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
-            zero, eta1B_vac, eta2B_vac = get_vacuum_coeffs(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes)
+            H0B, H1B, H2B = gvc(Es, fs, Gs, ha.sp_basis, ha.holes, ha._rho1b, ha._rho2b)
+            zero, eta1B_vac, eta2B_vac = gvc(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes, ha._rho1b, ha._rho2b)
             fname = output_root+'/vac_coeffs_flow_c{}.p'.format(iters)
             pickle.dump((solver.t, H0B, H1B, H2B, eta1B_vac, eta2B_vac), open(fname, 'wb'))
 
 #        if iters %20 == 0 and verbose:
-#            coeffs = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
+#            coeffs = gvc(Es, fs, Gs, ha.sp_basis, ha.holes)
 #            pickle.dump( coeffs, open( "mixed_state_test/pickled_coeffs/vac_coeffs_s{}.p".format(iters), "wb" ) )
 
         if len(E_vals) > 100 and abs(E_vals[-1] - E_vals[-2]) < 10**-8:
@@ -485,8 +508,8 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
 
     if verbose: print("IM-SRG(2) converged in {:2.5f} seconds".format(flowf-flowi))
 
-    H0B, H1B, H2B = get_vacuum_coeffs(Es, fs, Gs, ha.sp_basis, ha.holes)
-    zero, eta1B_vac, eta2B_vac = get_vacuum_coeffs(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes)
+    H0B, H1B, H2B = gvc(Es, fs, Gs, ha.sp_basis, ha.holes, ha._rho1b, ha._rho2b)
+    zero, eta1B_vac, eta2B_vac = gvc(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes, ha._rho1b, ha._rho2b)
     #pickle.dump( coeffs, open( "mixed_state_test/pickled_coeffs/vac_coeffs_evolved.p", "wb" ) )
     pickle.dump((H0B, H1B, H2B, eta1B_vac, eta2B_vac), open(output_root+'/vac_coeffs_evolved.p', 'wb'))
 
@@ -557,7 +580,7 @@ if __name__ == '__main__':
     #0,3,14,15,28,35
 
     g = 0.5
-    pb = 0.1
+    pb = 0.0
 
     hme = pyci.matrix(4,4,0.0,1.0,g,pb)
     w,v = np.linalg.eigh(hme)
@@ -571,15 +594,15 @@ if __name__ == '__main__':
 
     #ref = 0.8*basis[0,:] + 0.2*basis[1,:]
 
-    #ref = basis.T.dot(v0*v0)
-    ref = basis[0,:]
+    ref = basis.T.dot(v0*v0)
+    #ref = basis[0,:]
 
     # ref_input = sys.argv[1]
     # ref = [int(x) for x in list(ref_input)]
 
     #ref = pickle.load(open('reference_g2.00_pb0.01_4-4.p', 'rb'))
     
-    main(4,4, g=g, ref=ref, pb=pb, generator='white', dens_weights=np.append([1.0], np.zeros(35)))
+    main(4,4, g=g, ref=ref, pb=pb, generator='brillouinMR', dens_weights=v0)#dens_weights=np.append([1.0], np.zeros(35)))
     H0B, H1B, H2B, eta1b_vac, eta2b_vac = pickle.load(open('vac_coeffs_evolved.p', 'rb'))
     imsrg_hme = pyci.matrix(4,4, H0B, H1B, H2B, H2B, imsrg=True)
     imsrg_w,imsrg_v = np.linalg.eigh(imsrg_hme)

@@ -239,18 +239,18 @@ class OccupationTensors(object):
             
 
         if flag == 1:
-            # occA = np.zeros((n,n),dtype=np.float32)
+            occA = np.zeros((n,n),dtype=np.float32)
 
-            # for a in bas1B:
-            #     for b in bas1B:
-            #         occA[a,b] = ref[a] - ref[b]
+            for a in bas1B:
+                for b in bas1B:
+                    occA[a,b] = ref[a] - ref[b]
 
-            Ga = tn.Node(np.append(ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(self.DATA_TYPE))
-            Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(self.DATA_TYPE)))
-            Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
+            # Ga = tn.Node(np.append(ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(self.DATA_TYPE))
+            # Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(self.DATA_TYPE)))
+            # Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
             
-            final = tn.outer_product(Gab, tn.Node(np.ones((n,n))))
-
+            # final = tn.outer_product(Gab, tn.Node(np.ones((n,n))))
+            final = tn.outer_product(tn.Node(occA), tn.Node(np.ones((n,n))))
             occA = final
 
         return occA
@@ -314,12 +314,13 @@ class OccupationTensors(object):
             # for a in bas1B:
             #     for b in bas1B:
             #         occB[a,b] = 1 - ref[a] - ref[b]
+            # final = tn.outer_product(tn.Node(occB), tn.Node(np.ones((n,n))))
 
             Ga = tn.Node(np.append(1-ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(self.DATA_TYPE))
             Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(self.DATA_TYPE)))
             Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
             final = tn.outer_product(Gab, tn.Node(np.ones((n,n))))
-
+            
             occB = final
 
         return occB
@@ -655,6 +656,9 @@ class OccupationTensors(object):
         if flag:
             occI = tn.outer_product(tn.Node(occI), tn.Node(np.ones((n,n))))
         else:
+            occI_rs = np.reshape(occI, (n**2, n**2))
+            occI_rs = -1*occI_rs.conj().T
+            occI = np.reshape(occI, (n,n,n,n))
             occI = tn.Node(occI)
         return occI
 

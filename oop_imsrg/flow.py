@@ -1,7 +1,7 @@
 #import tensorflow as tf
 # tf.enable_v2_behavior()
 #import tensornetwork as tn
-#import numpy as np
+import numpy as np
 from tfimsrg.oop_imsrg.hamiltonian import *
 from tfimsrg.oop_imsrg.occupation_tensors import *
 from tfimsrg.oop_imsrg.generator import *
@@ -577,16 +577,14 @@ class Flow_MRIMSRG2(Flow):
         # rho1b = density_1b(len(h.holes), len(h.particles), weights=h._dens_weights)
         # rho2b = density_2b(len(h.holes), len(h.particles), weights=h._dens_weights)
         rho1b = h._rho1b
-        rho2b = h._rho2b
+        rho2b = h._rho2b        
+        self._lambda2b = h._lambda2b
+        self._lambda3b = h._lambda3b
 
-        lambda2b = np.zeros_like(rho2b)
-        for i in h.sp_basis:
-            for j in h.sp_basis:
-                for k in h.sp_basis:
-                    for l in h.sp_basis:
-                        lambda2b[i,j,k,l] += rho2b[i,j,k,l] - rho1b[i,k]*rho1b[j,l] + rho1b[i,l]*rho1b[j,k]
+        numstates = len(self._holes)+len(self._particles)
+        print('norm of lambda2b = {: .8f}'.format(np.linalg.norm(np.reshape(self._lambda2b, (numstates**2, numstates**2)))))
 
-        self._lambda2b = lambda2b
+        self._h = h
 
     def get_vacuum_coeffs(self, E, f, G, basis, holes):
             
@@ -619,7 +617,6 @@ class Flow_MRIMSRG2(Flow):
 
         assert isinstance(gen, Generator), "Arg 0 must be Generator object"
 
-
         eta1B, eta2B = gen.calc_eta()
 
         occA = self._occA
@@ -631,7 +628,8 @@ class Flow_MRIMSRG2(Flow):
         occG = self._occG
 
         lambda2b = self._lambda2b
-
+        lambda3b = self._lambda3b
+        
         # - Calculate dG/ds
         # first term (single index sum)
         sum1_2b_1 = tn.ncon([eta1B, G], [(-1,1),(1,-2,-3,-4)])
@@ -660,10 +658,18 @@ class Flow_MRIMSRG2(Flow):
         sum3_2b_2 = tn.ncon([GPrime, eta2B], [(-1,1,-3,2), (-2,2,-4,1)])
         sum3_2b_3 = tn.ncon([eta2BPrime, G], [(-2,1,-3,2), (-1,2,-4,1)])
         sum3_2b_4 = tn.ncon([GPrime, eta2B], [(-2,1,-3,2), (-1,2,-4,1)])
+
         sum3_2b = sum3_2b_1 - sum3_2b_2 - sum3_2b_3 + sum3_2b_4
 
         dG = sum1_2b + 0.5*sum2_2b + sum3_2b
 
+        # numStates = len(self._particles)+len(self._holes)
+        # dG_rs = np.reshape(dG, (numStates**2, numStates**2))
+        # dG_rs = +1*dG_rs.conj().T
+        # dG = np.reshape(dG_rs, (numStates, numStates, numStates, numStates))
+
+        norm = np.linalg.norm
+        #print(norm(dG), norm(sum1_2b), norm(sum2_2b), norm(sum3_2b))
 
         # - Calculate df/ds
         # first term
@@ -702,10 +708,11 @@ class Flow_MRIMSRG2(Flow):
         sum7_1b_2 = tn.ncon([G, lambda2b, eta2B], [(-1,1,-2,2), (1,3,4,5), (2,3,4,5)])
         sum7_1b = sum7_1b_1 - sum7_1b_2
         
+        #sum2_1b,sum3_1b,sum4_1b,sum5_1b,sum6_1b,sum7_1b =0,0,0,0,0,0
 
         df = sum1_1b + sum2_1b + 0.5*sum3_1b + 0.25*sum4_1b + sum5_1b - 0.5*sum6_1b + 0.5*sum7_1b
-
-
+        
+        # df = +1*df.conj().T
 
         # - Calculate dE/ds
         # first term
@@ -721,9 +728,11 @@ class Flow_MRIMSRG2(Flow):
 
         sum3_0b = tn.ncon([dG, lambda2b], [(1,2,3,4), (1,2,3,4)])
 
-        dE = sum1_0b + 0.25*sum2_0b + 0.25*sum3_0b
+        sum4_0b_1 = tn.ncon([eta2B, lambda3b, G], [(1,2,3,4), (2,5,6,3,4,7), (5,6,1,7)])
+        sum4_0b_2 = tn.ncon([G, lambda3b, eta2B], [(1,2,3,4), (2,5,6,3,4,7), (5,6,1,7)])
+        sum4_0b = sum4_0b_1 - sum4_0b_2
 
-
+        dE = sum1_0b + 0.25*sum2_0b + 0.25*sum3_0b + 0.25*sum4_0b
 
         return (dE, df, dG)
         

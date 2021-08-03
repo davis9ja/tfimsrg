@@ -786,7 +786,6 @@ class WhiteGenerator(Generator):
                 else:
                     result = f[a,i] / denom
 
-
                 eta1B[a,i] = result
                 eta1B[i,a] = -result
                 
@@ -819,7 +818,7 @@ class WhiteGenerator(Generator):
                         #    print('two body {}{}{}{},'.format(a,b,i,j), denom)
                         # if a == 5 and b == 4 and i == 3 and j ==2:
                         #     print(denom)
-                        #print(eta2B[5,4,3,2])
+                        # print(eta2B[5,4,3,2])
                     
                     
         return (eta1B, eta2B)
@@ -854,8 +853,8 @@ class WhiteGenerator(Generator):
                 eta1B[a,i] = result
                 eta1B[i,a] = -result
                 
-                # if denom < 1:
-                #     print('one body {}{},'.format(a, i), denom)
+                # if abs(denom) < 0.001:
+                #     print('one body',a,i, denom)
                 # if a == 4 and i == 3:
                 #     print(G[a,i,a,i])
 
@@ -884,14 +883,173 @@ class WhiteGenerator(Generator):
                         eta2B[a,b,i,j] = result
                         eta2B[i,j,a,b] = -result
 
-                        # if denom < 1:
-                        #    print('two body {}{}{}{},'.format(a,b,i,j), denom)
+                        # if abs(denom) < 0.001:
+                        #    print('two body ', a,b,i,j, denom)
                         # if a == 5 and b == 4 and i == 3 and j ==2:
                         #     print(denom)
-                        #print(eta2B[5,4,3,2])
+                        # print(eta2B[5,4,3,2])
                     
                     
         return (eta1B, eta2B)
+
+class WhiteGeneratorAtan(Generator):
+    """Calculate White's generator for a normal ordered Hamiltonian.
+       This implemenation uses Epstein-Nesbet denominator and regulates
+       via the arctan."""
+
+    
+    def __init__(self, h):
+
+#        assert isinstance(h, Hamiltonian), "Arg 0 must be Hamiltonian object"
+        
+        self._my_f = h.f
+        self._my_G = h.G
+        
+        self._holes = h.holes
+        self._particles = h.particles
+        self._sp_basis = h.sp_basis
+
+        self._reference = h.reference
+
+        self._eta1B = np.zeros_like(self.f)
+        self._eta2B = np.zeros_like(self.G)
+
+    @property
+    def eta1B(self):
+        """Returns:
+
+        eta1B -- one-body generator"""
+        return self._eta1B
+
+    @property
+    def eta2B(self):
+        """Returns:
+
+        eta2B -- one-body generator"""
+        return self._eta2B
+
+
+    @property
+    def f(self):
+        """Returns:
+
+        f -- one-body tensor elements (initialized by Hamiltonian object)"""
+        return self._my_f
+
+    @property
+    def G(self):
+        """Returns:
+
+        f -- two-body tensor elements (initialized by Hamiltonian object)"""
+        return self._my_G
+
+    @f.setter
+    def f(self, f):
+        """Sets the one-body tensor."""
+        self._my_f = f
+
+    @G.setter
+    def G(self, G):
+        """Sets the two-body tensor."""
+        self._my_G = G
+
+
+    def calc_eta(self):
+
+        bas1B = self._sp_basis
+        holes = self._holes
+        particles = self._particles
+        ref = self._reference
+
+        f = self.f
+        G = self.G
+
+        eta1B, eta2B = self._wrapper_calc_eta_generalized_ph(bas1B, holes, particles, f, G, ref)
+        #eta1B, eta2B = self._wrapper_calc_eta(bas1B, holes, particles, f, G, ref)
+        #print(np.array_equal(eta1B1, eta1B), np.array_equal(eta2B1, eta2B))
+
+        self._eta1B = eta1B
+        self._eta2B = eta2B
+
+        # for i in bas1B:
+        #     for j in bas1B:
+        #         if eta1B[i,j] != eta1B1[i,j]:
+        #             print(i,j, eta1B[i,j], eta1B1[i,j])
+        #         for k in bas1B:
+        #             for l in bas1B:
+        #                 if eta2B[i,j,k,l] != eta2B1[i,j,k,l]:
+        #                     print(i,j,k,l, eta2B[i,j,k,l],eta2B1[i,j,k,l])
+
+        # assert np.array_equal(eta1B, -1*np.transpose(eta1B)), "1B not anti-sym"
+        # assert np.array_equal(eta2B, -1*np.transpose(eta2B, [0,1,3,2])), "2B not anti-sym"
+
+        return (eta1B, eta2B)
+
+    @staticmethod
+    @jit(nopython=True)
+    def _wrapper_calc_eta_generalized_ph(bas1B, holes, particles, f, G, n):
+
+        # bas1B = self._sp_basis
+        # holes = self._holes
+        # particles = self._particles
+
+        # f = self.f
+        # G = self.G
+        
+        eta1B = np.zeros_like(f)
+        eta2B = np.zeros_like(G)
+        
+        for a in bas1B:
+            for i in range(a):
+                nbar_a = 1-n[a]
+                n_i = n[i]
+                denom = f[a,a]*nbar_a**2 - f[i,i]*n_i**2 + G[a,i,a,i]*nbar_a**2*n_i**2
+
+                if denom != 0.0:
+                    result = 0.5*np.arctan(2*f[a,i]*nbar_a*n_i / denom)
+                else:
+                    result = 0.0
+
+                eta1B[a,i] += result
+                eta1B[i,a] += -result
+                
+                # if abs(denom) < 0.001:
+                #     print('one body',a,i, denom)
+                # if a == 4 and i == 3:
+                #     print(G[a,i,a,i])
+
+        for b in bas1B:
+            for a in bas1B:
+                for j in bas1B:
+                    for i in bas1B:
+                        nbar_a = 1 - n[a]
+                        nbar_b = 1 - n[b]
+                        n_i = n[i]
+                        n_j = n[j]
+
+                        denom = (
+                            f[a,a]*nbar_a**2 + f[b,b]*nbar_b**2 - f[i,i]*n_i**2 - f[j,j]*n_j**2
+                            + G[a,b,a,b]*nbar_a**2*nbar_b**2 + G[i,j,i,j]*n_i**2*n_j**2 - G[a,i,a,i]*nbar_a**2*n_i**2
+                            - G[b,j,b,j]*nbar_b**2*n_j**2 - G[a,j,a,j]*nbar_a**2*n_j**2 - G[b,i,b,i]*nbar_b**2*n_i**2
+                        )
+
+                        if denom != 0.0:
+                            result = (1/8)*np.arctan(2*G[a,b,i,j]*nbar_a*nbar_b*n_i*n_j / denom)
+                        else:
+                            result = 0.0
+                        
+                        eta2B[a,b,i,j] += result
+                        eta2B[i,j,a,b] += -result
+
+                        # if abs(denom) < 0.001:
+                        #    print('two body ', a,b,i,j, denom)
+                        # if a == 5 and b == 4 and i == 3 and j ==2:
+                        #     print(denom)
+                        # print(eta2B[5,4,3,2])
+                    
+                    
+        return (eta1B, eta2B)
+
         
 class WhiteGeneratorMP3B(Generator):
     """Calculate White's generator for a normal ordered Hamiltonian.
@@ -1245,6 +1403,8 @@ class BrillouinGeneratorMR(Generator):
         rho1b = h._rho1b
         rho2b = h._rho2b
         rho3b = h._rho3b
+        self._lambda2b = h._lambda2b
+        self._lambda3b = h._lambda3b
 
         # rho1b = density_1b(len(h.holes), len(h.particles), weights=h._dens_weights)
         # rho2b = density_2b(len(h.holes), len(h.particles), weights=h._dens_weights)
@@ -1254,32 +1414,31 @@ class BrillouinGeneratorMR(Generator):
         # tf = time.time()
         # print('generated 3b density in {: .4f} seconds'.format(tf-ti))
 
-        lambda2b = np.zeros_like(rho2b)
-        for i in h.sp_basis:
-            for j in h.sp_basis:
-                for k in h.sp_basis:
-                    for l in h.sp_basis:
-                        lambda2b[i,j,k,l] += rho2b[i,j,k,l] - rho1b[i,k]*rho1b[j,l] + rho1b[i,l]*rho1b[j,k]
+        # lambda2b = np.zeros_like(rho2b)
+        # for i in h.sp_basis:
+        #     for j in h.sp_basis:
+        #         for k in h.sp_basis:
+        #             for l in h.sp_basis:
+        #                 lambda2b[i,j,k,l] += rho2b[i,j,k,l] - rho1b[i,k]*rho1b[j,l] + rho1b[i,l]*rho1b[j,k]
         
-        lambda3b = np.zeros_like(rho3b)
-        for i in h.sp_basis:
-            for j in h.sp_basis:
-                for k in h.sp_basis:
-                    for l in h.sp_basis:
-                        for m in h.sp_basis:
-                            for n in h.sp_basis:
-                                lambda3b[i,j,k,l,m,n] += rho3b[i,j,k,l,m,n] - rho1b[i,l]*lambda2b[j,k,m,n] -\
-                                                         rho1b[j,m]*lambda2b[i,k,l,n] - rho1b[k,n]*lambda2b[i,j,l,m] +\
-                                                         rho1b[i,m]*lambda2b[j,k,l,n] + rho1b[i,n]*lambda2b[j,k,m,l] +\
-                                                         rho1b[j,l]*lambda2b[i,k,m,n] + rho1b[j,n]*lambda2b[i,k,l,m] +\
-                                                         rho1b[k,l]*lambda2b[i,j,n,m] + rho1b[k,m]*lambda2b[i,j,l,n] -\
-                                                         rho1b[i,l]*rho1b[j,m]*rho1b[k,n] - rho1b[i,m]*rho1b[j,n]*rho1b[k,l] -\
-                                                         rho1b[i,n]*rho1b[j,l]*rho1b[k,m] + rho1b[i,l]*rho1b[j,n]*rho1b[k,m] +\
-                                                         rho1b[j,m]*rho1b[i,n]*rho1b[k,l] + rho1b[i,m]*rho1b[j,l]*rho1b[k,n]
-        self._lambda2b = lambda2b
-        self._lambda3b = lambda3b
-        self._eta1B = np.zeros_like(self.f)
-        self._eta2B = np.zeros_like(self.G)
+        # lambda3b = np.zeros_like(rho3b)
+        # for i in h.sp_basis:
+        #     for j in h.sp_basis:
+        #         for k in h.sp_basis:
+        #             for l in h.sp_basis:
+        #                 for m in h.sp_basis:
+        #                     for n in h.sp_basis:
+        #                         lambda3b[i,j,k,l,m,n] += rho3b[i,j,k,l,m,n] - rho1b[i,l]*lambda2b[j,k,m,n] -\
+        #                                                  rho1b[j,m]*lambda2b[i,k,l,n] - rho1b[k,n]*lambda2b[i,j,l,m] +\
+        #                                                  rho1b[i,m]*lambda2b[j,k,l,n] + rho1b[i,n]*lambda2b[j,k,m,l] +\
+        #                                                  rho1b[j,l]*lambda2b[i,k,m,n] + rho1b[j,n]*lambda2b[i,k,l,m] +\
+        #                                                  rho1b[k,l]*lambda2b[i,j,n,m] + rho1b[k,m]*lambda2b[i,j,l,n] -\
+        #                                                  rho1b[i,l]*rho1b[j,m]*rho1b[k,n] - rho1b[i,m]*rho1b[j,n]*rho1b[k,l] -\
+        #                                                  rho1b[i,n]*rho1b[j,l]*rho1b[k,m] + rho1b[i,l]*rho1b[j,n]*rho1b[k,m] +\
+        #                                                  rho1b[j,m]*rho1b[i,n]*rho1b[k,l] + rho1b[i,m]*rho1b[j,l]*rho1b[k,n]
+
+        # self._eta1B = np.zeros_like(self.f)
+        # self._eta2B = np.zeros_like(self.G)
 
     @property
     def eta1B(self):
@@ -1337,43 +1496,88 @@ class BrillouinGeneratorMR(Generator):
         occI4 = self._occI4
         
         # 1B generator
-        sum1_1b = np.multiply(occA, f)
-        sum1_1b = np.transpose(sum1_1b)
+        sum1_1b = np.multiply(np.transpose(occA), np.transpose(f))
+        #sum1_1b = np.transpose(sum1_1b)
         
         sum2_1b_1 = tn.ncon([G, lambda2b], [(-2,1,2,3),(-1,1,2,3)])
         sum2_1b_2 = tn.ncon([G, lambda2b], [(1,2,-1,3),(1,2,-2,3)])        
         sum2_1b = sum2_1b_1 - sum2_1b_2
         
+        #sum2_1b = 0
+
         eta1B = sum1_1b - 0.5*sum2_1b
+        eta1B = -1*eta1B.conj().T
+
+        #print(np.linalg.norm(sum1_1b + sum1_1b.conj().T), np.linalg.norm(sum2_1b + sum2_1b.conj().T), np.linalg.norm(eta1B + eta1B.conj().T))
+
+        #eta1B = np.zeros_like(eta1B)
+        #print(np.linalg.norm(G), np.linalg.norm(lambda2b))
         
         # 2B generator
-        sum1_2b = np.multiply(np.transpose(G,[2,3,0,1]), occI4)
+        sum1_2b = np.multiply(G,np.transpose(occI4,[2,3,0,1]))
+        sum1_2b = np.transpose(sum1_2b, [2,3,0,1])
         
         sum2_2b_1 = tn.ncon([f, lambda2b], [(1,-1),(1,-2,-3,-4)])
         sum2_2b_2 = tn.ncon([f, lambda2b], [(-3,1),(-1,-2,1,-4)])
-        sum2_2b_3 = sum2_2b_1 - np.transpose(sum2_2b_1,[1,0,2,3])
-        sum2_2b_4 = sum2_2b_2 - np.transpose(sum2_2b_2,[0,1,3,2])
-        sum2_2b = sum2_2b_3 - sum2_2b_4
+        sum2_2b_3 = tn.ncon([f, lambda2b], [(1,-2),(1,-1,-3,-4)])
+        sum2_2b_4 = tn.ncon([f, lambda2b], [(-4,1),(-1,-2,1,-3)])
+        sum2_2b = sum2_2b_1 - sum2_2b_3 - sum2_2b_2 + sum2_2b_4
+        # sum2_2b_3 = sum2_2b_1 - np.transpose(sum2_2b_1,[1,0,2,3])
+        # sum2_2b_4 = sum2_2b_2 - np.transpose(sum2_2b_2,[0,1,3,2])
+        # sum2_2b = sum2_2b_3 - sum2_2b_4
 
-        lambdaG = np.matmul(lambda2b,G)
-        sum3_2b_1 = np.multiply(np.transpose(lambdaG,[2,3,0,1]), occB4)
-        sum3_2b_2 = np.multiply(np.transpose(lambdaG,[2,3,0,1]), np.transpose(occB4,[2,3,0,1]))
+        numStates = len(bas1B)
+        dimMat = (numStates**2, numStates**2)
+        dimTens = (numStates, numStates, numStates, numStates)
+        lambda2b_rs = np.reshape(lambda2b, dimMat)
+        G_rs = np.reshape(G, dimMat)
+        lambdaG = np.matmul(lambda2b_rs, G_rs)
+        Glambda = np.matmul(G_rs, lambda2b_rs)
+        lambdaG = np.reshape(lambdaG, dimTens)
+        Glambda = np.reshape(Glambda, dimTens)
+
+        sum3_2b_1 = np.multiply(np.transpose(lambdaG,[2,3,0,1]), np.transpose(occB4, [2,3,0,1]))
+        sum3_2b_2 = np.multiply(np.transpose(Glambda,[2,3,0,1]), occB4)
         sum3_2b = sum3_2b_1 - sum3_2b_2
 
-        occA_transpose = np.transpose(occA4, [2,0,1,3])
-        sum4_2b_1 = np.transpose(np.multiply(occA_transpose, G), [0,2,3,1])
-        sum4_2b_2 = tn.ncon([G, lambda2b], [(1,-3,2,-2), (1,-1,2,-4)])
-        sum4_2b = sum4_2b_2 - np.transpose(sum4_2b_2,[1,0,2,3]) - \
-                  - np.transpose(sum4_2b_2,[0,1,3,2]) + np.transpose(sum4_2b_2,[1,0,3,2])
+        occA_transpose = np.transpose(occA4, [3,1,2,0])
+        sum4_2b_1 = np.multiply(occA_transpose, G)
+        sum4_2b_2 = tn.ncon([sum4_2b_1, lambda2b], [(1,-3,2,-2), (1,-1,2,-4)])
+        sum4_2b_3 = tn.ncon([sum4_2b_1, lambda2b], [(1,-3,2,-1), (1,-2,2,-4)])
+        sum4_2b_4 = tn.ncon([sum4_2b_1, lambda2b], [(1,-4,2,-2), (1,-1,2,-3)])
+        sum4_2b_5 = tn.ncon([sum4_2b_1, lambda2b], [(1,-4,2,-1), (1,-2,2,-3)])
+        sum4_2b = sum4_2b_2 - sum4_2b_3 - sum4_2b_4 + sum4_2b_5
+        # sum4_2b = sum4_2b_2 - np.transpose(sum4_2b_2,[1,0,2,3]) - \
+        #           - np.transpose(sum4_2b_2,[0,1,3,2]) + np.transpose(sum4_2b_2,[1,0,3,2])
 
         sum5_2b_1 = tn.ncon([G, lambda3b], [(-3,1,2,3),(1,-1,-2,2,3,-4)])
         sum5_2b_2 = tn.ncon([G, lambda3b], [(1,2,-1,3),(1,2,-2,3,-3,-4)])
-        sum5_2b_3 = np.transpose(sum5_2b_1, [0,1,3,2])
-        sum5_2b_4 = np.transpose(sum5_2b_2, [1,0,2,3])
+        sum5_2b_3 = tn.ncon([G, lambda3b], [(-4,1,2,3),(1,-1,-2,2,3,-3)])
+        sum5_2b_4 = tn.ncon([G, lambda3b], [(1,2,-2,3),(1,2,-1,3,-3,-4)])
+        # sum5_2b_3 = np.transpose(sum5_2b_1, [0,1,3,2])
+        # sum5_2b_4 = np.transpose(sum5_2b_2, [1,0,2,3])
+
         sum5_2b = sum5_2b_1 - sum5_2b_3 - sum5_2b_2 + sum5_2b_4
 
-        eta2B = sum1_2b + sum2_2b + 0.5*sum3_2b + sum4_2b + 0.5*sum5_2b
+        #sum4_2b = 0
+        
+        eta2B = 0.25*(sum1_2b + sum2_2b + 0.5*sum3_2b + sum4_2b + 0.5*sum5_2b)
+        
+        eta2b_rs = np.reshape(eta2B, (len(bas1B)**2, len(bas1B)**2))
+        sum4_2b_rs = np.reshape(sum4_2b, (len(bas1B)**2, len(bas1B)**2))
 
+        eta2b_rs = -1*eta2b_rs.conj().T
+        eta2B = np.reshape(eta2b_rs, (len(bas1B),len(bas1B),len(bas1B),len(bas1B)))
+
+        #eta2b_rs = np.reshape(eta2B, (len(bas1B)**2, len(bas1B)**2))
+
+        #print(np.linalg.norm(eta2b_rs + eta2b_rs.conj().T), np.linalg.norm(G_rs - G_rs.conj().T), np.linalg.norm(sum1_2b_rs - sum1_2b_rs.conj().T))
+        #print(np.linalg.norm(sum4_2b_rs + sum4_2b_rs.conj().T));
+                              
+
+        #eta2B = np.zeros_like(self._eta2B)
+        #norm = np.linalg.norm
+        
         # update the class members
         self._eta1B = eta1B
         self._eta2B = eta2B

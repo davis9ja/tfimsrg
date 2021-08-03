@@ -66,11 +66,17 @@ class PairingHamiltonian2B(Hamiltonian):
         if dens_weights is None:
             self._E, self._f, self._G = self.normal_order()
         else:
-            self._rho1b, self._rho2b, self._rho3b = self.make_densities(dens_weights)
+            self._rho1b, self._rho2b, self._rho3b, self._lambda2b, self._lambda3b = self.make_densities(dens_weights)
 
             self._E, self._f, self._G = self.normal_order_slow(self._rho1b,self._rho2b)
 
         self._dens_weights = dens_weights
+
+        # E, f, G = self.normal_order()
+        # rho1b, rho2b, rho3b, lambda2b, lambda3b = self.make_densities(dens_weights)
+        # E1, f1, G1 = self.normal_order_slow(rho1b,rho2b)
+
+        # print(np.array_equal(f, f1), np.array_equal(G, G1), E, E1)
 
     @property
     def d(self):
@@ -167,6 +173,7 @@ class PairingHamiltonian2B(Hamiltonian):
 
         holes = self.holes
         particles = self.particles
+        bas1B = self.sp_basis
 
         ti = time.time()
         rho1b = density_1b(len(holes), len(particles), weights=dens_weights)
@@ -182,9 +189,41 @@ class PairingHamiltonian2B(Hamiltonian):
         rho3b = density_3b(len(holes), len(particles), weights=dens_weights)
         tf = time.time()
         print('generated 3b density in {: .4f} seconds'.format(tf-ti))
+
         
 
-        return (rho1b, rho2b, rho3b)
+        ti = time.time()
+        lambda2b = np.zeros_like(rho2b)
+        for i in bas1B:
+            for j in bas1B:
+                for k in bas1B:
+                    for l in bas1B:
+                        lambda2b[i,j,k,l] += rho2b[i,j,k,l] - rho1b[i,k]*rho1b[j,l] + rho1b[i,l]*rho1b[j,k]
+        tf = time.time()
+        print('generated lambda2b in {: .4f} seconds'.format(tf-ti))
+        
+        ti = time.time()
+        lambda3b = np.zeros_like(rho3b)
+        for i in bas1B:
+            for j in bas1B:
+                for k in bas1B:
+                    for l in bas1B:
+                        for m in bas1B:
+                            for n in bas1B:
+                                lambda3b[i,j,k,l,m,n] += rho3b[i,j,k,l,m,n] - rho1b[i,l]*lambda2b[j,k,m,n] -\
+                                                         rho1b[j,m]*lambda2b[i,k,l,n] - rho1b[k,n]*lambda2b[i,j,l,m] +\
+                                                         rho1b[i,m]*lambda2b[j,k,l,n] + rho1b[i,n]*lambda2b[j,k,m,l] +\
+                                                         rho1b[j,l]*lambda2b[i,k,m,n] + rho1b[j,n]*lambda2b[i,k,l,m] +\
+                                                         rho1b[k,l]*lambda2b[i,j,n,m] + rho1b[k,m]*lambda2b[i,j,l,n] -\
+                                                         rho1b[i,l]*rho1b[j,m]*rho1b[k,n] - rho1b[i,m]*rho1b[j,n]*rho1b[k,l] -\
+                                                         rho1b[i,n]*rho1b[j,l]*rho1b[k,m] + rho1b[i,l]*rho1b[j,n]*rho1b[k,m] +\
+                                                         rho1b[j,m]*rho1b[i,n]*rho1b[k,l] + rho1b[i,m]*rho1b[j,l]*rho1b[k,n]
+        tf = time.time()
+        print('generated lambda3b density in {: .4f} seconds'.format(tf-ti))
+                
+        
+
+        return (rho1b, rho2b, rho3b, lambda2b, lambda3b)
         
 
     def delta2B(self, p,q,r,s):
