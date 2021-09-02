@@ -40,7 +40,7 @@ import pyci.imsrg_ci.pyci_p3h as pyci
 
 def get_vacuum_coeffs(E, f, G, basis, holes, rho1b, rho2b):
 
-    H2B = G
+    H2B = np.copy(G)
     H1B = f - np.trace(G[np.ix_(basis,holes,basis,holes)], axis1=1,axis2=3) 
 
     Gnode = tn.Node(G[np.ix_(holes,holes,holes,holes)])
@@ -58,14 +58,18 @@ def get_vacuum_coeffs_dm(E, f, G, basis, holes, rho1b, rho2b):
     n_states = len(basis)
 
     H2B = G
-    H1B = f - np.einsum('piqj,ij', H2B, rho1b)
+    H1B = f - np.einsum('piqj,ij->pq',H2B, rho1b) #0.5*(np.einsum('piqj,ij->pq', H2B, rho1b) - np.einsum('pijq,ij->pq', H2B, rho1b))
     
-    contract_1b = np.einsum('ij,ij', rho1b, H1B)
-    rho_reshape_2b = np.reshape(rho2b, (n_states**2,n_states**2))
-    h2b_reshape_2b = np.reshape(H2B, (n_states**2,n_states**2))
-    contract_2b = np.einsum('ij,ij', rho_reshape_2b, h2b_reshape_2b)
+    contract_1b = np.einsum('ij,ij->', rho1b, H1B)
+
+    # rho_reshape_2b = np.reshape(rho2b, (n_states**2,n_states**2))
+    # h2b_reshape_2b = np.reshape(H2B, (n_states**2,n_states**2))
+    # contract_2b = np.einsum('ij,ij->', rho_reshape_2b, h2b_reshape_2b)
+    contract_2b = np.einsum('ijkl,ijkl->', rho2b, H2B)
 
     H0B = E - contract_1b - 0.25*contract_2b
+
+    #print("un-NOH contract_1b, contract_2b, piqj", contract_1b, contract_2b, np.einsum('piqj,ij->pq', H2B, rho1b))
 
     return (H0B, H1B, H2B)
 
@@ -139,9 +143,22 @@ def unravel(E, f, G):
     Returns:
 
     concatenation of tensors peeled into 1D arrays"""
+
+    # get triangles from f, Gamma
+    fDim = f.shape[0]
+    f_tri_idx = np.triu_indices(fDim)
+
+    GDim = fDim**2
+    G_tri_idx = np.triu_indices(GDim)
+
+    G_rs = np.reshape(G, (GDim, GDim))
+
     unravel_E = np.reshape(E, -1)
-    unravel_f = np.reshape(f, -1)
-    unravel_G = np.reshape(G, -1)
+    unravel_f = f[f_tri_idx]
+    unravel_G = G_rs[G_tri_idx]
+
+    # unravel_f = np.reshape(f, -1)
+    # unravel_G = np.reshape(G, -1)
 
     return np.concatenate([unravel_E, unravel_f, unravel_G], axis=0)
 
@@ -161,12 +178,30 @@ def ravel(y, bas_len):
     """
 
     # bas_len = len(np.append(holes,particles))
+    f_triu_idx = np.triu_indices(bas_len)
+    #f_tril_idx = np.tril_indices(bas_len)
+    G_triu_idx = np.triu_indices(bas_len**2)    
+    #G_tril_idx = np.tril_indices(bas_len**2)
+
+    num_f_tri = int((bas_len**2-bas_len)/2) + bas_len
+    num_G_tri = int((bas_len**4-bas_len**2)/2) + bas_len**2
 
     ravel_E = np.reshape(y[0], ())
-    ravel_f = np.reshape(y[1:bas_len**2+1], (bas_len, bas_len))
-    ravel_G = np.reshape(y[bas_len**2+1:bas_len**2+1+bas_len**4],
-                         (bas_len, bas_len, bas_len, bas_len))
-    
+
+    ravel_f = np.zeros((bas_len, bas_len))
+    ravel_f[f_triu_idx] = y[1:num_f_tri+1]
+    ravel_f.T[f_triu_idx] = y[1:num_f_tri+1]
+
+
+    ravel_G = np.zeros((bas_len**2, bas_len**2))
+    ravel_G[G_triu_idx] = y[num_f_tri+1:num_f_tri+1+num_G_tri]
+    ravel_G.T[G_triu_idx] = y[num_f_tri+1:num_f_tri+1+num_G_tri]
+
+    ravel_G = np.reshape(ravel_G, (bas_len, bas_len, bas_len, bas_len))
+
+    # ravel_f = np.reshape(y[1:bas_len**2+1], (bas_len, bas_len))
+    # ravel_G = np.reshape(y[bas_len**2+1:bas_len**2+1+bas_len**4],
+    #                      (bas_len, bas_len, bas_len, bas_len))
 
     return(ravel_E, ravel_f, ravel_G)
 
@@ -286,14 +321,18 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
     H0B, H1B, H2B = gvc(ha.E, ha.f, ha.G, ha.sp_basis, ha.holes, ha._rho1b, ha._rho2b)
     zero, eta1B_vac, eta2B_vac = gvc(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes, ha._rho1b, ha._rho2b)
 
+    #pickle.dump( (H0B, H1B, H2B, eta1B_vac, eta2B_vac), open( output_root+"/vac_coeffs_unevolved.p", "wb" ) )
     pickle.dump( (0.0, ha.H1B, ha.H2B, eta1B_vac, eta2B_vac), open( output_root+"/vac_coeffs_unevolved.p", "wb" ) )
+
+    if flow_data_log:
+        pickle.dump( (0.0,0.0, ha.H1B, ha.H2B, eta1B_vac, eta2B_vac), open( output_root+"/vac_coeffs_flow_c0.p", "wb" ) )
 
     solver = ode(derivative,jac=None)
     solver.set_integrator('vode', method='bdf', order=5, nsteps=1000)
     solver.set_f_params([ha, ot, wg, fl])
     solver.set_initial_value(y0, 0.)
 
-    sfinal = 50
+    sfinal = 20
     ds = 0.01
     s_vals = []
     E_vals = []
@@ -473,7 +512,7 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
                                                                                                                                      # commute2bd,
                                                                                                                                      # commute2bod))
         
-        if flow_data_log and iters %10 == 0:
+        if flow_data_log and iters %10 == 0 and iters > 0:
             H0B, H1B, H2B = gvc(Es, fs, Gs, ha.sp_basis, ha.holes, ha._rho1b, ha._rho2b)
             zero, eta1B_vac, eta2B_vac = gvc(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes, ha._rho1b, ha._rho2b)
             fname = output_root+'/vac_coeffs_flow_c{}.p'.format(iters)
@@ -493,7 +532,7 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
         #     if verbose: print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
         #     break
 
-        if iters > 300:
+        if iters > 1000:
             if verbose: print("---- Energy diverged at iter {:>06d} with energy {:3.8f}\n".format(iters,E_vals[-1]))
             break
 
