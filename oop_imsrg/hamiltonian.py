@@ -6,7 +6,7 @@ import tensornetwork as tn
 tn.set_default_backend("numpy") 
 
 from pyci.density_matrix.density_matrix import density_1b, density_2b, density_3b
-import pyci.imsrg_ci.pyci_p3h as pyci
+#import pyci.imsrg_ci.pyci_p3h as pyci
 
 
 class Hamiltonian(object):
@@ -55,7 +55,7 @@ class PairingHamiltonian2B(Hamiltonian):
         #self._holes = np.arange(n_hole_states, dtype=np.int32)
         self._n_sp_states = n_hole_states + n_particle_states
         #self._particles = np.arange(n_hole_states,self.n_sp_states, dtype=np.int32)
-        self._sp_basis = np.append(self.holes, self.particles)
+        self._sp_basis = np.arange(n_hole_states+n_particle_states,dtype=np.int32)#np.append(self.holes, self.particles)
 
         self._H1B, self._H2B = self.construct()
 
@@ -69,7 +69,7 @@ class PairingHamiltonian2B(Hamiltonian):
             self._rho1b, self._rho2b, self._rho3b, self._lambda2b, self._lambda3b = self.make_densities(dens_weights)
 
             self._E, self._f, self._G = self.normal_order_slow(self._rho1b,self._rho2b)
-
+            
         self._dens_weights = dens_weights
 
         # E, f, G = self.normal_order()
@@ -370,7 +370,7 @@ class PairingHamiltonian2B(Hamiltonian):
         #f = f.astype(np.float32)
 
         # - Calculate 2B piece
-        G = H2B_t
+        G = np.copy(H2B_t)
 
 
         return (E, f, G)
@@ -393,16 +393,19 @@ class PairingHamiltonian2B(Hamiltonian):
         # v0 = v[:, 0]
 
 
-        contract_1b = np.einsum('ij,ij', rho1b, H1B_t)
+        contract_1b = np.einsum('ij,ij->', rho1b, H1B_t)
 
-        rho_reshape_2b = np.reshape(rho2b, (n_states**2,n_states**2))
-        h2b_reshape_2b = np.reshape(H2B_t, (n_states**2,n_states**2))
-        contract_2b = np.einsum('ij,ij', rho_reshape_2b, h2b_reshape_2b)
+        # rho_reshape_2b = np.reshape(rho2b, (n_states**2,n_states**2))
+        # h2b_reshape_2b = np.reshape(H2B_t, (n_states**2,n_states**2))
+        # contract_2b = np.einsum('ij,ij->', rho_reshape_2b, h2b_reshape_2b)
+        contract_2b = np.einsum('ijkl,ijkl->', rho2b, H2B_t)
             
         E = contract_1b + 0.25*contract_2b
         
-        f = H1B_t + np.einsum('piqj,ij', H2B_t, rho1b)
+        f = H1B_t + np.einsum('piqj,ij->pq', H2B_t, rho1b) #0.5*(np.einsum('piqj,ij->pq', H2B_t, rho1b) - np.einsum('pijq,ij->pq', H2B_t, rho1b))
 
         G = H2B_t
+
+        #print("NOH contract_1b, contract_2b, piqj", contract_1b, contract_2b, np.einsum('piqj,ij->pq', H2B_t, rho1b))
 
         return (E, f, G)
