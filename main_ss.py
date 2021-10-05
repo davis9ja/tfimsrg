@@ -98,13 +98,13 @@ def derivative(t, y, inputs):
     E, f, G = ravel(y[0:half], hamiltonian.n_sp_states)
     generator.f = f
     generator.G = G
-    dE, df, dG = flow.flow(f, G, generator)
+    dE, df, dG = flow.flow(E, f, G, generator)
 
     # Spin-squared flow
     E_spin, f_spin, G_spin = ravel(y[half::], tspinsq.n_sp_states)
     # generator_spin.f = f_spin
     # generator_spin.G = G_spin
-    dE_spin, df_spin, dG_spin = flow_spin.flow(f_spin, G_spin, generator)
+    dE_spin, df_spin, dG_spin = flow_spin.flow(E_spin, f_spin, G_spin, generator)
 
     dy = np.concatenate([unravel(dE, df, dG), unravel(dE_spin, df_spin, dG_spin)], axis=0)
 
