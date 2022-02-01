@@ -627,8 +627,8 @@ class Flow_MRIMSRG2(Flow):
         occD = self._occD
         occG = self._occG
 
-        lambda2b = self._lambda2b
-        lambda3b = self._lambda3b
+        lambda2b = (self._lambda2b)
+        lambda3b = (self._lambda3b)
         
         # - Calculate dG/ds
         # first term (single index sum)

@@ -742,8 +742,8 @@ class WhiteGenerator(Generator):
         f = self.f
         G = self.G
 
-        #eta1B, eta2B = self._wrapper_calc_eta_generalized_ph(bas1B, holes, particles, f, G, ref)
-        eta1B, eta2B = self._wrapper_calc_eta(bas1B, holes, particles, f, G, ref)
+        eta1B, eta2B = self._wrapper_calc_eta_generalized_ph(bas1B, holes, particles, f, G, ref)
+        #eta1B, eta2B = self._wrapper_calc_eta(bas1B, holes, particles, f, G, ref)
         #print(np.array_equal(eta1B1, eta1B), np.array_equal(eta2B1, eta2B))
 
         self._eta1B = eta1B
@@ -1487,8 +1487,9 @@ class BrillouinGeneratorMR(Generator):
         
         f = self.f
         G = self.G
+
         lambda2b = self._lambda2b
-        lambda3b = self._lambda3b
+        lambda3b = (self._lambda3b)
 
         occA = self._occA
         occA4 = self._occA4

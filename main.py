@@ -298,6 +298,7 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
     if verbose:
         print("Initialized objects in {:2.4f} seconds\n".format(initf-initi))
 
+
     if verbose:
         print("""Pairing model IM-SRG(2) flow:
         Generator      = {}
@@ -361,6 +362,10 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
             else:
                 column_string += '{: >'+str(11)+'}'
         print(column_string.format(*print_columns))
+        
+
+    log_data_columns = ["s", "E", "f", "Gamma", "H0B", "H1B", "H2B", "||eta1b||", "||eta2b||", "rho1b", "rho2b"]
+    df_list = []
 
     eig_idx = 0
     while solver.successful() and solver.t < sfinal:
@@ -396,7 +401,16 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
 
         # E_gs_lst.append(w[eig_idx])
         # s_expect_lst.append(s_expect)
-        
+
+        if iters %10 == 0:
+            H0B, H1B, H2B = gvc(Es, fs, Gs, ha.sp_basis, ha.holes, ha._rho1b, ha._rho2b)
+
+            norm_eta1B = np.linalg.norm(np.ravel(wg.eta1B))
+            norm_eta2B = np.linalg.norm(np.ravel(wg.eta2B))
+
+            row = pd.DataFrame([[ solver.t, Es, [fs], [Gs], H0B, [H1B], [H2B], norm_eta1B, norm_eta2B, [ha._rho1b], [ha._rho2b] ]], #np.linalg.norm(eta1B_vac), np.linalg.norm(eta2B_vac) ]], 
+                               columns=log_data_columns)
+            df_list.append(row)
 
         if iters %10 == 0 and verbose: 
             #zero, eta1Bv, eta2Bv = gvc(0.0,wg.eta1B,wg.eta2B,ha.sp_basis,ha.holes)
@@ -547,16 +561,19 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
 
     if verbose: print("IM-SRG(2) converged in {:2.5f} seconds".format(flowf-flowi))
 
+    full_df = pd.concat(df_list)
+
     H0B, H1B, H2B = gvc(Es, fs, Gs, ha.sp_basis, ha.holes, ha._rho1b, ha._rho2b)
     zero, eta1B_vac, eta2B_vac = gvc(0.0, wg.eta1B, wg.eta2B, ha.sp_basis, ha.holes, ha._rho1b, ha._rho2b)
     #pickle.dump( coeffs, open( "mixed_state_test/pickled_coeffs/vac_coeffs_evolved.p", "wb" ) )
     pickle.dump((H0B, H1B, H2B, eta1B_vac, eta2B_vac), open(output_root+'/vac_coeffs_evolved.p', 'wb'))
 
+
     num_sp = n_holes+n_particles
 
     del ha, ot, wg, fl, solver, y0, sfinal
 
-    return (convergence, iters, d, g, pb, num_sp, s_vals, E_vals, time_str)
+    return full_df #(convergence, iters, d, g, pb, num_sp, s_vals, E_vals, time_str)
  
 
 if __name__ == '__main__':
@@ -633,15 +650,16 @@ if __name__ == '__main__':
 
     #ref = 0.8*basis[0,:] + 0.2*basis[1,:]
 
-    ref = basis.T.dot(v0*v0)
-    #ref = basis[0,:]
+    #ref = basis.T.dot(v0*v0)
+    ref = 0.8*basis[0,:] + 0.2*basis[1,:]
 
     # ref_input = sys.argv[1]
     # ref = [int(x) for x in list(ref_input)]
 
     #ref = pickle.load(open('reference_g2.00_pb0.01_4-4.p', 'rb'))
     
-    main(4,4, g=g, ref=ref, pb=pb, generator='brillouinMR', dens_weights=v0)#dens_weights=np.append([1.0], np.zeros(35)))
+    main(4,4, g=g, ref=ref, pb=pb, generator='white_atan', dens_weights=np.append([0.8,0.2], np.zeros(34)))
+    #main(4,4, g=g, pb=pb, generator='white_atan')
     H0B, H1B, H2B, eta1b_vac, eta2b_vac = pickle.load(open('vac_coeffs_evolved.p', 'rb'))
     imsrg_hme = pyci.matrix(4,4, H0B, H1B, H2B, H2B, imsrg=True)
     imsrg_w,imsrg_v = np.linalg.eigh(imsrg_hme)
