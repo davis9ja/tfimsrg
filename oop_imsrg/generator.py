@@ -786,8 +786,8 @@ class WhiteGenerator(Generator):
                 else:
                     result = f[a,i] / denom
 
-                eta1B[a,i] = result
-                eta1B[i,a] = -result
+                eta1B[a,i] += result
+                eta1B[i,a] += -result
                 
                 # if denom < 1:
                 #     print('one body {}{},'.format(a, i), denom)
@@ -811,8 +811,8 @@ class WhiteGenerator(Generator):
 
 
                         
-                        eta2B[a,b,i,j] = result
-                        eta2B[i,j,a,b] = -result
+                        eta2B[a,b,i,j] += result
+                        eta2B[i,j,a,b] += -result
 
                         # if denom < 1:
                         #    print('two body {}{}{}{},'.format(a,b,i,j), denom)
@@ -850,8 +850,8 @@ class WhiteGenerator(Generator):
                     result = f[a,i]*nbar_a*n_i / denom
 
 
-                eta1B[a,i] = result
-                eta1B[i,a] = -result
+                eta1B[a,i] += result
+                eta1B[i,a] += -result
                 
                 # if abs(denom) < 0.001:
                 #     print('one body',a,i, denom)
@@ -880,8 +880,8 @@ class WhiteGenerator(Generator):
 
 
                         
-                        eta2B[a,b,i,j] = result
-                        eta2B[i,j,a,b] = -result
+                        eta2B[a,b,i,j] += result
+                        eta2B[i,j,a,b] += -result
 
                         # if abs(denom) < 0.001:
                         #    print('two body ', a,b,i,j, denom)
@@ -1167,8 +1167,8 @@ class WhiteGeneratorMP3B(Generator):
                 denom = f[a,a] - f[i,i]
                 result = f[a,i] / denom
 
-                eta1B[a,i] = result
-                eta1B[i,a] = -result
+                eta1B[a,i] += result
+                eta1B[i,a] += -result
                 
                 # if denom < 1:
                 #     print('one body {}{},'.format(a, i), denom)
@@ -1182,8 +1182,8 @@ class WhiteGeneratorMP3B(Generator):
                         )
                         result = G[a,b,i,j] / denom
                         
-                        eta2B[a,b,i,j] = result
-                        eta2B[i,j,a,b] = -result
+                        eta2B[a,b,i,j] += result
+                        eta2B[i,j,a,b] += -result
 
         for a in particles:
             for b in particles:
@@ -1196,8 +1196,8 @@ class WhiteGeneratorMP3B(Generator):
                                 )
                                 result = W[a,b,c,i,j,k] / denom
 
-                                eta3B[a,b,c,i,j,k] = result
-                                eta3B[i,j,k,a,b,c] = -result
+                                eta3B[a,b,c,i,j,k] += result
+                                eta3B[i,j,k,a,b,c] += -result
 
         return (eta1B, eta2B, eta3B)
 
@@ -1276,8 +1276,8 @@ class WhiteGeneratorMP(Generator):
                 denom = f[a,a] - f[i,i]
                 result = f[a,i] / denom
 
-                eta1B[a,i] = result
-                eta1B[i,a] = -result
+                eta1B[a,i] += result
+                eta1B[i,a] += -result
                 
                 # if denom < 1:
                 #     print('one body {}{},'.format(a, i), denom)
@@ -1291,8 +1291,8 @@ class WhiteGeneratorMP(Generator):
                         )
                         result = G[a,b,i,j] / denom
                         
-                        eta2B[a,b,i,j] = result
-                        eta2B[i,j,a,b] = -result
+                        eta2B[a,b,i,j] += result
+                        eta2B[i,j,a,b] += -result
 
                         # if denom < 1:
                         #     print('two body {}{}{}{},'.format(a,b,i,j), denom)
@@ -1357,8 +1357,8 @@ class BrillouinGenerator(Generator):
         for a in particles:
             for i in holes:
                 # (1-n_a)n_i - n_a(1-n_i) = n_i - n_a
-                eta1B[a, i] =  f[a,i]
-                eta1B[i, a] = -f[a,i]
+                eta1B[a, i] +=  f[a,i]
+                eta1B[i, a] += -f[a,i]
 
 
 
@@ -1368,8 +1368,8 @@ class BrillouinGenerator(Generator):
                     for j in holes:
                         val = G[a,b,i,j]
 
-                        eta2B[a,b,i,j] = val
-                        eta2B[i,j,a,b] = -val
+                        eta2B[a,b,i,j] += val
+                        eta2B[i,j,a,b] += -val
 
 
         return (eta1B, eta2B)
@@ -1396,10 +1396,12 @@ class BrillouinGeneratorMR(Generator):
         self._eta2B = np.zeros_like(self.G)
         
         self._occA = occ.occA.tensor
+        self._occB = occ.occB.tensor
+        self._occI = occ.occI.tensor
         self._occA4 = occ.occA4.tensor
         self._occB4 = occ.occB4.tensor
         self._occI4 = occ.occI4.tensor
-
+        
         rho1b = h._rho1b
         rho2b = h._rho2b
         rho3b = h._rho3b
@@ -1479,6 +1481,54 @@ class BrillouinGeneratorMR(Generator):
         """Sets the two-body tensor."""
         self._G = G
 
+    @staticmethod
+    @jit(nopython=True)
+    def _wrapper_calc_eta(numsp, f, Gamma, lambdaG, Glambda, lambda2b, lambda3b, occA, occB, occI):
+        
+        # 1b generator
+        eta1b = np.zeros_like(f)
+        for i in range(numsp):
+            for j in range(numsp):
+        
+                Gammalambda = np.zeros_like(f)
+                for a in range(numsp):
+                    for b in range(numsp):
+                        for c in range(numsp):
+                            Gammalambda[i,j] += Gamma[j,a,b,c]*lambda2b[i,a,b,c] - Gamma[a,b,i,c]*lambda2b[a,b,j,c]
+                
+                eta1b[i,j] += occA[j,i]*f[j,i] - 0.5*Gammalambda[i,j]
+        
+        # 2b generator
+        eta2b = np.zeros_like(Gamma)
+        for i in range(numsp):
+            for j in range(numsp):
+                for k in range(numsp):
+                    for l in range(numsp):
+                        
+                        sum_2b_1 = np.zeros_like(Gamma)
+                        sum_2b_2 = np.zeros_like(Gamma)
+                        sum_2b_3 = np.zeros_like(Gamma)
+                        for a in range(numsp):
+                            sum_2b_1[i,j,k,l] += f[a,i]*lambda2b[a,j,k,l] - f[a,j]*lambda2b[a,i,k,l] - f[k,a]*lambda2b[i,j,a,l] + f[l,a]*lambda2b[i,j,a,k]
+
+                            for c in range(numsp):
+                                sum_2b_2[i,j,k,l] += occA[j,k]*Gamma[a,k,c,j]*lambda2b[a,i,c,l] - \
+                                                     occA[i,k]*Gamma[a,k,c,i]*lambda2b[a,j,c,l] - \
+                                                     occA[j,l]*Gamma[a,l,c,j]*lambda2b[a,i,c,k] + \
+                                                     occA[i,l]*Gamma[a,l,c,i]*lambda2b[a,j,c,k]
+                                
+                                for b in range(numsp):
+                                    sum_2b_3[i,j,k,l] += Gamma[k,a,b,c]*lambda3b[a,i,j,b,c,l] - Gamma[l,a,b,c]*lambda3b[a,i,j,b,c,k] -\
+                                                         Gamma[a,b,i,c]*lambda3b[a,b,j,c,k,l] + Gamma[a,b,j,c]*lambda3b[a,b,i,c,k,l]
+
+                        eta2b[i,j,k,l] += Gamma[k,l,i,j]*occI[i,j,k,l] \
+                                          + sum_2b_1[i,j,k,l] \
+                                          + 0.5*(lambdaG[k,l,i,j]*occB[i,j] - Glambda[k,l,i,j]*occB[k,l]) \
+                                          + sum_2b_2[i,j,k,l] \
+                                          + 0.5*sum_2b_3[i,j,k,l]
+
+            return (eta1b, eta2b)
+
     def calc_eta(self):
 
         bas1B = self._sp_basis
@@ -1486,105 +1536,142 @@ class BrillouinGeneratorMR(Generator):
         particles = self._particles
         
         f = self.f
-        G = self.G
+        Gamma = self.G
 
         lambda2b = self._lambda2b
         lambda3b = (self._lambda3b)
 
         occA = self._occA
-        occA4 = self._occA4
-        occB4 = self._occB4
-        occI4 = self._occI4
-        
-        # 1B generator
-        sum1_1b = np.multiply(np.transpose(occA), np.transpose(f))
-        #sum1_1b = np.transpose(sum1_1b)
-        
-        sum2_1b_1 = tn.ncon([G, lambda2b], [(-2,1,2,3),(-1,1,2,3)])
-        sum2_1b_2 = tn.ncon([G, lambda2b], [(1,2,-1,3),(1,2,-2,3)])        
-        sum2_1b = sum2_1b_1 - sum2_1b_2
-        
-        #sum2_1b = 0
-
-        eta1B = sum1_1b - 0.5*sum2_1b
-        eta1B = -1*eta1B.conj().T
-
-        #print(np.linalg.norm(sum1_1b + sum1_1b.conj().T), np.linalg.norm(sum2_1b + sum2_1b.conj().T), np.linalg.norm(eta1B + eta1B.conj().T))
-
-        #eta1B = np.zeros_like(eta1B)
-        #print(np.linalg.norm(G), np.linalg.norm(lambda2b))
-        
-        # 2B generator
-        sum1_2b = np.multiply(G,np.transpose(occI4,[2,3,0,1]))
-        sum1_2b = np.transpose(sum1_2b, [2,3,0,1])
-        
-        sum2_2b_1 = tn.ncon([f, lambda2b], [(1,-1),(1,-2,-3,-4)])
-        sum2_2b_2 = tn.ncon([f, lambda2b], [(-3,1),(-1,-2,1,-4)])
-        sum2_2b_3 = tn.ncon([f, lambda2b], [(1,-2),(1,-1,-3,-4)])
-        sum2_2b_4 = tn.ncon([f, lambda2b], [(-4,1),(-1,-2,1,-3)])
-        sum2_2b = sum2_2b_1 - sum2_2b_3 - sum2_2b_2 + sum2_2b_4
-        # sum2_2b_3 = sum2_2b_1 - np.transpose(sum2_2b_1,[1,0,2,3])
-        # sum2_2b_4 = sum2_2b_2 - np.transpose(sum2_2b_2,[0,1,3,2])
-        # sum2_2b = sum2_2b_3 - sum2_2b_4
+        occB = self._occB
+        occI = self._occI4
 
         numStates = len(bas1B)
         dimMat = (numStates**2, numStates**2)
         dimTens = (numStates, numStates, numStates, numStates)
         lambda2b_rs = np.reshape(lambda2b, dimMat)
-        G_rs = np.reshape(G, dimMat)
+        G_rs = np.reshape(Gamma, dimMat)
         lambdaG = np.matmul(lambda2b_rs, G_rs)
         Glambda = np.matmul(G_rs, lambda2b_rs)
         lambdaG = np.reshape(lambdaG, dimTens)
         Glambda = np.reshape(Glambda, dimTens)
 
-        sum3_2b_1 = np.multiply(np.transpose(lambdaG,[2,3,0,1]), np.transpose(occB4, [2,3,0,1]))
-        sum3_2b_2 = np.multiply(np.transpose(Glambda,[2,3,0,1]), occB4)
-        sum3_2b = sum3_2b_1 - sum3_2b_2
+        #print(type(lambdaG), type(Glambda), type(occB), type(occI))
 
-        occA_transpose = np.transpose(occA4, [3,1,2,0])
-        sum4_2b_1 = np.multiply(occA_transpose, G)
-        sum4_2b_2 = tn.ncon([sum4_2b_1, lambda2b], [(1,-3,2,-2), (1,-1,2,-4)])
-        sum4_2b_3 = tn.ncon([sum4_2b_1, lambda2b], [(1,-3,2,-1), (1,-2,2,-4)])
-        sum4_2b_4 = tn.ncon([sum4_2b_1, lambda2b], [(1,-4,2,-2), (1,-1,2,-3)])
-        sum4_2b_5 = tn.ncon([sum4_2b_1, lambda2b], [(1,-4,2,-1), (1,-2,2,-3)])
-        sum4_2b = sum4_2b_2 - sum4_2b_3 - sum4_2b_4 + sum4_2b_5
-        # sum4_2b = sum4_2b_2 - np.transpose(sum4_2b_2,[1,0,2,3]) - \
-        #           - np.transpose(sum4_2b_2,[0,1,3,2]) + np.transpose(sum4_2b_2,[1,0,3,2])
 
-        sum5_2b_1 = tn.ncon([G, lambda3b], [(-3,1,2,3),(1,-1,-2,2,3,-4)])
-        sum5_2b_2 = tn.ncon([G, lambda3b], [(1,2,-1,3),(1,2,-2,3,-3,-4)])
-        sum5_2b_3 = tn.ncon([G, lambda3b], [(-4,1,2,3),(1,-1,-2,2,3,-3)])
-        sum5_2b_4 = tn.ncon([G, lambda3b], [(1,2,-2,3),(1,2,-1,3,-3,-4)])
-        # sum5_2b_3 = np.transpose(sum5_2b_1, [0,1,3,2])
-        # sum5_2b_4 = np.transpose(sum5_2b_2, [1,0,2,3])
+        eta1B, eta2B = self._wrapper_calc_eta(len(bas1B), f, Gamma, lambdaG, Glambda, lambda2b, lambda3b, occA, occB, occI)
 
-        sum5_2b = sum5_2b_1 - sum5_2b_3 - sum5_2b_2 + sum5_2b_4
-
-        #sum4_2b = 0
-        
-        eta2B = 0.25*(sum1_2b + sum2_2b + 0.5*sum3_2b + sum4_2b + 0.5*sum5_2b)
-        
-        eta2b_rs = np.reshape(eta2B, (len(bas1B)**2, len(bas1B)**2))
-        sum4_2b_rs = np.reshape(sum4_2b, (len(bas1B)**2, len(bas1B)**2))
-
-        eta2b_rs = -1*eta2b_rs.conj().T
-        eta2B = np.reshape(eta2b_rs, (len(bas1B),len(bas1B),len(bas1B),len(bas1B)))
-
-        #eta2b_rs = np.reshape(eta2B, (len(bas1B)**2, len(bas1B)**2))
-
-        #print(np.linalg.norm(eta2b_rs + eta2b_rs.conj().T), np.linalg.norm(G_rs - G_rs.conj().T), np.linalg.norm(sum1_2b_rs - sum1_2b_rs.conj().T))
-        #print(np.linalg.norm(sum4_2b_rs + sum4_2b_rs.conj().T));
-                              
-
-        #eta2B = np.zeros_like(self._eta2B)
-        #norm = np.linalg.norm
-        
         # update the class members
         self._eta1B = eta1B
         self._eta2B = eta2B
 
-
         return (eta1B, eta2B)
+
+    # def calc_eta(self):
+
+    #     bas1B = self._sp_basis
+    #     holes = self._holes
+    #     particles = self._particles
+        
+    #     f = self.f
+    #     G = self.G
+
+    #     lambda2b = self._lambda2b
+    #     lambda3b = (self._lambda3b)
+
+    #     occA = self._occA
+    #     occA4 = self._occA4
+    #     occB4 = self._occB4
+    #     occI4 = self._occI4
+        
+    #     # 1B generator
+    #     sum1_1b = np.multiply(np.transpose(occA), np.transpose(f))
+    #     #sum1_1b = np.transpose(sum1_1b)
+        
+    #     sum2_1b_1 = tn.ncon([G, lambda2b], [(-2,1,2,3),(-1,1,2,3)])
+    #     sum2_1b_2 = tn.ncon([G, lambda2b], [(1,2,-1,3),(1,2,-2,3)])        
+    #     sum2_1b = sum2_1b_1 - sum2_1b_2
+        
+    #     #sum2_1b = 0
+
+    #     eta1B = sum1_1b - 0.5*sum2_1b
+    #     eta1B = -1*eta1B.conj().T
+
+    #     #print(np.linalg.norm(sum1_1b + sum1_1b.conj().T), np.linalg.norm(sum2_1b + sum2_1b.conj().T), np.linalg.norm(eta1B + eta1B.conj().T))
+
+    #     #eta1B = np.zeros_like(eta1B)
+    #     #print(np.linalg.norm(G), np.linalg.norm(lambda2b))
+        
+    #     # 2B generator
+    #     sum1_2b = np.multiply(G,np.transpose(occI4,[2,3,0,1]))
+    #     sum1_2b = np.transpose(sum1_2b, [2,3,0,1])
+        
+    #     sum2_2b_1 = tn.ncon([f, lambda2b], [(1,-1),(1,-2,-3,-4)])
+    #     sum2_2b_2 = tn.ncon([f, lambda2b], [(-3,1),(-1,-2,1,-4)])
+    #     sum2_2b_3 = tn.ncon([f, lambda2b], [(1,-2),(1,-1,-3,-4)])
+    #     sum2_2b_4 = tn.ncon([f, lambda2b], [(-4,1),(-1,-2,1,-3)])
+    #     sum2_2b = sum2_2b_1 - sum2_2b_3 - sum2_2b_2 + sum2_2b_4
+    #     # sum2_2b_3 = sum2_2b_1 - np.transpose(sum2_2b_1,[1,0,2,3])
+    #     # sum2_2b_4 = sum2_2b_2 - np.transpose(sum2_2b_2,[0,1,3,2])
+    #     # sum2_2b = sum2_2b_3 - sum2_2b_4
+
+    #     numStates = len(bas1B)
+    #     dimMat = (numStates**2, numStates**2)
+    #     dimTens = (numStates, numStates, numStates, numStates)
+    #     lambda2b_rs = np.reshape(lambda2b, dimMat)
+    #     G_rs = np.reshape(G, dimMat)
+    #     lambdaG = np.matmul(lambda2b_rs, G_rs)
+    #     Glambda = np.matmul(G_rs, lambda2b_rs)
+    #     lambdaG = np.reshape(lambdaG, dimTens)
+    #     Glambda = np.reshape(Glambda, dimTens)
+
+    #     sum3_2b_1 = np.multiply(np.transpose(lambdaG,[2,3,0,1]), np.transpose(occB4, [2,3,0,1]))
+    #     sum3_2b_2 = np.multiply(np.transpose(Glambda,[2,3,0,1]), occB4)
+    #     sum3_2b = sum3_2b_1 - sum3_2b_2
+
+    #     occA_transpose = np.transpose(occA4, [3,1,2,0])
+    #     sum4_2b_1 = np.multiply(occA_transpose, G)
+    #     sum4_2b_2 = tn.ncon([sum4_2b_1, lambda2b], [(1,-3,2,-2), (1,-1,2,-4)])
+    #     sum4_2b_3 = tn.ncon([sum4_2b_1, lambda2b], [(1,-3,2,-1), (1,-2,2,-4)])
+    #     sum4_2b_4 = tn.ncon([sum4_2b_1, lambda2b], [(1,-4,2,-2), (1,-1,2,-3)])
+    #     sum4_2b_5 = tn.ncon([sum4_2b_1, lambda2b], [(1,-4,2,-1), (1,-2,2,-3)])
+    #     sum4_2b = sum4_2b_2 - sum4_2b_3 - sum4_2b_4 + sum4_2b_5
+    #     # sum4_2b = sum4_2b_2 - np.transpose(sum4_2b_2,[1,0,2,3]) - \
+    #     #           - np.transpose(sum4_2b_2,[0,1,3,2]) + np.transpose(sum4_2b_2,[1,0,3,2])
+
+    #     sum5_2b_1 = tn.ncon([G, lambda3b], [(-3,1,2,3),(1,-1,-2,2,3,-4)])
+    #     sum5_2b_2 = tn.ncon([G, lambda3b], [(1,2,-1,3),(1,2,-2,3,-3,-4)])
+    #     sum5_2b_3 = tn.ncon([G, lambda3b], [(-4,1,2,3),(1,-1,-2,2,3,-3)])
+    #     sum5_2b_4 = tn.ncon([G, lambda3b], [(1,2,-2,3),(1,2,-1,3,-3,-4)])
+    #     # sum5_2b_3 = np.transpose(sum5_2b_1, [0,1,3,2])
+    #     # sum5_2b_4 = np.transpose(sum5_2b_2, [1,0,2,3])
+
+    #     sum5_2b = sum5_2b_1 - sum5_2b_3 - sum5_2b_2 + sum5_2b_4
+
+    #     #sum4_2b = 0
+        
+    #     eta2B = 0.25*(sum1_2b + sum2_2b + 0.5*sum3_2b + sum4_2b + 0.5*sum5_2b)
+        
+    #     eta2b_rs = np.reshape(eta2B, (len(bas1B)**2, len(bas1B)**2))
+    #     sum4_2b_rs = np.reshape(sum4_2b, (len(bas1B)**2, len(bas1B)**2))
+
+    #     eta2b_rs = -1*eta2b_rs.conj().T
+    #     eta2B = np.reshape(eta2b_rs, (len(bas1B),len(bas1B),len(bas1B),len(bas1B)))
+
+    #     #eta2b_rs = np.reshape(eta2B, (len(bas1B)**2, len(bas1B)**2))
+
+    #     #print(np.linalg.norm(eta2b_rs + eta2b_rs.conj().T), np.linalg.norm(G_rs - G_rs.conj().T), np.linalg.norm(sum1_2b_rs - sum1_2b_rs.conj().T))
+    #     #print(np.linalg.norm(sum4_2b_rs + sum4_2b_rs.conj().T));
+                              
+
+    #     #eta2B = np.zeros_like(self._eta2B)
+    #     #norm = np.linalg.norm
+        
+    #     # update the class members
+    #     self._eta1B = eta1B
+    #     self._eta2B = eta2B
+
+
+    #     return (eta1B, eta2B)
 
 
 class ImTimeGenerator(Generator):

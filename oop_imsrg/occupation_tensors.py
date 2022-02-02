@@ -650,15 +650,17 @@ class OccupationTensors(object):
             for b in bas1B:
                 for c in bas1B:
                     for d in bas1B:
-                        occI[a,b,c,d] = (1-ref[a])*(1-ref[b])*ref[c]*ref[d]-\
+                        occI[a,b,c,d] += (1-ref[a])*(1-ref[b])*ref[c]*ref[d]-\
                                         ref[a]*ref[b]*(1-ref[c])*(1-ref[d])
 
         if flag:
             occI = tn.outer_product(tn.Node(occI), tn.Node(np.ones((n,n))))
         else:
-            occI_rs = np.reshape(occI, (n**2, n**2))
-            occI_rs = -1*occI_rs.conj().T
-            occI = np.reshape(occI, (n,n,n,n))
+            # occI_rs = np.reshape(occI, (n**2, n**2))
+            # occI_rs = -1*occI_rs.conj().T
+            # occI = np.reshape(occI, (n,n,n,n))
+            # occI = tn.Node(occI)
+            
             occI = tn.Node(occI)
         return occI
 
