@@ -71,8 +71,9 @@ class PairingHamiltonian2B(Hamiltonian):
         #     self._E, self._f, self._G = self.normal_order_slow(self._rho1b,self._rho2b)
 
         self._rho1b, self._rho2b, self._rho3b, self._lambda2b, self._lambda3b = self.make_densities(dens_weights)
-        self._E, self._f, self._G = self.normal_order_slow(self._rho1b,self._rho2b)
-                    
+        #self._E, self._f, self._G = self.normal_order_slow(self._rho1b,self._rho2b)
+        self._E, self._f, self._G = self.normal_order()
+
         self._dens_weights = dens_weights
 
         # E, f, G = self.normal_order()

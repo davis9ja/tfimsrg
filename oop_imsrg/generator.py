@@ -1395,12 +1395,12 @@ class BrillouinGeneratorMR(Generator):
         self._eta1B = np.zeros_like(self.f)
         self._eta2B = np.zeros_like(self.G)
         
-        self._occA = occ.occA.tensor
-        self._occB = occ.occB.tensor
-        self._occI = occ.occI.tensor
-        self._occA4 = occ.occA4.tensor
-        self._occB4 = occ.occB4.tensor
-        self._occI4 = occ.occI4.tensor
+        self._occA = occ.occA#.tensor
+        self._occB = occ.occB#.tensor
+        self._occI = occ.occI#.tensor
+        self._occA4 = occ.occA4#.tensor
+        self._occB4 = occ.occB4#.tensor
+        self._occI4 = occ.occI4#.tensor
         
         rho1b = h._rho1b
         rho2b = h._rho2b
@@ -1511,23 +1511,28 @@ class BrillouinGeneratorMR(Generator):
                         for a in range(numsp):
                             sum_2b_1[i,j,k,l] += f[a,i]*lambda2b[a,j,k,l] - f[a,j]*lambda2b[a,i,k,l] - f[k,a]*lambda2b[i,j,a,l] + f[l,a]*lambda2b[i,j,a,k]
 
+                        for a in range(numsp):
                             for c in range(numsp):
                                 sum_2b_2[i,j,k,l] += occA[j,k]*Gamma[a,k,c,j]*lambda2b[a,i,c,l] - \
                                                      occA[i,k]*Gamma[a,k,c,i]*lambda2b[a,j,c,l] - \
                                                      occA[j,l]*Gamma[a,l,c,j]*lambda2b[a,i,c,k] + \
                                                      occA[i,l]*Gamma[a,l,c,i]*lambda2b[a,j,c,k]
-                                
-                                for b in range(numsp):
+                        for a in range(numsp):
+                            for b in range(numsp):
+                                for c in range(numsp):
                                     sum_2b_3[i,j,k,l] += Gamma[k,a,b,c]*lambda3b[a,i,j,b,c,l] - Gamma[l,a,b,c]*lambda3b[a,i,j,b,c,k] -\
                                                          Gamma[a,b,i,c]*lambda3b[a,b,j,c,k,l] + Gamma[a,b,j,c]*lambda3b[a,b,i,c,k,l]
 
-                        eta2b[i,j,k,l] += Gamma[k,l,i,j]*occI[i,j,k,l] \
-                                          + sum_2b_1[i,j,k,l] \
-                                          + 0.5*(lambdaG[k,l,i,j]*occB[i,j] - Glambda[k,l,i,j]*occB[k,l]) \
-                                          + sum_2b_2[i,j,k,l] \
-                                          + 0.5*sum_2b_3[i,j,k,l]
+                        result = Gamma[k,l,i,j]*occI[i,j,k,l] \
+                                 + sum_2b_1[i,j,k,l] \
+                                 + 0.5*(lambdaG[k,l,i,j]*occB[i,j] - Glambda[k,l,i,j]*occB[k,l]) \
+                                 + sum_2b_2[i,j,k,l] \
+                                 + 0.5*sum_2b_3[i,j,k,l]
 
-            return (eta1b, eta2b)
+                        eta2b[i,j,k,l] += result
+                        eta2b[k,l,i,j] += -result
+
+        return (eta1b, eta2b)
 
     def calc_eta(self):
 
@@ -1538,7 +1543,7 @@ class BrillouinGeneratorMR(Generator):
         f = self.f
         Gamma = self.G
 
-        lambda2b = self._lambda2b
+        lambda2b = (self._lambda2b)
         lambda3b = (self._lambda3b)
 
         occA = self._occA
@@ -1556,7 +1561,6 @@ class BrillouinGeneratorMR(Generator):
         Glambda = np.reshape(Glambda, dimTens)
 
         #print(type(lambdaG), type(Glambda), type(occB), type(occI))
-
 
         eta1B, eta2B = self._wrapper_calc_eta(len(bas1B), f, Gamma, lambdaG, Glambda, lambda2b, lambda3b, occA, occB, occI)
 

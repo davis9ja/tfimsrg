@@ -353,7 +353,9 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
                          'E', 
 #                         'CI_gs',  
                          '||eta1b||',
-                         '||eta2b||'
+                         '||eta2b||',
+                         'AH eta1B',
+                         'AH eta2B'
         ]
         column_string = '{: >6}, '
         for i, string in enumerate(print_columns[1::]):
@@ -418,6 +420,13 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
             # ssme = pyci.matrix(n_holes, n_particles, SS0B, SS1B, SS2B, SS2B, imsrg=True)
             norm_eta1B = np.linalg.norm(np.ravel(wg.eta1B))
             norm_eta2B = np.linalg.norm(np.ravel(wg.eta2B))
+
+            ah1B = np.linalg.norm(wg.eta1B + wg.eta1B.T)
+            
+            #eta2B_rs = np.reshape(wg.eta2B, (ha.n_sp_states**2, ha.n_sp_states**2))
+            eta2B_T = np.transpose(wg.eta2B, [2,3,0,1])
+            ah2B = np.linalg.norm(wg.eta2B + eta2B_T)
+
             #num_sp = n_holes+n_particles
             #axes = (num_sp**2,num_sp**2)
 
@@ -479,7 +488,9 @@ def main(n_holes, n_particles, ref=None, dens_weights=None, d=1.0, g=0.5, pb=0.0
                             Es,
 #                            w[eig_idx],
                             norm_eta1B,
-                            norm_eta2B]
+                            norm_eta2B,
+                            ah1B, 
+                            ah2B]
             column_string = '{:>6d}, '
             for i, string in enumerate(print_columns[1::]):
                 if i != len(print_columns)-2:
@@ -651,14 +662,14 @@ if __name__ == '__main__':
     #ref = 0.8*basis[0,:] + 0.2*basis[1,:]
 
     #ref = basis.T.dot(v0*v0)
-    ref = 0.8*basis[0,:] + 0.2*basis[1,:]
+    ref = 0.01*basis[0,:] + 0.99*basis[1,:]
 
     # ref_input = sys.argv[1]
     # ref = [int(x) for x in list(ref_input)]
 
     #ref = pickle.load(open('reference_g2.00_pb0.01_4-4.p', 'rb'))
     
-    main(4,4, g=g, ref=ref, pb=pb, generator='white_atan', dens_weights=np.append([0.8,0.2], np.zeros(34)))
+    main(4,4, g=g, ref=ref, pb=pb, generator='brillouinMR', dens_weights=np.append([0.01,0.99], np.zeros(34)))
     #main(4,4, g=g, pb=pb, generator='white_atan')
     H0B, H1B, H2B, eta1b_vac, eta2b_vac = pickle.load(open('vac_coeffs_evolved.p', 'rb'))
     imsrg_hme = pyci.matrix(4,4, H0B, H1B, H2B, H2B, imsrg=True)

@@ -98,7 +98,7 @@ class Flow_IMSRG2(Flow):
         # first term
         #sum1_0b = tn.ncon([eta1B, occA, f], [(3,4), (3,4,1,2), (2,1)])#.numpy()
         
-        sum1_0b_1 = np.multiply(occA.tensor, eta1B)
+        sum1_0b_1 = np.multiply(occA, eta1B)
         sum1_0b = tn.ncon([sum1_0b_1, f], [(1,2),(2,1)])
 
         # sum1_0b_1 = tn.ncon([occA, eta1B], [(0, 1, -1, -2), (0, 1)])#.numpy()
@@ -109,7 +109,7 @@ class Flow_IMSRG2(Flow):
         #sum2_0b = tn.ncon([eta2B, occD, G], [(5,6,7,8), (5,6,7,8,1,2,3,4), (3,4,1,2)])#.numpy()
 
         #sum2_0b_1 = tn.ncon([eta2B, occD],[(-1,-2,1,2),(-3,-4,1,2)])
-        sum2_0b_1 = np.multiply(eta2B, occD.tensor)
+        sum2_0b_1 = np.multiply(eta2B, occD)
         sum2_0b = tn.ncon([sum2_0b_1, G], [(1, 2, 3, 4), (3, 4, 1, 2)])#.numpy()
 
         dE = sum1_0b + 0.5*sum2_0b
@@ -125,8 +125,8 @@ class Flow_IMSRG2(Flow):
         #sum2_1b_1 = tn.ncon([eta1B, occA, G], [(3,4), (3,4,1,2), (2,-1,1,-2)])#.numpy()
         #sum2_1b_2 = tn.ncon([f, occA, eta2B], [(3,4), (3,4,1,2), (2,-1,1,-2)])#.numpy()
 
-        eta1BPrime = np.multiply(occA.tensor, eta1B)
-        fPrime = np.multiply(occA.tensor, f)
+        eta1BPrime = np.multiply(occA, eta1B)
+        fPrime = np.multiply(occA, f)
         sum2_1b_1 = tn.ncon([eta1BPrime, G], [(1,2), (2,-1,1,-2)])
         sum2_1b_2 = tn.ncon([fPrime, eta2B], [(1,2), (2,-1,1,-2)])
         sum2_1b = sum2_1b_1 - sum2_1b_2
@@ -140,7 +140,7 @@ class Flow_IMSRG2(Flow):
         #sum3_1b_1 = tn.ncon([eta2B, occC, G], [(6,-1,4,5), (4,5,6,1,2,3), (1,2,3,-2)])#.numpy()
         #sum3_1b = sum3_1b_1 + np.transpose(sum3_1b_1)
 
-        sum3_1b_1 = np.multiply(occC.tensor, G) #np.multiply(tn.outer_product(tn.Node(occC), tn.Node(np.ones(8))).tensor, G)
+        sum3_1b_1 = np.multiply(occC, G) #np.multiply(tn.outer_product(tn.Node(occC), tn.Node(np.ones(8))).tensor, G)
         sum3_1b_2 = tn.ncon([eta2B, G], [(3,-1,1,2),(1,2,3,-2)])
         sum3_1b = sum3_1b_2 + np.transpose(sum3_1b_2)
 
@@ -678,14 +678,14 @@ class Flow_MRIMSRG2(Flow):
         sum1_1b = sum1_1b_1 - sum1_1b_2
 
         # second term (might need to fix)
-        eta1BPrime = np.multiply(occA.tensor, eta1B)
-        fPrime = np.multiply(occA.tensor, f)
+        eta1BPrime = np.multiply(occA, eta1B)
+        fPrime = np.multiply(occA, f)
         sum2_1b_1 = tn.ncon([eta1BPrime, G], [(1,2), (2,-1,1,-2)])
         sum2_1b_2 = tn.ncon([fPrime, eta2B], [(1,2), (2,-1,1,-2)])
         sum2_1b = sum2_1b_1 - sum2_1b_2
 
         # third term
-        GPrime = np.multiply(np.transpose(occG.tensor,[3,0,1,2]), G) #np.multiply(tn.outer_product(tn.Node(occC), tn.Node(np.ones(8))).tensor, G)
+        GPrime = np.multiply(np.transpose(occG.tensor,[3,0,1,2]), G) #np.multiply(tn.outer_product(tn.Node(occC), tn.Node(np.ones(8))), G)
         eta2BPrime = np.multiply(np.transpose(occG.tensor,[3,0,1,2]), eta2B)
         sum3_1b_1 = tn.ncon([eta2BPrime, G], [(-1,1,2,3), (2,3,-2,1)])
         sum3_1b_2 = tn.ncon([GPrime, eta2B], [(-1,1,2,3), (2,3,-2,1)])
@@ -716,12 +716,12 @@ class Flow_MRIMSRG2(Flow):
 
         # - Calculate dE/ds
         # first term
-        sum1_0b_1 = np.multiply(occA.tensor, eta1B)
+        sum1_0b_1 = np.multiply(occA, eta1B)
         sum1_0b = tn.ncon([sum1_0b_1, f], [(1,2),(2,1)])
 
         # second term
-        sum2_0b_1 = np.multiply(eta2B, occD.tensor)
-        sum2_0b_2 = np.multiply(G, occD.tensor)
+        sum2_0b_1 = np.multiply(eta2B, occD)
+        sum2_0b_2 = np.multiply(G, occD)
         sum2_0b_3 = tn.ncon([sum2_0b_1, G],     [(1,2,3,4), (3,4,1,2)])
         sum2_0b_4 = tn.ncon([sum2_0b_2, eta2B], [(1,2,3,4), (3,4,1,2)])
         sum2_0b = sum2_0b_3 - sum2_0b_4

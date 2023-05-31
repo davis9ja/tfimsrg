@@ -215,7 +215,7 @@ class OccupationTensors(object):
 
             Ga = tn.Node(np.append(ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(self.DATA_TYPE))
             Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(self.DATA_TYPE)))
-            Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
+            Gab = tn.ncon([Ga.tensor,Gb.tensor], [(-1,1),(1,-2)])
             #final = tn.outer_product(Gab, tn.Node(np.ones((n,n)))).tensor
 
             # PARALLELIZE NESTED LOOPS FOR BETTER PERFORMANCE
@@ -287,7 +287,7 @@ class OccupationTensors(object):
 
             Ga = tn.Node(np.append(1-ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(self.DATA_TYPE))
             Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(self.DATA_TYPE)))
-            Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
+            Gab = tn.ncon([Ga.tensor,Gb.tensor], [(-1,1),(1,-2)])
             #final = tn.outer_product(Gab, tn.Node(np.ones((n,n)))).tensor
 
             # PARALLELIZE NESTED LOOPS FOR BETTER PERFORMANCE
@@ -318,8 +318,8 @@ class OccupationTensors(object):
 
             Ga = tn.Node(np.append(1-ref[:,np.newaxis], np.ones((n,1)),axis=1).astype(self.DATA_TYPE))
             Gb = tn.Node(np.transpose(np.append(np.ones((n,1)), -1*ref[:,np.newaxis],axis=1).astype(self.DATA_TYPE)))
-            Gab = tn.ncon([Ga,Gb], [(-1,1),(1,-2)])
-            final = tn.outer_product(Gab, tn.Node(np.ones((n,n))))
+            Gab = tn.ncon([Ga.tensor,Gb.tensor], [(-1,1),(1,-2)])
+            final = tn.outer_product(tn.Node(Gab), tn.Node(np.ones((n,n))))
             
             occB = final
 
@@ -377,7 +377,7 @@ class OccupationTensors(object):
         Gc1 = np.append(np.ones((n,1)), np.repeat(ref[:,np.newaxis],3,axis=1), axis=1).astype(self.DATA_TYPE)
         Gc = tn.Node(np.transpose(Gc1))
 
-        Gabc = tn.ncon([Ga, Gb, Gc], [(-1, 1), (-2, 1, 2), (2, -3)])
+        Gabc = tn.ncon([Ga.tensor, Gb.tensor, Gc.tensor], [(-1, 1), (-2, 1, 2), (2, -3)])
 
         # final = tn.outer_product(Gabc, tn.Node(np.ones((n,n,n)))).tensor
 
@@ -397,10 +397,10 @@ class OccupationTensors(object):
         #     return tensor
 
         if flag == 0:    
-            occC = tn.outer_product(Gabc, tn.Node(np.ones(n))) #tn.Node(enforce_delta(n, final))
+            occC = tn.outer_product(tn.Node(Gabc), tn.Node(np.ones(n))) #tn.Node(enforce_delta(n, final))
      
         if flag == 1:
-            occC = tn.outer_product(Gabc, tn.Node(np.ones((n,n,n)))) #tn.Node(enforce_delta(n, final))
+            occC = tn.outer_product(tn.Node(Gabc), tn.Node(np.ones((n,n,n)))) #tn.Node(enforce_delta(n, final))
             # occC = np.zeros((n,n,n),dtype=np.float32)
 
             # for a in bas1B:
@@ -454,9 +454,9 @@ class OccupationTensors(object):
             Gc = tn.Node(np.transpose(np.append(ref[::-1][np.newaxis,:],np.zeros((1,n)), axis=0).astype(self.DATA_TYPE)))
             Gd = tn.Node(np.transpose(Gc.tensor))
 
-            Gabcd = tn.ncon([Ga,Gb,Gc,Gd], [(-1,1),(1,-2),(-3,2),(2,-4)])
+            Gabcd = tn.ncon([Ga.tensor,Gb.tensor,Gc.tensor,Gd.tensor], [(-1,1),(1,-2),(-3,2),(2,-4)])
 
-            final = tn.outer_product(Gabcd, tn.Node(np.ones((8,8,8,8)))).tensor
+            final = tn.outer_product(tn.Node(Gabcd), tn.Node(np.ones((8,8,8,8)))).tensor
 
             @numba.jit(nopython=True)#, parallel=True)
             def enforce_delta(n, tensor):
@@ -498,7 +498,7 @@ class OccupationTensors(object):
             Gc = tn.Node(np.transpose(np.append(ref[::-1][np.newaxis,:],np.zeros((1,n)), axis=0).astype(self.DATA_TYPE)))
             Gd = tn.Node(np.transpose(Gc.tensor))
 
-            Gabcd = tn.ncon([Ga,Gb,Gc,Gd], [(-1,1),(1,-2),(-3,2),(2,-4)])
+            Gabcd = tn.ncon([Ga.tensor,Gb.tensor,Gc.tensor,Gd.tensor], [(-1,1),(1,-2),(-3,2),(2,-4)])
 
             occD = Gabcd
 
@@ -654,14 +654,14 @@ class OccupationTensors(object):
                                         ref[a]*ref[b]*(1-ref[c])*(1-ref[d])
 
         if flag:
-            occI = tn.outer_product(tn.Node(occI), tn.Node(np.ones((n,n))))
+            occI = tn.outer_product(tn.Node(occI), tn.Node(np.ones((n,n)))).tensor
         else:
             # occI_rs = np.reshape(occI, (n**2, n**2))
             # occI_rs = -1*occI_rs.conj().T
             # occI = np.reshape(occI, (n,n,n,n))
             # occI = tn.Node(occI)
             
-            occI = tn.Node(occI)
+            occI = tn.Node(occI).tensor
         return occI
 
     def __get_occJ(self):

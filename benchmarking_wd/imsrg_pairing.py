@@ -1001,12 +1001,12 @@ def main():
   particles  = 4
 
   # setup shared data
-  dim1B     = 8
+  dim1B     = 10
 
   # this defines the reference state
   # 1st state
   holes     = [0,1,2,3]
-  particles = [4,5,6,7]
+  particles = [4,5,6,7,8,9]
 
   # 2nd state
   # holes     = [0,1,4,5]
