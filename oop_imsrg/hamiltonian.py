@@ -55,7 +55,8 @@ class PairingHamiltonian2B(Hamiltonian):
         #self._holes = np.arange(n_hole_states, dtype=np.int32)
         self._n_sp_states = n_hole_states + n_particle_states
         #self._particles = np.arange(n_hole_states,self.n_sp_states, dtype=np.int32)
-        self._sp_basis = np.append(self.holes, self.particles)
+        #self._sp_basis = np.append(self.holes, self.particles)
+        self._sp_basis = np.arange(n_hole_states+n_particle_states,dtype=np.int32)
 
         self._H1B, self._H2B = self.construct()
 
@@ -370,7 +371,7 @@ class PairingHamiltonian2B(Hamiltonian):
         #f = f.astype(np.float32)
 
         # - Calculate 2B piece
-        G = H2B_t
+        G = np.copy(H2B_t)
 
 
         return (E, f, G)
